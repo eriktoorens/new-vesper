@@ -144,7 +144,7 @@ Tags constrain the DM: an awakened cat cannot pick a lock, but walks where nobod
 
 **Who chooses (D17):** the player makes every creation and leveling choice through CLI menus. The DM never picks stats, knacks or level choices.
 
-**Currency (D18):** one local currency (name to be chosen). New characters start with 5. It is earned through loot table entries or specific NPC deals, never invented by the DM.
+**Currency (D18):** decimal coin: 1 glamour = 10 glims = 100 glitter. Glitter is small change, glims are everyday money, glamour is a big deal. Code stores every amount as a whole number of glitter and only displays denominations. New characters start with 5 glims (50 glitter). Currency is earned through loot table entries or specific NPC deals, never invented by the DM.
 
 **Knacks** are the open catalog of things a character does well. Anyone can take any knack the fiction supports; a rat hacker is fine if you can say how.
 
@@ -175,9 +175,9 @@ Both tracks have 6 boxes. A bad hit deals 1–3, so a track fills after 2–4 se
 | --- | --- | --- |
 | 1–2 | Bruised | Unnoticed (2) |
 | 3–4 | Wounded: −1 to Steel and Slick | Unseen (4): NPCs forget you between scenes |
-| 5–6 | Critical; at 6, Fall or Endure | Slipping (6): into Old Vesper |
+| 5–6 | Critical: −2 to Steel and Slick; at 6, Fall or Endure | Slipping (6): into Old Vesper |
 
-**Bands (D11, D12):** each status covers its whole row: Unnoticed is 1–2 Fade, Unseen 3–4, Slipping 5–6. The Wounded penalty (−1 to Steel and Slick) applies from 3 Harm upward, including Critical.
+**Bands (D11, D12):** each status covers its whole row: Unnoticed is 1–2 Fade, Unseen 3–4, Slipping 5–6. Harm penalties to Steel and Slick are −1 while Wounded (3–4) and −2 while Critical (5–6), so the lowest possible roll stat is −3.
 
 **Harm** (flesh and chrome) fills from violence, accidents and backlash. Treatment, rest and repair clear it. When Harm fills, the player chooses:
 
@@ -208,7 +208,7 @@ Magic is bargaining with attention. There are no spell slots and no mana; every 
 - **Knacks** define what a character can do reliably, such as asking a shrine's god one question. Anyone can attempt raw magic without a knack, at Desperate difficulty.
 - **Costs on 7–9** come from a magic list: a tick of Fade, a side effect, or a favor owed to a god.
 - **The favor ledger:** code records every favor owed. Gods collect, and debts become story hooks. This is the Tally made mechanical.
-- **Who is owed (D10):** the god of the shrine the character is at, or the god whose power they are tapping. If neither applies, a 7–9 cost must be Fade or a side effect, not a favor.
+- **Who is owed (D10, provisional):** the god of the shrine the character is at, or the god whose power they are tapping. If neither applies, a 7–9 cost must be Fade or a side effect, not a favor. **High priority to revisit:** the player should understand, and have some choice over, where a debt accrues. Candidate alternatives: the district's patron god as a fallback, or an unnamed creditor ("something that noticed") named later as a story hook.
 
 ## DM Authority
 
@@ -274,7 +274,7 @@ PvP is allowed. The city remembers it, and nobody dies without choosing to.
 
 - **Death stays a choice.** PvP can fill another player's Harm track, but at 6 the victim still chooses Fall or Endure.
 - **Havens are safe.** No PvP at lodgings, shrines or Bonds' homes.
-- **Preying on the weak makes you forgettable.** Attacking a character several levels below you adds Fade to the attacker: 3 or more levels below adds 1 Fade to the attacker per PvP consequence (D16).
+- **Preying on the weak makes you forgettable.** Attacking a character several levels below you adds Fade to the attacker, scaled by the gap: 3–4 levels below adds 1 Fade, 5 or more adds 2, for each PvP consequence applied (D16).
 - **The city takes notice.** Violence against a player lowers the region's Light and can trigger "a faction takes notice." Victims can file a grievance with the Registry, which posts bounties.
 - **Opposed rolls.** Both players roll and the tiers are compared, so the defender always has agency. On equal tiers the defender holds (D5).
 
@@ -296,7 +296,8 @@ The DM's tokens are the main running cost; hosting is small. Cost scales with pl
 - **Per-player allowances:** a monthly hour budget per player, so no one drains the shared pool.
 - **Model routing:** cheaper models for routine narration, stronger ones for adjudication.
 - **Routing in practice (D20):** one tool-using turn both adjudicates and narrates, so the turn loop runs on Sonnet. Haiku handles beat summaries, "while you were gone" recaps and knack drafting. The model is configurable per call type.
-- **Cap and allowance (D21, D22):** the monthly cap in dollars and the per-player hour allowance are still open; they are needed before step 5.
+- **Starting cap (D21):** $50 a month for the whole city, as an operator setting. Retune after step 6 measures cost per player-hour.
+- **Starting allowance (D22):** $10 per player per month, as an operator setting, enforced on measured spend. Players see it as an estimated number of hours left, from their own measured cost per hour.
 - **Later options:** a patron pool, bring-your-own API key, or prepaid credits, all built on the same ledger.
 
 ## Open Questions and Next Steps
@@ -307,11 +308,10 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 - [ ] Starter knack catalog: about 20 knacks across the five stats. (8 shipped for the Market District.)
 - [ ] Advanced knacks and origin evolutions for level 5 and up.
-- [ ] How gods collect on favors, mechanically. (The magic cost list and who is owed are settled: D10.)
+- [ ] **High priority:** who a favor is owed to, with player understanding and choice (D10 is provisional).
+- [ ] How gods collect on favors, mechanically.
 - [x] Market District layout: key stalls, NPCs, shrines, the drowned station.
 - [ ] Beat window length, and whether it adapts to how many players are present.
-- [ ] Name of the currency (D18).
-- [ ] Monthly spending cap and per-player hour allowance (D21, D22).
 - [ ] Alt accounts: how many characters a player may have.
 
 **Prototype plan:**
@@ -323,7 +323,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-Decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. "Open" means still waiting on a decision.
+Decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -336,17 +336,17 @@ Decided 2026-09-27, in the repository, from the open questions raised after the 
 | D7 | Enforced tags | Only `no-hands` (blocks `needs-hands` knacks) for now |
 | D8 | Recovery | Haven: 1 Harm and 1 Fade per real day offline; treatment knack: 1 Harm per use; named by another player: 1 Fade once per scene |
 | D9 | Time | 1 real day = 1 in-game day; a week is 7 real days |
-| D10 | Favor owed to whom | Shrine's god or the god being tapped; otherwise the cost is Fade or a side effect |
-| D11 | Wounded at Critical | The −1 applies from 3 Harm upward, including 5–6 |
+| D10 | Favor owed to whom | **Provisional, high priority to revisit.** Shrine's god or the god being tapped; otherwise Fade or a side effect. Player should understand and choose where debt accrues |
+| D11 | Harm penalties | −1 to Steel and Slick at 3–4 Harm, −2 at 5–6 |
 | D12 | Fade bands | Row ranges: Unnoticed 1–2, Unseen 3–4, Slipping 5–6 |
 | D13 | After Endure | Harm drops to 4 |
 | D14 | The +4 stat | Level-10+ milestone advanced knack names one stat; its cap becomes +4; one stat ever |
 | D15 | Slipping (prototype) | Move to the Underside entrance, gain `half-faded`, keep playing |
-| D16 | Preying on the weak | 3+ levels below: +1 Fade to the attacker per PvP consequence |
+| D16 | Preying on the weak | Attacker gains Fade per PvP consequence: +1 at 3–4 levels above the target, +2 at 5+ |
 | D17 | Who chooses | The player, through CLI menus, for creation and leveling |
-| D18 | Currency | One currency, name open; start with 5; earned from loot entries or NPC deals |
+| D18 | Currency | 1 glamour = 10 glims = 100 glitter; stored in glitter; start with 5 glims; earned from loot entries or NPC deals |
 | D19 | Content lines | No sexual content, detailed torture, real-world hate groups or slurs, or harm to children |
 | D20 | Model routing | Turn loop on Sonnet; Haiku for summaries, recaps and knack drafting; configurable per call type |
-| D21 | Monthly cap | Open |
-| D22 | Per-player allowance | Open |
+| D21 | Monthly cap | $50 per month, operator setting |
+| D22 | Per-player allowance | $10 per player per month on spend, shown to players as estimated hours left |
 | D23 | Where decisions live | Written into this file and tagged; to be copied back to the living doc |
