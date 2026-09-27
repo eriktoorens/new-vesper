@@ -1,0 +1,17 @@
+{
+  "loot_tables": [
+    {
+      "id": "market-stalls",
+      "name": "Market stall finds",
+      "entries": [
+        {"kind": "brass-luck-charm", "name": "Brass luck charm", "weight": 4},
+        {"kind": "paper-umbrella", "name": "Paper umbrella, only slightly lost", "weight": 4},
+        {"kind": "ghost-pepper-paste", "name": "Jar of ghost-pepper paste", "weight": 3},
+        {"kind": "bootleg-firmware", "name": "Bootleg firmware chip", "weight": 3},
+        {"kind": "prayer-token", "name": "Subscription prayer token (expired)", "weight": 2},
+        {"kind": "ferry-token", "name": "Rat-ferry token", "weight": 2},
+        {"kind": "secondhand-miracle", "name": "Secondhand miracle, lightly used", "weight": 1}
+      ]
+    }
+  ]
+}

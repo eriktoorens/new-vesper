@@ -1,0 +1,34 @@
+{
+  "origins": [
+    {
+      "id": "street-born",
+      "name": "Street-born human",
+      "trait": "Knows someone in every market.",
+      "tags": ["streetwise"]
+    },
+    {
+      "id": "made-person",
+      "name": "Made person",
+      "trait": "Built, not born; hard to hurt, easy to doubt.",
+      "tags": ["synthetic"]
+    },
+    {
+      "id": "enclave-raised",
+      "name": "Enclave-raised",
+      "trait": "Primer-educated, speaks in protocols.",
+      "tags": ["networked"]
+    },
+    {
+      "id": "underside-born",
+      "name": "Underside-born",
+      "trait": "Sees things others have forgotten.",
+      "tags": ["half-faded"]
+    },
+    {
+      "id": "awakened-animal",
+      "name": "Awakened animal",
+      "trait": "Speaks with its own kind; nobody suspects a cat.",
+      "tags": ["no-hands", "overlooked", "animal-speech"]
+    }
+  ]
+}

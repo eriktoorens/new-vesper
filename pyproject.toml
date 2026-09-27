@@ -28,3 +28,4 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
 
 [tool.setuptools.package-data]
 "new_vesper.state" = ["migrations/*.sql"]
+"new_vesper.content" = ["data/*.json"]
