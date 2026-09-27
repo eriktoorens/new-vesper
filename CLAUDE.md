@@ -53,11 +53,11 @@ Build and finish each step, with tests passing, before starting the next.
 | Tool | Does |
 | --- | --- |
 | `look(entity)` | Returns current state so narration matches the world |
-| `call_for_roll(stat, difficulty, stakes)` | Code rolls 2d6 + stat + modifier; returns total and tier |
-| `apply_consequence(type, target, magnitude)` | Checks type against the allowed-moves list and caps magnitude; writes state |
+| `call_for_roll(stat, difficulty, stakes)` | Code rolls 2d6 + stat + modifier; returns total, tier and a single-use roll id |
+| `apply_consequence(roll_id, type, target, magnitude)` | Checks the roll's tier (7–9 cost, 6− move, 10+ none), the allowed list and the magnitude cap; writes state |
 | `grant_from_table(table_id)` | Loot from a table; the DM never invents items |
 | `report_trigger(trigger_id, evidence)` | Flags an XP trigger; code decides the payout |
-| `adjust_light(region, reason)` | Moves a region's Light by a fixed step |
+| `adjust_light(region, direction, size, reason)` | Moves a region's Light by a deed (±1) or major deed (±2); one change per region per scene |
 
 Rules for tool handlers:
 

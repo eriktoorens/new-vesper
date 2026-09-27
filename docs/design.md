@@ -2,6 +2,8 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
+**Decisions D1–D23** (2026-09-27) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+
 ## Overview
 
 New Vesper is a persistent, shared, text-based RPG where an AI dungeon master runs a rain-soaked megacity in which magic and technology both run on the same fuel: attention. Belief makes things real; being forgotten unmakes them.
@@ -85,6 +87,18 @@ Every risky action resolves as 2d6 + a stat + a difficulty modifier, rolled by c
 
 No roll when there is no risk. The DM calls for a roll only when failure would be interesting.
 
+**Rolls gate consequences (D1).** Each roll gets a single-use roll id. A consequence must cite one, and the tier limits what it can be:
+
+| Tier | Allowed consequence |
+| --- | --- |
+| 10+ | None |
+| 7–9 | One cost from the cost list, at most 1 box of Harm or Fade |
+| 6 or less | One move from the allowed list, within its magnitude cap |
+
+Without a roll there is no state change, except rewards reported through `report_trigger`.
+
+**Costs on 7–9 (D2):** take one item; 1 Harm; 1 Fade; region Light −1; or a narrative-only cost that writes no state. Magic has its own cost list (see Magic).
+
 **Why the cap is +3:** 2d6 is a bell curve, so each point shifts the odds a lot. Past +3, rolls stop being interesting. One stat can reach +4 through a level-10 advanced knack.
 
 | Stat | 10+ (clean) | 6 or less (city moves) |
@@ -106,6 +120,8 @@ No roll when there is no risk. The DM calls for a roll only when failure would b
 - A faction takes notice
 - The dark encroaches (region Light −1)
 
+**Magnitudes (D6):** Deal harm and Add Fade are 1–3 boxes. The dark encroaches is exactly −1 Light. Every other move is magnitude 1. Threat clocks have 4 segments and are defined in content, per district; the DM can advance a clock by 1 but never creates one.
+
 ## Characters
 
 There are no classes. A character is an Origin, five stats, a few Knacks and a Bond, and grows by leveling.
@@ -122,7 +138,13 @@ There are no classes. A character is an Origin, five stats, a few Knacks and a B
 
 Tags constrain the DM: an awakened cat cannot pick a lock, but walks where nobody asks questions.
 
+**Tags code enforces (D7):** for now only `no-hands`, which blocks knacks tagged `needs-hands`. The other tags guide narration through the prompt until playtest shows a need to enforce them.
+
 **Creation:** assign the array +2, +1, +1, 0, −1 to the five stats; pick an origin; pick two knacks; name one Bond, a person your character matters to.
+
+**Who chooses (D17):** the player makes every creation and leveling choice through CLI menus. The DM never picks stats, knacks or level choices.
+
+**Currency (D18):** one local currency (name to be chosen). New characters start with 5. It is earned through loot table entries or specific NPC deals, never invented by the DM.
 
 **Knacks** are the open catalog of things a character does well. Anyone can take any knack the fiction supports; a rat hacker is fine if you can say how.
 
@@ -133,6 +155,8 @@ Tags constrain the DM: an awakened cat cannot pick a lock, but walks where nobod
 - Heal a scar
 
 Every fifth level also unlocks an **advanced knack** or an **origin evolution**, such as a plaza pigeon becoming the plaza's minor god.
+
+**The +4 stat (D14):** from level 10, a milestone advanced knack may name one stat. That stat's cap becomes +4, and later +1 stat choices can raise it there. Only one stat per character, ever.
 
 **Player-proposed knacks:**
 
@@ -153,17 +177,28 @@ Both tracks have 6 boxes. A bad hit deals 1–3, so a track fills after 2–4 se
 | 3–4 | Wounded: −1 to Steel and Slick | Unseen (4): NPCs forget you between scenes |
 | 5–6 | Critical; at 6, Fall or Endure | Slipping (6): into Old Vesper |
 
+**Bands (D11, D12):** each status covers its whole row: Unnoticed is 1–2 Fade, Unseen 3–4, Slipping 5–6. The Wounded penalty (−1 to Steel and Slick) applies from 3 Harm upward, including Critical.
+
 **Harm** (flesh and chrome) fills from violence, accidents and backlash. Treatment, rest and repair clear it. When Harm fills, the player chooses:
 
 - **Fall:** die performing a final act that permanently changes the world (a sealed door, a saved block, a named memorial in code).
-- **Endure:** survive with a permanent scar or condition, written to the character sheet.
+- **Endure:** survive with a permanent scar or condition, written to the character sheet. Harm then drops to 4: still Wounded (D13).
 
 **Fade** fills from isolation, horror and broken promises. As it rises, the world forgets you: shopkeepers lose your face, cameras stop tracking you, doors stop opening. Low Fade can help a thief; high Fade is dangerous.
 
 - **Recovery:** being seen. Time with other players at a shared place, keeping your word, someone speaking your name.
 - **At maximum:** the character slips into Old Vesper and becomes an Underside character. Changed, not dead.
+- **In the prototype (D15):** a slipped character moves to the district's Underside entrance (the Drowned Station), gains the `half-faded` tag and keeps playing. Full Old Vesper play comes later.
+
+**Recovery amounts (D8):**
+
+- Logging off at a haven clears 1 Harm and 1 Fade per real day offline.
+- A treatment knack clears 1 Harm per use.
+- Another player speaking your character's name clears 1 Fade, once per scene.
 
 **Advancement:** experience comes from a fixed list of triggers that code checks: protecting someone, making a sacrifice, keeping a hard promise, raising a region's Light. Killing things earns nothing on its own. See Characters for what XP buys. The DM can report that a trigger happened; code decides whether it pays out.
+
+**Triggers and payouts (D4):** exactly four triggers: `protect_someone`, `make_a_sacrifice`, `keep_a_hard_promise`, `raise_light`. Each pays 1 XP, at most once per character per scene.
 
 ## Magic
 
@@ -173,6 +208,7 @@ Magic is bargaining with attention. There are no spell slots and no mana; every 
 - **Knacks** define what a character can do reliably, such as asking a shrine's god one question. Anyone can attempt raw magic without a knack, at Desperate difficulty.
 - **Costs on 7–9** come from a magic list: a tick of Fade, a side effect, or a favor owed to a god.
 - **The favor ledger:** code records every favor owed. Gods collect, and debts become story hooks. This is the Tally made mechanical.
+- **Who is owed (D10):** the god of the shrine the character is at, or the god whose power they are tapping. If neither applies, a 7–9 cost must be Fade or a side effect, not a favor.
 
 ## DM Authority
 
@@ -199,11 +235,11 @@ Every state change goes through a tool, and every tool checks the request agains
 
 **Initial tool contract:**
 
-- `call_for_roll(stat, difficulty, stakes)` returns the tier.
-- `apply_consequence(type, target, magnitude)` checks the allowed list and writes state.
+- `call_for_roll(stat, difficulty, stakes)` returns the total, the tier and a single-use roll id (D1).
+- `apply_consequence(roll_id, type, target, magnitude)` checks the roll's tier, the allowed list and the magnitude cap, then writes state (D1, D2).
 - `grant_from_table(table_id)` hands out loot; the DM never invents items.
 - `report_trigger(trigger_id, evidence)` flags an XP trigger; code decides the payout.
-- `adjust_light(region, reason)` nudges a region by a fixed step.
+- `adjust_light(region, direction, size, reason)` moves a region's Light: `direction` is raise or lower, `size` is deed (±1) or major (±2). At most one change per region per scene; a major change needs an XP trigger reported in the same scene (D3).
 - `look(entity)` reads current state so narration matches the world.
 
 ## Shared Play
@@ -211,6 +247,8 @@ Every state change goes through a tool, and every tool checks the request agains
 Players act freely until their actions touch each other; then they share a scene resolved in beats, not initiative.
 
 **Light scale:** each region runs 0–10. A deed moves it ±1, a major deed ±2. Neglected regions lose 1 per in-game week. The city ticks once per real day.
+
+**Time (D9):** one real day is one in-game day, for everything: knack "per day" limits, the city tick and recovery. An in-game week is 7 real days.
 
 **Solo by default.** Outside shared scenes, each player's action resolves immediately.
 
@@ -236,9 +274,9 @@ PvP is allowed. The city remembers it, and nobody dies without choosing to.
 
 - **Death stays a choice.** PvP can fill another player's Harm track, but at 6 the victim still chooses Fall or Endure.
 - **Havens are safe.** No PvP at lodgings, shrines or Bonds' homes.
-- **Preying on the weak makes you forgettable.** Attacking a character several levels below you adds Fade to the attacker.
+- **Preying on the weak makes you forgettable.** Attacking a character several levels below you adds Fade to the attacker: 3 or more levels below adds 1 Fade to the attacker per PvP consequence (D16).
 - **The city takes notice.** Violence against a player lowers the region's Light and can trigger "a faction takes notice." Victims can file a grievance with the Registry, which posts bounties.
-- **Opposed rolls.** Both players roll and the tiers are compared, so the defender always has agency.
+- **Opposed rolls.** Both players roll and the tiers are compared, so the defender always has agency. On equal tiers the defender holds (D5).
 
 **Focus on social conflict.** Betrayal, theft, rival bargains with the same god and races to claim a forgotten shrine carry the drama. Violence is possible but expensive.
 
@@ -246,6 +284,7 @@ PvP is allowed. The city remembers it, and nobody dies without choosing to.
 
 - **Prompt injection between players.** Player text is untrusted input. Code validates every tool call, whatever a player writes or the narration says.
 - **Harassment.** Content lines the DM will not narrate, plus mute and block tools for players.
+- **Content lines (D19):** the DM does not narrate sexual content, torture in detail, real-world hate groups or slurs, or harm to children. Cruelty is shown through its consequences, not gore.
 - **Alt accounts.** Second characters used to farm or gang up; address before public launch.
 
 ## Costs and Budget
@@ -256,6 +295,8 @@ The DM's tokens are the main running cost; hosting is small. Cost scales with pl
 - **Monthly cap:** a hard spending limit set by the operator. When the pool runs out, the city goes quiet until the month resets.
 - **Per-player allowances:** a monthly hour budget per player, so no one drains the shared pool.
 - **Model routing:** cheaper models for routine narration, stronger ones for adjudication.
+- **Routing in practice (D20):** one tool-using turn both adjudicates and narrates, so the turn loop runs on Sonnet. Haiku handles beat summaries, "while you were gone" recaps and knack drafting. The model is configurable per call type.
+- **Cap and allowance (D21, D22):** the monthly cap in dollars and the per-player hour allowance are still open; they are needed before step 5.
 - **Later options:** a patron pool, bring-your-own API key, or prepaid credits, all built on the same ledger.
 
 ## Open Questions and Next Steps
@@ -264,11 +305,14 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 **Open questions:**
 
-- [ ] Starter knack catalog: about 20 knacks across the five stats.
+- [ ] Starter knack catalog: about 20 knacks across the five stats. (8 shipped for the Market District.)
 - [ ] Advanced knacks and origin evolutions for level 5 and up.
-- [ ] Magic cost list and how gods collect on favors.
-- [ ] Market District layout: key stalls, NPCs, shrines, the drowned station.
+- [ ] How gods collect on favors, mechanically. (The magic cost list and who is owed are settled: D10.)
+- [x] Market District layout: key stalls, NPCs, shrines, the drowned station.
 - [ ] Beat window length, and whether it adapts to how many players are present.
+- [ ] Name of the currency (D18).
+- [ ] Monthly spending cap and per-player hour allowance (D21, D22).
+- [ ] Alt accounts: how many characters a player may have.
 
 **Prototype plan:**
 
@@ -276,3 +320,33 @@ The first build is a playable CLI prototype: one player, one district, the full 
 2. Rules engine: the 2d6 resolver, tiers, tracks, XP triggers, all unit-tested.
 3. DM agent on the Claude API with the tool contract above and a setting prompt built from this doc.
 4. One playable scene end to end, then playtest and tune the prompt.
+
+## Decision log
+
+Decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. "Open" means still waiting on a decision.
+
+| ID | Topic | Decision |
+| --- | --- | --- |
+| D1 | Rolls gate consequences | Single-use roll id; consequences cite it; 10+ none, 7–9 one cost, 6− one move; no roll, no state change except `report_trigger` rewards |
+| D2 | 7–9 costs | Take one item, 1 Harm, 1 Fade, region Light −1, or narrative-only |
+| D3 | `adjust_light` | Adds direction (raise/lower) and size (deed ±1 / major ±2); one change per region per scene; major needs an XP trigger in the same scene |
+| D4 | XP triggers | Exactly four; 1 XP each; once per character per scene |
+| D5 | Opposed-roll ties | Defender holds |
+| D6 | Move magnitudes | Harm and Fade 1–3; encroach −1; others 1; threat clocks 4 segments, defined in content, advanced by 1, never created by the DM |
+| D7 | Enforced tags | Only `no-hands` (blocks `needs-hands` knacks) for now |
+| D8 | Recovery | Haven: 1 Harm and 1 Fade per real day offline; treatment knack: 1 Harm per use; named by another player: 1 Fade once per scene |
+| D9 | Time | 1 real day = 1 in-game day; a week is 7 real days |
+| D10 | Favor owed to whom | Shrine's god or the god being tapped; otherwise the cost is Fade or a side effect |
+| D11 | Wounded at Critical | The −1 applies from 3 Harm upward, including 5–6 |
+| D12 | Fade bands | Row ranges: Unnoticed 1–2, Unseen 3–4, Slipping 5–6 |
+| D13 | After Endure | Harm drops to 4 |
+| D14 | The +4 stat | Level-10+ milestone advanced knack names one stat; its cap becomes +4; one stat ever |
+| D15 | Slipping (prototype) | Move to the Underside entrance, gain `half-faded`, keep playing |
+| D16 | Preying on the weak | 3+ levels below: +1 Fade to the attacker per PvP consequence |
+| D17 | Who chooses | The player, through CLI menus, for creation and leveling |
+| D18 | Currency | One currency, name open; start with 5; earned from loot entries or NPC deals |
+| D19 | Content lines | No sexual content, detailed torture, real-world hate groups or slurs, or harm to children |
+| D20 | Model routing | Turn loop on Sonnet; Haiku for summaries, recaps and knack drafting; configurable per call type |
+| D21 | Monthly cap | Open |
+| D22 | Per-player allowance | Open |
+| D23 | Where decisions live | Written into this file and tagged; to be copied back to the living doc |
