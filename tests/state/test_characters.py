@@ -122,6 +122,9 @@ def test_fall_and_endure(conn: sqlite3.Connection, mira: Character) -> None:
     endured = resolve_full_harm(mira.sheet, "endure", "chrome-jaw")
     mira = characters.update_sheet(conn, mira.id, mira.sheet, endured, DM, "endure")
     assert mira.sheet.scars == ("chrome-jaw",)
+    assert mira.sheet.harm == 4
+    full_again, _ = apply_track(mira.sheet, Track.HARM, 2)
+    mira = characters.update_sheet(conn, mira.id, mira.sheet, full_again, DM, "shot again")
     fallen = resolve_full_harm(mira.sheet, "fall")
     mira = characters.update_sheet(conn, mira.id, mira.sheet, fallen, DM, "fall")
     assert mira.sheet.fallen
@@ -170,8 +173,9 @@ def test_move_and_currency(conn: sqlite3.Connection, mira: Character) -> None:
     assert mira.location_id == "umbrella-shrine"
     with pytest.raises(NotFoundError):
         characters.move_character(conn, mira.id, "the-moon", DM)
+    assert mira.currency == 50  # starts with 5 glims (D18)
     mira = characters.adjust_currency(conn, mira.id, 10, DM, "sold a charm")
-    mira = characters.adjust_currency(conn, mira.id, -10, DM, "bought noodles")
+    mira = characters.adjust_currency(conn, mira.id, -60, DM, "bought noodles")
     assert mira.currency == 0
     for delta in (-1, 0, 1.5, "5"):
         with pytest.raises(StateError):

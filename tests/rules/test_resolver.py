@@ -71,11 +71,11 @@ def test_stat_at_cap_and_advanced_cap_accepted() -> None:
 
 
 def test_lowest_effective_stat_accepted() -> None:
-    # -1 base with the Wounded penalty.
-    assert resolve(-2, Difficulty.DESPERATE, FixedDice([1, 1])).total == -2
+    # -1 base with the Critical penalty.
+    assert resolve(-3, Difficulty.DESPERATE, FixedDice([1, 1])).total == -3
 
 
-@pytest.mark.parametrize("stat_value", [5, -3, 99])
+@pytest.mark.parametrize("stat_value", [5, -4, 99])
 def test_stat_out_of_range_rejected(stat_value: int) -> None:
     with pytest.raises(RulesError):
         resolve(stat_value, Difficulty.RISKY, FixedDice([1, 1]))

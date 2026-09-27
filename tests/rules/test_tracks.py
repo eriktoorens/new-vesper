@@ -100,10 +100,12 @@ def test_slip_only_at_six() -> None:
 
 
 @pytest.mark.parametrize("stat", [Stat.STEEL, Stat.SLICK])
-def test_wounded_penalises_steel_and_slick(stat: Stat) -> None:
+def test_harm_penalises_steel_and_slick(stat: Stat) -> None:
     assert effective_stat(stat, 2, 2) == 2
     assert effective_stat(stat, 2, 3) == 1
-    assert effective_stat(stat, 2, 6) == 1
+    assert effective_stat(stat, 2, 4) == 1
+    assert effective_stat(stat, 2, 5) == 0
+    assert effective_stat(stat, 2, 6) == 0
 
 
 @pytest.mark.parametrize("stat", [Stat.WIRE, Stat.WEIRD, Stat.HEART])
@@ -113,3 +115,7 @@ def test_wounded_leaves_other_stats(stat: Stat) -> None:
 
 def test_wounded_stat_at_cap() -> None:
     assert effective_stat(Stat.STEEL, 3, 3) == 2
+
+
+def test_critical_at_the_floor_is_minus_three() -> None:
+    assert effective_stat(Stat.SLICK, -1, 5) == -3

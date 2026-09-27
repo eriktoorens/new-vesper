@@ -192,7 +192,13 @@ def get_region(conn: sqlite3.Connection, region_id: str) -> Region:
 
 
 def apply_light_change(
-    conn: sqlite3.Connection, region_id: str, change: LightChange, cause: Cause, reason: str
+    conn: sqlite3.Connection,
+    region_id: str,
+    change: LightChange,
+    cause: Cause,
+    reason: str,
+    *,
+    source: str = "system",
 ) -> Region:
     """Write a Light change computed by the rules engine.
 
@@ -213,7 +219,13 @@ def apply_light_change(
             conn,
             "light_changed",
             cause,
-            {"before": change.before, "after": change.after, "fell": change.fell, "reason": why},
+            {
+                "before": change.before,
+                "after": change.after,
+                "fell": change.fell,
+                "reason": why,
+                "source": slug(source, "source"),
+            },
             region_id=region.id,
         )
     return get_region(conn, region.id)

@@ -3,7 +3,10 @@ name = "new-vesper"
 version = "0.1.0"
 description = "A persistent, shared, text-based RPG with an AI dungeon master."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["anthropic>=1.8"]
+
+[project.scripts]
+new-vesper = "new_vesper.cli:main"
 
 [project.optional-dependencies]
 dev = ["pytest", "ruff"]

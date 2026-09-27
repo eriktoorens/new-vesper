@@ -74,6 +74,15 @@ class LocationDef:
 
 
 @dataclass(frozen=True)
+class ClockDef:
+    id: str
+    region_id: str
+    name: str
+    segments: int
+    description: str
+
+
+@dataclass(frozen=True)
 class GodDef:
     id: str
     name: str
@@ -236,6 +245,21 @@ def parse_location(raw: object, region_id: str) -> LocationDef:
         r.boolean("is_haven"),
         r.slugs("tags"),
         r.text("description", 1000),
+    )
+
+
+# Threat clocks have 4 segments (D6).
+CLOCK_SEGMENTS = 4
+
+
+def parse_clock(raw: object, region_id: str) -> ClockDef:
+    r = Reader(raw, "clock", {"id", "name", "segments", "description"})
+    return ClockDef(
+        r.slug("id"),
+        region_id,
+        r.text("name", 80),
+        r.integer("segments", CLOCK_SEGMENTS, CLOCK_SEGMENTS),
+        r.text("description", 500),
     )
 
 

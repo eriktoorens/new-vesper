@@ -31,3 +31,11 @@ def get_player(conn: sqlite3.Connection, player_id: int) -> Player:
         conn.execute("SELECT * FROM players WHERE id = ?", (pid,)).fetchone(), "player", pid
     )
     return Player(row["id"], row["handle"], row["created_at"])
+
+
+def find_player(conn: sqlite3.Connection, handle: str) -> Player | None:
+    """The player with this handle, if any."""
+    row = conn.execute(
+        "SELECT id FROM players WHERE handle = ?", (text(handle, "handle", 40).strip(),)
+    ).fetchone()
+    return None if row is None else get_player(conn, row[0])

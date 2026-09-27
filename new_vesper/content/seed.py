@@ -8,7 +8,7 @@ import sqlite3
 from collections.abc import Callable
 
 from new_vesper.content.loader import Content
-from new_vesper.state import world
+from new_vesper.state import clocks, world
 from new_vesper.state.db import atomic
 from new_vesper.state.errors import NotFoundError
 from new_vesper.state.events import SYSTEM
@@ -64,4 +64,10 @@ def seed(conn: sqlite3.Connection, content: Content) -> list[str]:
                     is_haven=location.is_haven,
                 )
                 added.append(f"location:{location.id}")
+        for clock in content.clocks.values():
+            if not _exists(clocks.get_clock, conn, clock.id):
+                clocks.add_clock(
+                    conn, clock.id, clock.region_id, clock.name, clock.segments, SYSTEM
+                )
+                added.append(f"clock:{clock.id}")
     return added

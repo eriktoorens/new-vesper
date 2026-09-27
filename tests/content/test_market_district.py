@@ -27,6 +27,20 @@ def test_market_district_shape(content: Content) -> None:
     assert 7 <= len(content.knacks) <= 9
 
 
+def test_three_four_segment_clocks(content: Content) -> None:
+    assert len(content.clocks) == 3
+    assert {c.segments for c in content.clocks.values()} == {4}
+    assert {c.region_id for c in content.clocks.values()} == {"market"}
+
+
+def test_lookups(content: Content) -> None:
+    entrance = content.underside_entrance("market")
+    assert entrance is not None and entrance.id == "drowned-station"
+    god = content.shrine_god("umbrella-shrine")
+    assert god is not None and god.id == "paru-of-lost-umbrellas"
+    assert content.shrine_god("tarp-row") is None
+
+
 def test_god_has_a_haven_shrine(content: Content) -> None:
     [god] = content.gods.values()
     shrine = content.locations[god.shrine]

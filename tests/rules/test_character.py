@@ -99,6 +99,7 @@ def test_endure_adds_scar(sheet: Sheet) -> None:
     endured = resolve_full_harm(sheet, "endure", "chrome-jaw")
     assert endured.scars == ("chrome-jaw",)
     assert not endured.fallen
+    assert endured.harm == 4  # still Wounded (D13)
 
 
 def test_choice_only_at_full_harm(sheet: Sheet) -> None:

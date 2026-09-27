@@ -6,7 +6,7 @@ from enum import StrEnum
 from new_vesper.rules.dice import Rng, roll_2d6
 from new_vesper.rules.errors import parse_enum, require_range
 from new_vesper.rules.stats import ADVANCED_STAT_CAP, STAT_MIN
-from new_vesper.rules.tracks import WOUNDED_PENALTY
+from new_vesper.rules.tracks import CRITICAL_PENALTY
 
 
 class Difficulty(StrEnum):
@@ -36,9 +36,9 @@ TIER_RANK: dict[Tier, int] = {Tier.CITY_MOVES: 0, Tier.COST: 1, Tier.CLEAN: 2}
 CLEAN_THRESHOLD = 10
 COST_THRESHOLD = 7
 
-# The lowest effective stat is the floor with the Wounded penalty applied;
+# The lowest effective stat is the floor with the Critical penalty applied;
 # the highest is the advanced-knack cap.
-EFFECTIVE_STAT_MIN = STAT_MIN - WOUNDED_PENALTY
+EFFECTIVE_STAT_MIN = STAT_MIN - CRITICAL_PENALTY
 EFFECTIVE_STAT_MAX = ADVANCED_STAT_CAP
 # Knack balance budget: at most +1 to a roll.
 MAX_ROLL_BONUS = 1

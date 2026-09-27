@@ -11,6 +11,7 @@ from dataclasses import dataclass, replace
 from new_vesper.rules.errors import RulesError
 from new_vesper.rules.stats import Stat, validate_starting_stats
 from new_vesper.rules.tracks import (
+    ENDURE_HARM,
     FullHarmChoice,
     Track,
     TrackChange,
@@ -86,8 +87,7 @@ def apply_track(sheet: Sheet, track: Track, delta: int) -> tuple[Sheet, TrackCha
 def resolve_full_harm(sheet: Sheet, choice: object, scar: object = None) -> Sheet:
     """At full Harm the player chooses. Fall ends the character; Endure scars them.
 
-    Endure leaves Harm where it is: the design doc does not say whether it
-    clears the track, so that is left to treatment and rest until it does.
+    After Endure, Harm drops to 4: still Wounded (D13).
     """
     _require_active(sheet)
     if not must_fall_or_endure(sheet.harm):
@@ -100,4 +100,4 @@ def resolve_full_harm(sheet: Sheet, choice: object, scar: object = None) -> Shee
     scar_id = validate_id(scar, "scar")
     if scar_id in sheet.scars:
         raise RulesError(f"already carries scar {scar_id!r}")
-    return replace(sheet, scars=(*sheet.scars, scar_id))
+    return replace(sheet, scars=(*sheet.scars, scar_id), harm=ENDURE_HARM)

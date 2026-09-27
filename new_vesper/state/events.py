@@ -83,11 +83,20 @@ def list_events(
     *,
     character_id: int | None = None,
     region_id: str | None = None,
+    scene_id: int | None = None,
+    kind: str | None = None,
     after_id: int = 0,
     limit: int = 100,
 ) -> list[Event]:
-    """Events in order, optionally filtered by character or region."""
-    clauses, params = ["id > ?"], [after_id]
+    """Events in order, optionally filtered by character, region, scene or kind."""
+    clauses: list[str] = ["id > ?"]
+    params: list[object] = [after_id]
+    if scene_id is not None:
+        clauses.append("scene_id = ?")
+        params.append(scene_id)
+    if kind is not None:
+        clauses.append("kind = ?")
+        params.append(kind)
     if character_id is not None:
         clauses.append("character_id = ?")
         params.append(character_id)

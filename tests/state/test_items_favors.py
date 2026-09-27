@@ -75,5 +75,5 @@ def test_favor_needs_real_character(conn: sqlite3.Connection) -> None:
 def test_currency_writes_are_atomic(conn: sqlite3.Connection, mira: Character) -> None:
     before = len(list_events(conn, limit=10_000))
     with pytest.raises(StateError):
-        characters.adjust_currency(conn, mira.id, -1, SYSTEM, "overdraw")
+        characters.adjust_currency(conn, mira.id, -51, SYSTEM, "overdraw")
     assert len(list_events(conn, limit=10_000)) == before

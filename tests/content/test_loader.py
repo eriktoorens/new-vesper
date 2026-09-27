@@ -104,6 +104,8 @@ def test_bad_knacks_rejected(knack: dict[str, Any]) -> None:
         _region(npcs__0__pronouns=""),
         {"locations": REGION_DOC["locations"]},  # locations without a region
         {"monsters": []},
+        {"clocks": []},  # clocks without a region
+        {**_region(), "clocks": [{"id": "c", "name": "C", "segments": 6, "description": "d"}]},
     ],
 )
 def test_inconsistent_region_rejected(doc: dict[str, Any]) -> None:

@@ -1,7 +1,12 @@
 import pytest
 
 from new_vesper.rules.errors import RulesError
-from new_vesper.rules.pvp import OpposedOutcome, check_pvp_state_change, opposed_roll
+from new_vesper.rules.pvp import (
+    OpposedOutcome,
+    check_pvp_state_change,
+    opposed_roll,
+    preying_fade,
+)
 from new_vesper.rules.resolver import Difficulty, Tier
 from tests.rules.conftest import FixedDice
 
@@ -22,10 +27,18 @@ def test_defender_wins_on_better_tier() -> None:
     assert result.outcome is OpposedOutcome.DEFENDER
 
 
-def test_same_tier_is_a_tie_even_with_different_totals() -> None:
+def test_defender_holds_a_tie_even_with_lower_total() -> None:
     result = opposed_roll(0, RISKY, 0, RISKY, FixedDice([6, 6, 5, 5]))
     assert (result.attacker.total, result.defender.total) == (12, 10)
-    assert result.outcome is OpposedOutcome.TIE
+    assert result.outcome is OpposedOutcome.DEFENDER
+
+
+@pytest.mark.parametrize(
+    ("attacker", "target", "fade"),
+    [(5, 5, 0), (5, 3, 0), (5, 2, 1), (6, 2, 1), (6, 1, 2), (20, 1, 2), (1, 9, 0)],
+)
+def test_preying_on_the_weak_scales_with_the_gap(attacker: int, target: int, fade: int) -> None:
+    assert preying_fade(attacker, target) == fade
 
 
 def test_each_side_uses_its_own_difficulty() -> None:

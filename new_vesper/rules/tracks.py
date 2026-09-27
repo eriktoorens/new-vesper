@@ -3,7 +3,7 @@
 | Boxes | Harm                               | Fade                     |
 | 1-2   | Bruised                            | Unnoticed                |
 | 3-4   | Wounded: -1 to Steel and Slick     | Unseen                   |
-| 5-6   | Critical; at 6, Fall or Endure     | Slipping; at 6, into Old Vesper |
+| 5-6   | Critical: -2 to Steel and Slick; at 6, Fall or Endure | Slipping; at 6, into Old Vesper |
 """
 
 from dataclasses import dataclass
@@ -19,6 +19,9 @@ BAD_HIT_MAX = 3
 WOUNDED_FROM = 3
 CRITICAL_FROM = 5
 WOUNDED_PENALTY = 1
+CRITICAL_PENALTY = 2
+# After Endure, Harm drops to 4: still Wounded (D13).
+ENDURE_HARM = 4
 WOUNDED_STATS: frozenset[Stat] = frozenset({Stat.STEEL, Stat.SLICK})
 
 
@@ -94,18 +97,17 @@ def slips_into_old_vesper(fade: int) -> bool:
     return require_range(fade, "fade", 0, TRACK_MAX) == TRACK_MAX
 
 
-def is_wounded(harm: int) -> bool:
-    """Wounded from 3 boxes. The penalty carries into Critical (5-6).
-
-    The design doc lists the -1 only on the 3-4 row; this reads Critical as
-    at least as bad as Wounded. Flagged for confirmation in docs/design.md.
-    """
-    return require_range(harm, "harm", 0, TRACK_MAX) >= WOUNDED_FROM
+def harm_penalty(harm: int) -> int:
+    """The penalty to Steel and Slick: -1 while Wounded, -2 while Critical (D11)."""
+    boxes = require_range(harm, "harm", 0, TRACK_MAX)
+    if boxes >= CRITICAL_FROM:
+        return CRITICAL_PENALTY
+    if boxes >= WOUNDED_FROM:
+        return WOUNDED_PENALTY
+    return 0
 
 
 def effective_stat(stat: Stat, base: int, harm: int) -> int:
-    """The stat as rolled, after the Wounded penalty."""
+    """The stat as rolled, after the Harm penalty."""
     require_int(base, f"{stat} value")
-    if stat in WOUNDED_STATS and is_wounded(harm):
-        return base - WOUNDED_PENALTY
-    return base
+    return base - harm_penalty(harm) if stat in WOUNDED_STATS else base

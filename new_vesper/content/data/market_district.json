@@ -24,14 +24,18 @@
       "id": "umbrella-shrine",
       "name": "The Umbrella Shrine",
       "is_haven": true,
-      "tags": ["shrine"],
+      "tags": [
+        "shrine"
+      ],
       "description": "A shrine bolted to the side of a dead vending machine, hung three deep with lost umbrellas in every color. Offerings go in the coin slot. It is always, somehow, dry underneath."
     },
     {
       "id": "hundred-hooks",
       "name": "The Hundred Hooks",
       "is_haven": true,
-      "tags": ["lodging"],
+      "tags": [
+        "lodging"
+      ],
       "description": "Capsule lodging above a spice warehouse: a hundred bunks, a hundred coat hooks, one landlady who remembers every guest's name and makes sure the city does too."
     },
     {
@@ -45,7 +49,9 @@
       "id": "drowned-station",
       "name": "The Drowned Station",
       "is_haven": false,
-      "tags": ["underside-entrance"],
+      "tags": [
+        "underside-entrance"
+      ],
       "description": "Beneath the Weighhouse, a subway station the maps stopped showing. Black water stands to the second step. The platform signs name a line that never existed, and a rat with a lantern-boat runs a ferry into Old Vesper."
     }
   ],
@@ -76,7 +82,9 @@
       "description": "Small, sharp, seventy-odd, reading glasses on a chain. Keeps a ledger of every guest who ever slept under her roof and reads names from it aloud each night.",
       "wants": "Nobody under her roof forgotten. Rent on time would also be nice.",
       "voice": "Brisk and fond; calls everyone 'child', including the made people.",
-      "tags": ["haven-keeper"]
+      "tags": [
+        "haven-keeper"
+      ]
     },
     {
       "id": "tomas-haddad",
@@ -87,7 +95,9 @@
       "description": "Broad shoulders, flour to the elbows, a cart that has survived three fires and a god's tantrum. Knows which stallholders owe whom.",
       "wants": "To keep Tarp Row out of corporate hands.",
       "voice": "Loud, warm, answers questions with food.",
-      "tags": ["fixer"]
+      "tags": [
+        "fixer"
+      ]
     },
     {
       "id": "adaeze-lim",
@@ -98,7 +108,9 @@
       "description": "Tall, immaculate, a coat of pockets. Sells charms that mostly work and miracles that were only lightly used.",
       "wants": "A licensed miracle permit before the Registry audit catches up with her.",
       "voice": "Silky sales patter; every sentence ends in a price.",
-      "tags": ["merchant"]
+      "tags": [
+        "merchant"
+      ]
     },
     {
       "id": "clerk-vasil",
@@ -109,7 +121,9 @@
       "description": "Grey raincoat, grey clipboard, grey patience. Has come to audit the belief levels of every shrine in the market and is eleven weeks behind.",
       "wants": "Every form filed correctly, including Paru's, which he has personally lost twice.",
       "voice": "Dry, exact, quietly despairing; quotes subsection numbers.",
-      "tags": ["registry"]
+      "tags": [
+        "registry"
+      ]
     },
     {
       "id": "rahel",
@@ -120,7 +134,9 @@
       "description": "A made person with a hand-painted face and a stall of salvaged chips. Rahel was built to sell subscription prayers and quit.",
       "wants": "Proof that a made person can be remembered like anyone born.",
       "voice": "Soft, precise, occasionally glitches into old sales scripts and apologizes.",
-      "tags": ["synthetic"]
+      "tags": [
+        "synthetic"
+      ]
     },
     {
       "id": "ferryman-whisker",
@@ -131,7 +147,30 @@
       "description": "A grey rat in a waxed coat, poling a paper-lantern boat across the black water. Half-faded: you can see the tiles through his tail.",
       "wants": "Fares paid in things people remember, and someone to remember him back.",
       "voice": "Old-fashioned, polite, drives a hard bargain.",
-      "tags": ["underside", "half-faded"]
+      "tags": [
+        "underside",
+        "half-faded"
+      ]
+    }
+  ],
+  "clocks": [
+    {
+      "id": "registry-audit",
+      "name": "The Registry audit",
+      "segments": 4,
+      "description": "Inspector-Clerk Vasil's audit of every shrine in the market. When it fills, unlicensed miracles are seized and at least one small god is reclassified out of existence."
+    },
+    {
+      "id": "tarp-row-buyout",
+      "name": "The Tarp Row buyout",
+      "segments": 4,
+      "description": "A corporate god's franchise is buying up Tarp Row's carts one debt at a time. When it fills, the carts wear the same logo and the tarps come down."
+    },
+    {
+      "id": "rising-water",
+      "name": "The rising water",
+      "segments": 4,
+      "description": "The black water in the Drowned Station is climbing the stairs. When it fills, it reaches the Weighhouse floor and Old Vesper bleeds into the market."
     }
   ]
 }

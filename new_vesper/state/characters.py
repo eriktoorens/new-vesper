@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from new_vesper.rules.character import Sheet
+from new_vesper.rules.currency import STARTING_GLITTER
 from new_vesper.rules.errors import require_int, require_range
 from new_vesper.rules.stats import Stat, validate_stats
 from new_vesper.rules.tracks import TRACK_MAX
@@ -30,8 +31,8 @@ class Character:
     origin_id: str
     bond: str
     sheet: Sheet
-    tags: frozenset[str]  # from the origin; code enforces them
-    currency: int
+    tags: frozenset[str]  # origin tags plus tags gained in play
+    currency: int  # in glitter (D18)
     online: bool
     location_id: str | None
     version: int
@@ -125,6 +126,7 @@ def create_character(
         "origin_id": origin.id,
         "bond": clean_bond,
         "location_id": location_id,
+        "currency": STARTING_GLITTER,
         **_sheet_columns(sheet),
     }
     with atomic(conn), as_state_error():
@@ -188,7 +190,11 @@ def get_character(conn: sqlite3.Connection, character_id: int) -> Character:
         origin_id=row["origin_id"],
         bond=row["bond"],
         sheet=sheet,
-        tags=get_origin(conn, row["origin_id"]).tags,
+        tags=get_origin(conn, row["origin_id"]).tags
+        | frozenset(
+            t[0]
+            for t in conn.execute("SELECT tag FROM character_tags WHERE character_id = ?", (cid,))
+        ),
         currency=row["currency"],
         online=bool(row["online"]),
         location_id=row["location_id"],
@@ -323,3 +329,26 @@ def adjust_currency(
             cause,
             {"before": character.currency, "after": after, "reason": why},
         )
+
+
+def add_character_tag(
+    conn: sqlite3.Connection, character_id: int, tag: str, cause: Cause
+) -> Character:
+    """Give a character a tag gained in play. Adding a tag it already has is a no-op."""
+    character = get_character(conn, character_id)
+    name = slug(tag, "tag")
+    if name in character.tags:
+        return character
+    with atomic(conn):
+        conn.execute(
+            "INSERT INTO character_tags (character_id, tag) VALUES (?, ?)", (character.id, name)
+        )
+        append_event(conn, "tag_gained", cause, {"tag": name}, character_id=character.id)
+    return get_character(conn, character.id)
+
+
+def characters_of(conn: sqlite3.Connection, player_id: int) -> list[Character]:
+    """A player's characters, oldest first."""
+    pid = get_player(conn, player_id).id
+    rows = conn.execute("SELECT id FROM characters WHERE player_id = ? ORDER BY id", (pid,))
+    return [get_character(conn, row[0]) for row in rows]
