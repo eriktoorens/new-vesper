@@ -365,3 +365,47 @@ def test_playing_a_mislaid(tmp_path: Path) -> None:
     [brolly] = characters.characters_of(conn, players.find_player(conn, "ash").id)
     assert brolly.origin_id == "mislaid"
     assert "underside-cant" in brolly.languages
+
+
+def test_a_pasted_action_is_one_action() -> None:
+    """The blind playtest: a three-line paste became three turns, and three outcomes."""
+    from new_vesper.cli import read_action
+
+    feed = iter(
+        [
+            "I stay crouched, keeping my hands clear of the chain.",
+            "In a low voice, I speak into the stairwell in Underside Cant:",
+            "  \"I'm not here to take anything. Who's down there?\"",
+            "/look",
+        ]
+    )
+    waiting = iter([True, True, False])
+    action = read_action(lambda _: next(feed), lambda: next(waiting))
+    assert action == (
+        "I stay crouched, keeping my hands clear of the chain. In a low voice, I speak "
+        "into the stairwell in Underside Cant: \"I'm not here to take anything. Who's "
+        'down there?"'
+    )
+    assert next(feed) == "/look"  # typed later, so it stays its own line
+
+
+def test_typed_lines_stay_separate() -> None:
+    from new_vesper.cli import read_action
+
+    feed = iter(["Mira sits.", "Mira waits."])
+    assert read_action(lambda _: next(feed), lambda: False) == "Mira sits."
+    assert read_action(lambda _: next(feed), lambda: False) == "Mira waits."
+
+
+def test_a_paste_that_runs_out_ends_cleanly() -> None:
+    from new_vesper.cli import read_action
+
+    feed = iter(["Mira runs."])
+
+    def ask(_: str) -> str:
+        try:
+            return next(feed)
+        except StopIteration as exc:
+            raise EOFError from exc
+
+    assert read_action(ask, lambda: True) == "Mira runs."

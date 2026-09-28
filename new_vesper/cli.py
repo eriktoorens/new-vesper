@@ -76,6 +76,39 @@ def _ask(ask: Ask, question: str) -> str:
         raise Quit from exc
 
 
+# How long to wait for the rest of a paste before taking what has arrived.
+PASTE_WINDOW = 0.05
+
+
+def stdin_has_more(timeout: float = PASTE_WINDOW) -> bool:
+    """Whether more input is already waiting, such as the next line of a paste.
+
+    POSIX terminals only; elsewhere every line stands alone.
+    """
+    try:
+        import select
+
+        ready, _, _ = select.select([sys.stdin], [], [], timeout)
+    except (ImportError, OSError, ValueError):
+        return False
+    return bool(ready)
+
+
+def read_action(ask: Ask, more: Callable[[], bool]) -> str:
+    """One player action: a line, plus any lines pasted along with it.
+
+    A multi-line paste arrives as several lines at once. Read one at a time, each
+    line became its own turn, and the DM answered one action three times over.
+    """
+    lines = [_ask(ask, "> ")]
+    while more():
+        try:
+            lines.append(ask("").strip())
+        except EOFError:
+            break
+    return " ".join(" ".join(line.split()) for line in lines if line.strip())
+
+
 def choose(ask: Ask, say: Say, title: str, options: Sequence[tuple[str, str]]) -> str:
     """A numbered menu; returns the chosen option's key."""
     say(title)
@@ -340,7 +373,9 @@ def play(
     rng: random.Random,
     budget: BudgetConfig | None = None,
     now: Callable[[], datetime] = lambda: datetime.now(UTC),
+    more: Callable[[], bool] | None = None,
 ) -> None:
+    """The terminal game. ``more`` says whether pasted lines are still waiting."""
     seed(conn, content)
     player = players.find_player(conn, handle) or players.create_player(
         conn, handle, Cause(Actor.PLAYER)
@@ -400,9 +435,12 @@ def play(
         session.end()
         return
     say("(/help for commands)")
+    if more is None:
+        live = ask is input and sys.stdin.isatty()
+        more = stdin_has_more if live else (lambda: False)
     try:
         while True:
-            line = _ask(ask, "> ")
+            line = read_action(ask, more)
             if not line:
                 continue
             try:

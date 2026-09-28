@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D98** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D99** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -238,7 +238,9 @@ Every state change goes through a tool, and every tool checks the request agains
 
 **Owed consequences (D36):** a roll at 7–9 or 6 or less must get its consequence. If the DM tries to end a turn with one still owed, code sends it back to apply it (up to twice).
 
-**One action, one roll (D98):** a player's action gets at most one roll, and its result stands. Code refuses a second `call_for_roll` in the same turn, so the DM cannot re-roll a failure; when it is sent back to apply a consequence or fix speech, it tells the turn once, replacing its earlier telling, so the player sees one outcome. (From the first blind playtest, where a 6 and then an 11 on the same action produced three contradictory outcomes.)
+**One action, one roll (D98):** a player's action gets at most one roll, and its result stands. Code refuses a second `call_for_roll` in the same turn, so the DM cannot re-roll a failure; when it is sent back to apply a consequence or fix speech, it tells the turn once, replacing its earlier telling, so the player sees one outcome. A guard added after the first blind playtest, though the database showed that playtest's problem was a different one (D99).
+
+**One action, one input (D99):** a player's action is whatever they send at once. A multi-line paste arrives as several lines together, and code joins them into one action; lines typed later stay separate. (In the first blind playtest, a three-line action was read as three turns, 26 seconds apart, and the DM answered each: no answer, then a failed roll, then a clean success. The player saw three contradictory outcomes for one action.)
 
 **Movement (D27):** the player moves with the `/go <place>` command; code checks the place is real and in the same district, closes the scene and opens one there. The DM never moves characters, since that would be a state change without a roll. When a player says they head somewhere, the DM narrates setting off and points to `/go`.
 
@@ -518,7 +520,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, D94–D95 from the designer after layer 8, D96 from the designer after merging layers 6–8, D97 from the designer the same evening, and D98 from the first blind playtest.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, D94–D95 from the designer after layer 8, D96 from the designer after merging layers 6–8, D97 from the designer the same evening, and D98–D99 from the first blind playtest.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -620,3 +622,4 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D96 | Story export (planned) | Players can export their character's story as an artifact of play; it may be told rather than recorded, but reveals nothing the character doesn't know; comes before attention |
 | D97 | The city is the DM (theme) | The AI that runs New Vesper is the city itself: attention, forgetting, curated memory and going quiet are how both live. A thematic note, not yet in the DM's prompt |
 | D98 | One action, one roll | At most one `call_for_roll` per turn, and its result stands; the DM re-tells the turn once when sent back, replacing its earlier telling |
+| D99 | One action, one input | Lines pasted together are joined into one action; typed lines stay separate |
