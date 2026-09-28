@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D95** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D96** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -419,6 +419,15 @@ Built in layer 8 (2026-09-28), from D42. New Vesper's own kinds of people come o
 - **Tags (D92):** `story-born`, `brand-born`, `glows` and `object-born` (and `overlooked` for the mislaid) guide narration only. Code still enforces only `no-hands` (D7).
 - **The DM knows every kind (D93):** the DM's content brief now describes every origin, with its trait, tags and needs, so the DM can play how the city treats each kind of person.
 
+## Planned: Exporting Your Story (D96)
+
+Direction from the designer (2026-09-28), to come before attention. The details are decided when it is built.
+
+- **An artifact of play (D96):** a player can export their character's story, something to keep and share. It leans into the RPG as collaborative storytelling: the export is the tale the player and the DM told together, not a log.
+- **It need not be true:** the export is a story, not the record. It can be told the way the character would tell it, with their gaps, their slant and the city's grimbright voice, and it doesn't have to match the event log line for line.
+- **It gives away nothing new:** it holds only what the character saw, heard or could know. It never reveals hidden state: dice and rolls the player didn't see, NPCs' private goals and feelings, what was said in a language the character didn't understand (D81), or anything else code keeps from them.
+- **Open:** its form (a text or Markdown file, something illustrated with the ASCII art); whether it covers a scene, a session or the whole life of a character, including a Fall; who writes it (stitched from the narration the player saw, or retold by a cheap model call from that, and at what cost against the budget); and whether players can edit or annotate it.
+
 ## Planned: Attention (D94)
 
 Direction from the designer (2026-09-28). The details are decided when it is built; everything below the first two points is open.
@@ -468,6 +477,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 - [ ] Multiplayer step (D32): shared scenes, opposed-roll PvP with its guards, healing others, being named by another player.
 - [x] Bodily conditions: hunger, thirst, heat and cold, sleep and the like. Built in layer 7 (D83–D89). Still open: clothing and gear against the weather, food as items and meals given by NPCs, whether resting should take time, and tuning the rates after a playtest.
 - [ ] Setting-native kinds (D90–D93): whether any of their tags should be enforced by code (for example, a hearsay recovering Fade when someone tells its story, or a castoff's glow giving it away in the dark), whether a mislaid object without hands should take `no-hands`, and origin evolutions for each kind.
+- [ ] Exporting a character's story: direction set (D96), details open. See Planned: Exporting Your Story.
 - [ ] Attention as a resource: direction set (D94), details open. See Planned: Attention.
 
 **Prototype plan:**
@@ -480,7 +490,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, and D94–D95 from the designer after layer 8.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, D94–D95 from the designer after layer 8, and D96 from the designer after merging layers 6–8.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -579,3 +589,4 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D93 | Origins in the DM's brief | Every origin's trait, tags and needs are in the content brief |
 | D94 | Attention (planned) | The world's sustaining force, tracked by code; a set amount per character per day; spent on pushing the world against its grain (like Paradox in Mage: the Ascension, with push-back), remembrance and prayer; details open |
 | D95 | Inspiration | China Miéville's work, especially Perdido Street Station, joins the influences |
+| D96 | Story export (planned) | Players can export their character's story as an artifact of play; it may be told rather than recorded, but reveals nothing the character doesn't know; comes before attention |
