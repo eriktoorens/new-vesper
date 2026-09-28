@@ -112,7 +112,8 @@ Check spending from outside the game with `new-vesper budget`.
 1. **Playtest layers 6–8: languages, bodily needs and the new kinds (D76–D93).** Watch whether the DM tags every line and keeps translations out of plain narration, whether the needs' rates feel right, and how the DM plays a hearsay, a castoff or a mislaid.
 2. **Exporting your story (D96):** players can export their character's story as a keepsake of play: told, not logged, and never revealing more than the character knows. Direction set; details open (see "Planned: Exporting Your Story" in `docs/design.md`).
 3. **Attention (D94):** the world's sustaining force, a daily amount per character spent on pushing the world against its grain, remembrance and prayer. Direction set; details open (see "Planned: Attention" in `docs/design.md`).
-4. Then multiplayer (D32): a shared city, and a second look at the city-day rule (D29/D50).
+4. **Nature and Demeanor**, borrowed from World of Darkness. This is proposed, not decided; the open questions are in `docs/design.md`.
+5. Then multiplayer (D32): a shared city, and a second look at the city-day rule (D29/D50).
 
 **Open question, high priority:** D10, who a favor is owed to. The player should understand where a debt accrues and have some choice in it. See the open questions in `docs/design.md`.
 

@@ -475,6 +475,11 @@ The first build is a playable CLI prototype: one player, one district, the full 
 - [x] The city's time zone (D38): US Eastern (D50).
 - [x] The languages of the Market District, and which count as common (D44, D45).
 - [ ] Multiplayer step (D32): shared scenes, opposed-roll PvP with its guards, healing others, being named by another player.
+- [ ] **Nature and Demeanor** (proposed 2026-09-28, borrowed from World of Darkness, not yet decided). Every character and NPC has a Nature, who they really are, and a Demeanor, the face they show. To decide:
+  - Chosen from a short list of setting-flavored archetypes, or written as free text?
+  - What acting true to your Nature earns. There is no Willpower here, so the options are: a fifth XP trigger (this changes D4's "exactly four"), clearing a box of Fade (being true to yourself keeps you real), a little attention (D94), or narrative only.
+  - Who can see what. Everyone sees the Demeanor. Is the Nature hidden from NPCs and other players until earned (a Heart roll, a raised attitude)?
+  - Whether it overlaps the NPCs' existing traits and the Bond, whether the new kinds (D90) lean toward particular Natures, and where it fits in the order of what's next.
 - [x] Bodily conditions: hunger, thirst, heat and cold, sleep and the like. Built in layer 7 (D83–D89). Still open: clothing and gear against the weather, food as items and meals given by NPCs, whether resting should take time, and tuning the rates after a playtest.
 - [ ] Setting-native kinds (D90–D93): whether any of their tags should be enforced by code (for example, a hearsay recovering Fade when someone tells its story, or a castoff's glow giving it away in the dark), whether a mislaid object without hands should take `no-hands`, and origin evolutions for each kind.
 - [ ] Exporting a character's story: direction set (D96), details open. See Planned: Exporting Your Story.
