@@ -13,6 +13,7 @@ from new_vesper.content.model import (
     CalendarDef,
     ClockDef,
     ContentError,
+    EncounterDef,
     GodDef,
     KnackDef,
     LanguageDef,
@@ -25,6 +26,7 @@ from new_vesper.content.model import (
     Spread,
     parse_calendar,
     parse_clock,
+    parse_encounter,
     parse_god,
     parse_knack,
     parse_language,
@@ -33,6 +35,7 @@ from new_vesper.content.model import (
     parse_npc,
     parse_origin,
     parse_region,
+    parse_stranger_names,
 )
 
 UNDERSIDE_ENTRANCE_TAG = "underside-entrance"
@@ -51,6 +54,8 @@ class Content:
     clocks: Mapping[str, ClockDef]
     languages: Mapping[str, LanguageDef]
     calendar: CalendarDef | None
+    encounters: Mapping[str, EncounterDef]
+    stranger_names: Mapping[str, tuple[str, ...]]
 
     def npcs_at(self, location_id: str) -> list[NpcDef]:
         return [npc for npc in self.npcs.values() if npc.location == location_id]
@@ -134,7 +139,25 @@ def _check_seasons(content: Content) -> None:
             raise ContentError(f"region {region.id!r}: needs a weather table for every season")
 
 
+def _check_encounters(content: Content) -> None:
+    for enc in content.encounters.values():
+        when, where = enc.when, f"encounter {enc.id!r}"
+        places = {loc.id for loc in content.locations_in(enc.region_id)}
+        if not when.locations <= places:
+            raise ContentError(f"{where}: places must be in its district")
+        states = set(content.regions[enc.region_id].weather.states)
+        if not (when.weather | when.weather_not) <= states:
+            raise ContentError(f"{where}: unknown weather")
+        seasons = set(content.calendar.seasons) if content.calendar else set()
+        if not when.seasons <= seasons:
+            raise ContentError(f"{where}: unknown season")
+    for lang in content.stranger_names:
+        if lang not in content.languages:
+            raise ContentError(f"stranger_names: unknown language {lang!r}")
+
+
 def _check_references(content: Content) -> None:
+    _check_encounters(content)
     _check_seasons(content)
     _check_schedules(content)
     _check_languages(content)
@@ -167,6 +190,8 @@ def load_documents(documents: Iterable[Mapping[str, Any]]) -> Content:
     regions: list[RegionDef] = []
     clocks: list[ClockDef] = []
     calendar: CalendarDef | None = None
+    encounters: list[EncounterDef] = []
+    stranger_names: dict[str, tuple[str, ...]] = {}
     allowed = {
         "origins",
         "knacks",
@@ -178,22 +203,34 @@ def load_documents(documents: Iterable[Mapping[str, Any]]) -> Content:
         "clocks",
         "languages",
         "calendar",
+        "encounters",
+        "stranger_names",
     }
     for doc in documents:
         reader = Reader(doc, "content file", set(), allowed)
-        if ("locations" in doc or "clocks" in doc) and "region" not in doc:
-            raise ContentError("locations and clocks must sit in a file with their region")
+        if ("locations" in doc or "clocks" in doc or "encounters" in doc) and "region" not in doc:
+            raise ContentError("locations, clocks and encounters sit in a file with their region")
         if "region" in doc:
             region = parse_region(doc["region"])
             regions.append(region)
             locations += [parse_location(raw, region.id) for raw in reader.items("locations")]
             if "clocks" in doc:
                 clocks += [parse_clock(raw, region.id) for raw in reader.items("clocks")]
+            if "encounters" in doc:
+                encounters += [
+                    parse_encounter(raw, region.id) for raw in reader.items("encounters")
+                ]
+        if "stranger_names" in doc:
+            for lang, names in parse_stranger_names(doc["stranger_names"]).items():
+                if lang in stranger_names:
+                    raise ContentError(f"stranger_names.{lang} given twice")
+                stranger_names[lang] = names
         if "calendar" in doc:
             if calendar is not None:
                 raise ContentError("only one calendar")
             calendar = parse_calendar(doc["calendar"])
-        for key in allowed - {"region", "locations", "clocks", "calendar"}:
+        skip = {"region", "locations", "clocks", "calendar", "encounters", "stranger_names"}
+        for key in allowed - skip:
             if key in doc:
                 sections.setdefault(key, []).extend(reader.items(key))
     content = Content(
@@ -207,6 +244,8 @@ def load_documents(documents: Iterable[Mapping[str, Any]]) -> Content:
         clocks=_index(clocks, "clock"),
         languages=_index(map(parse_language, sections.get("languages", [])), "language"),
         calendar=calendar,
+        encounters=_index(encounters, "encounter"),
+        stranger_names=MappingProxyType(stranger_names),
     )
     _check_references(content)
     return content

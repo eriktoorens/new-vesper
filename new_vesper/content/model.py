@@ -7,6 +7,8 @@ from typing import Any
 
 from new_vesper.rules.attitudes import validate_attitude
 from new_vesper.rules.character import validate_id
+from new_vesper.rules.clock import PARTS_OF_DAY
+from new_vesper.rules.encounters import Kind
 from new_vesper.rules.errors import RulesError, require_range
 from new_vesper.rules.light import LIGHT_MAX, LIGHT_MIN
 from new_vesper.rules.resolver import MAX_ROLL_BONUS
@@ -76,6 +78,31 @@ class ScheduleBlock:
 
     def minutes(self) -> set[int]:
         return {m for m in range(MINUTES_PER_DAY) if self.covers(m)}
+
+
+@dataclass(frozen=True)
+class EncounterWhen:
+    """Optional conditions; an empty set means 'any'."""
+
+    locations: frozenset[str] = frozenset()
+    parts_of_day: frozenset[str] = frozenset()
+    weather: frozenset[str] = frozenset()
+    weather_not: frozenset[str] = frozenset()
+    tide: frozenset[str] = frozenset()
+    seasons: frozenset[str] = frozenset()
+    moon: frozenset[str] = frozenset()
+
+
+@dataclass(frozen=True)
+class EncounterDef:
+    id: str
+    region_id: str
+    kind: Kind
+    weight: int
+    text: str
+    underside: bool
+    stranger_role: str | None  # a generated stranger takes this role, if set
+    when: EncounterWhen
 
 
 @dataclass(frozen=True)
@@ -404,6 +431,57 @@ def _parse_schedule(raw: object, where: str) -> Mapping[str, tuple[ScheduleBlock
             raise ContentError(f"{where}.{day}: blocks must cover the whole day exactly once")
         days[day] = tuple(parsed)
     return days
+
+
+ENCOUNTER_WHEN = ("locations", "parts_of_day", "weather", "weather_not", "tide", "seasons", "moon")
+
+
+def parse_encounter(raw: object, region_id: str) -> EncounterDef:
+    r = Reader(raw, "encounter", {"id", "kind", "weight", "text", "underside", "stranger", "when"})
+    where = f"encounter {r.raw.get('id')!r}"
+    if r.raw["kind"] not in {k.value for k in Kind}:
+        raise ContentError(f"{where}: kind is color, opportunity or trouble")
+    role = None
+    if r.raw["stranger"] is not None:
+        role = Reader(r.raw["stranger"], f"{where} stranger", {"role"}).text("role", 120)
+    w = Reader(r.raw["when"], f"{where} when", set(), set(ENCOUNTER_WHEN))
+    when = EncounterWhen(
+        **{key: frozenset(w.texts(key)) if key in w.raw else frozenset() for key in ENCOUNTER_WHEN}
+    )
+    for name in when.parts_of_day:
+        if name not in {part for _, part in PARTS_OF_DAY}:
+            raise ContentError(f"{where}: {name!r} is not a part of the day")
+    for name in when.tide:
+        if name not in TIDE_CONDITIONS:
+            raise ContentError(f"{where}: {name!r} is not a tide condition")
+    for name in when.moon:
+        if name not in PHASES:
+            raise ContentError(f"{where}: {name!r} is not a moon phase")
+    return EncounterDef(
+        r.slug("id"),
+        region_id,
+        Kind(r.raw["kind"]),
+        r.integer("weight", 1, 20),
+        r.text("text", 400),
+        r.boolean("underside"),
+        role,
+        when,
+    )
+
+
+def parse_stranger_names(raw: object) -> Mapping[str, tuple[str, ...]]:
+    if not isinstance(raw, dict):
+        raise ContentError("stranger_names: expected language id -> names")
+    names = {}
+    for lang, values in raw.items():
+        if (
+            not isinstance(values, list)
+            or len(values) < 3
+            or not all(isinstance(v, str) and 1 <= len(v) <= 40 for v in values)
+        ):
+            raise ContentError(f"stranger_names.{lang}: at least 3 names of up to 40 characters")
+        names[Reader._slug(lang, "stranger_names")] = tuple(values)
+    return names
 
 
 def _short_list(r: Reader, key: str, low: int, high: int) -> tuple[str, ...]:

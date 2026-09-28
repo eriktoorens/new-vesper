@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D66** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D71** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -360,6 +360,16 @@ Built in layer 4 (2026-09-28), from D39.
 - **The NPC web (D65):** NPC-to-NPC feelings are authored in content, seeded once, and then change in play with the same caps and reasons.
 - **Personalities (D66):** each NPC has a few traits, speech habits and a sample line, shown to the DM with their feelings and memories. `/who` shows the player who is here and what they are doing.
 
+## Random Encounters (D67–D71)
+
+Built in layer 5 (2026-09-28), from D40.
+
+- **Odds (D67):** code checks for an encounter when a character arrives somewhere (login or `/go`) and on every fifth beat of a scene. The chance depends on the district's Light: 20% at 7–10, 30% at 4–6, 45% at 1–3. A district that has fallen into Old Vesper has none (for now).
+- **Kinds (D68):** color (street life, no stakes), opportunity (something to gain or learn) and trouble (something that may call for a roll). As Light falls, trouble weighs double at 4–6 and triple at 1–3, and Underside bleed-through weighs more still (×2, ×4).
+- **Conditions (D69):** any encounter can be limited to places, parts of the day, weather (or not in some weather), tide, season or moon phase; code filters before drawing.
+- **Strangers (D70):** an encounter can bring a one-off stranger whom code generates: a name, pronouns, and a language drawn from the neighborhood's mix (D45), or Underside Cant for bleed-through. Strangers are logged but are not NPCs; promoting them is a possible later feature.
+- **Pacing (D71):** at most one encounter per check. The same encounter won't come round again in the same district, for anyone, for 3 days. The DM must bring a drawn encounter into that turn's narration; the player can engage or ignore it.
+
 ## Planned: A Living World (D37–D43)
 
 Direction agreed after the first playtest (2026-09-28). Each layer's details are decided when it is built, and every mechanic stays code-owned: the DM proposes, code decides.
@@ -400,7 +410,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, and D60–D66 from NPC memory and attitudes.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, and D67–D71 from random encounters.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -443,7 +453,7 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D37 | Character details | Age, pronouns, appearance, languages for players and NPCs (built: D44–D49) |
 | D38 | Time and weather | Real-time city clock, weather, NPC schedules, daily tick (built: D50–D55) |
 | D39 | NPC memory | Attitudes and interaction notes in code; DM proposes, code caps (built: D60–D66) |
-| D40 | Encounters (planned) | Code rolls on arrival and about every 5 beats; odds rise as Light falls |
+| D40 | Encounters | Code rolls on arrival and every 5th beat; odds rise as Light falls (built: D67–D71) |
 | D41 | Languages (planned) | Tracked; unknown speech as gibberish; Heart roll for the gist; language knack +1 |
 | D42 | New kinds of people (planned) | Setting-native kinds as origins, not classic fantasy races |
 | D43 | Build order | Fixes; details; time/weather/schedules; NPC memory; encounters; languages; kinds |
@@ -470,3 +480,8 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D64 | Rolls | Feelings never add to rolls; they shape whether to roll and the rung |
 | D65 | NPC web | Authored, seeded once, then changes in play with the same caps |
 | D66 | Personalities | Traits, speech habits, a sample line; `/who` for the player |
+| D67 | Encounter odds | Checks on arrival and every 5th beat; 20/30/45% by Light band; none in a fallen district |
+| D68 | Encounter kinds | Color, opportunity, trouble; trouble and Underside weigh more as Light falls |
+| D69 | Conditions | Optional place, part of day, weather, tide, season and moon filters |
+| D70 | Strangers | One-off, generated with a neighborhood language; logged, not NPCs |
+| D71 | Pacing | One per check; 3-day district-wide cooldown per encounter; the DM must weave it in |

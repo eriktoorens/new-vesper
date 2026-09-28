@@ -88,6 +88,10 @@ at all (a trusting friend simply helps) and which rung fits; they never add to a
 another NPC who is here, call adjust_attitude with a one-sentence reason. An NPC can \
 explain why they feel as they do when asked, drawing on "why", or decline to, in \
 character.
+- scene_state.encounter, when present, was drawn by the game: include it this turn. \
+Its stranger, if any, is a one-off person with the given name, pronouns and languages; \
+they are not an NPC and have no schedule. Trouble may call for a roll if the player \
+engages or it closes in; color never does.
 - An NPC's "lately" is what they have been doing about their own goal. Let it show in \
 what they say and do when it fits; don't announce it.
 - Languages: everyone speaks Registry Standard. Each character and NPC speaks the \

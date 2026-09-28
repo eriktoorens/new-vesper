@@ -1328,5 +1328,329 @@
       "segments": 4,
       "description": "The black water in the Drowned Station is climbing the stairs. When it fills, it reaches the Weighhouse floor and Old Vesper bleeds into the market."
     }
-  ]
+  ],
+  "encounters": [
+    {
+      "id": "umbrella-funeral",
+      "kind": "color",
+      "weight": 3,
+      "text": "A funeral procession passes under a hundred black umbrellas, the mourners humming a song in three languages at once.",
+      "underside": false,
+      "stranger": null,
+      "when": {
+        "locations": [
+          "lantern-arcade",
+          "tarp-row",
+          "umbrella-shrine"
+        ]
+      }
+    },
+    {
+      "id": "noodle-argument",
+      "kind": "color",
+      "weight": 3,
+      "text": "Two cart owners argue at full volume over whose steam is blowing into whose customers.",
+      "underside": false,
+      "stranger": null,
+      "when": {
+        "locations": [
+          "tarp-row"
+        ],
+        "parts_of_day": [
+          "morning",
+          "midday",
+          "afternoon",
+          "dusk",
+          "evening"
+        ]
+      }
+    },
+    {
+      "id": "prayer-drone",
+      "kind": "color",
+      "weight": 2,
+      "text": "A delivery drone selling prayers by subscription drifts low overhead, its speaker chanting a free trial.",
+      "underside": false,
+      "stranger": null,
+      "when": {
+        "weather_not": [
+          "storm",
+          "gale",
+          "thunderstorm"
+        ]
+      }
+    },
+    {
+      "id": "lantern-parade",
+      "kind": "color",
+      "weight": 4,
+      "text": "A lantern parade winds through the lanes: paper fish, paper gods, children carrying the smallest lanterns at the back.",
+      "underside": false,
+      "stranger": null,
+      "when": {
+        "seasons": [
+          "lantern-months"
+        ],
+        "parts_of_day": [
+          "dusk",
+          "evening"
+        ]
+      }
+    },
+    {
+      "id": "eel-sellers",
+      "kind": "color",
+      "weight": 3,
+      "text": "Eel-sellers work the uncovered steps with buckets and hooks, calling prices before the water comes back.",
+      "underside": false,
+      "stranger": null,
+      "when": {
+        "locations": [
+          "tidewater-stairs",
+          "the-mudflats"
+        ],
+        "tide": [
+          "low",
+          "ebbing"
+        ]
+      }
+    },
+    {
+      "id": "lost-child",
+      "kind": "opportunity",
+      "weight": 2,
+      "text": "A small child, soaked through, is looking for a parent in the crowd and has picked this character as the most trustworthy face nearby.",
+      "underside": false,
+      "stranger": {
+        "role": "a lost child, about seven"
+      },
+      "when": {
+        "parts_of_day": [
+          "morning",
+          "midday",
+          "afternoon",
+          "dusk"
+        ]
+      }
+    },
+    {
+      "id": "ledger-page",
+      "kind": "opportunity",
+      "weight": 2,
+      "text": "A page torn from a very old ledger blows against the character's leg: a list of names, one of them circled in faded ink.",
+      "underside": false,
+      "stranger": null,
+      "when": {
+        "weather_not": [
+          "dry-spell"
+        ]
+      }
+    },
+    {
+      "id": "stall-help",
+      "kind": "opportunity",
+      "weight": 2,
+      "text": "A stallholder short of hands offers a few glitter to anyone who'll hold a tarp down while they re-tie it in the wind.",
+      "underside": false,
+      "stranger": {
+        "role": "a harried stallholder"
+      },
+      "when": {
+        "weather": [
+          "gale",
+          "storm",
+          "downpour",
+          "thunderstorm"
+        ]
+      }
+    },
+    {
+      "id": "wreck-find",
+      "kind": "opportunity",
+      "weight": 2,
+      "text": "Something glints in the mud by an old wreck: a sealed tin box, half buried, with a Registry stamp on the lid.",
+      "underside": false,
+      "stranger": null,
+      "when": {
+        "locations": [
+          "the-mudflats"
+        ]
+      }
+    },
+    {
+      "id": "pickpocket",
+      "kind": "trouble",
+      "weight": 3,
+      "text": "A hand slides toward the character's pocket in the press of the crowd.",
+      "underside": false,
+      "stranger": {
+        "role": "a quick-fingered pickpocket"
+      },
+      "when": {
+        "locations": [
+          "lantern-arcade",
+          "tarp-row"
+        ]
+      }
+    },
+    {
+      "id": "registry-spot-check",
+      "kind": "trouble",
+      "weight": 2,
+      "text": "A Registry junior with a damp clipboard demands to see the character's proof of being remembered: a name, a witness, and a form they do not have.",
+      "underside": false,
+      "stranger": {
+        "role": "a junior Registry auditor"
+      },
+      "when": {
+        "parts_of_day": [
+          "morning",
+          "midday",
+          "afternoon"
+        ]
+      }
+    },
+    {
+      "id": "franchise-agent",
+      "kind": "trouble",
+      "weight": 2,
+      "text": "A franchise agent in a spotless raincoat is offering cart owners 'help with their debts', and doesn't like being watched.",
+      "underside": false,
+      "stranger": {
+        "role": "a corporate franchise agent"
+      },
+      "when": {
+        "locations": [
+          "tarp-row"
+        ]
+      }
+    },
+    {
+      "id": "forgotten-walker",
+      "kind": "trouble",
+      "weight": 2,
+      "text": "Someone half-faded walks past, see-through at the edges, and says the character's name as if they'd known them for years.",
+      "underside": true,
+      "stranger": {
+        "role": "one of the forgotten, drifting up from below"
+      },
+      "when": {
+        "moon": [
+          "new moon",
+          "waxing crescent",
+          "waning crescent"
+        ],
+        "parts_of_day": [
+          "night",
+          "small hours",
+          "evening"
+        ]
+      }
+    },
+    {
+      "id": "black-water-rising",
+      "kind": "trouble",
+      "weight": 1,
+      "text": "The black water surges up the station steps faster than any tide should, and something moves under it.",
+      "underside": true,
+      "stranger": null,
+      "when": {
+        "locations": [
+          "drowned-station",
+          "weighhouse"
+        ]
+      }
+    }
+  ],
+  "stranger_names": {
+    "wolof": [
+      "Awa",
+      "Moussa",
+      "Fatou",
+      "Cheikh",
+      "Ndeye",
+      "Ibrahima",
+      "Mariama",
+      "Ousmane"
+    ],
+    "tagalog": [
+      "Maricel",
+      "Jomar",
+      "Ligaya",
+      "Dante",
+      "Rosalie",
+      "Bayani",
+      "Tala",
+      "Nestor"
+    ],
+    "arabic": [
+      "Layla",
+      "Karim",
+      "Yasmin",
+      "Tariq",
+      "Huda",
+      "Nabil",
+      "Salma",
+      "Faris"
+    ],
+    "cantonese": [
+      "Wing",
+      "Ka-Man",
+      "Siu-Fong",
+      "Chun",
+      "Mei-Ling",
+      "Kwok",
+      "Yuk-Lan",
+      "Hoi"
+    ],
+    "hindi": [
+      "Anjali",
+      "Ravi",
+      "Sunita",
+      "Arjun",
+      "Kavita",
+      "Vikram",
+      "Meena",
+      "Deepak"
+    ],
+    "portuguese": [
+      "Inês",
+      "Tiago",
+      "Beatriz",
+      "Rui",
+      "Mafalda",
+      "Duarte",
+      "Leonor",
+      "Afonso"
+    ],
+    "registry-standard": [
+      "Form-Clerk Dell",
+      "Ada Voss",
+      "M. Harrow",
+      "Pim Quill",
+      "Oona Ledger",
+      "Sam Tallis"
+    ],
+    "protocol": [
+      "Unit Seven-Ash",
+      "Kestrel/Two",
+      "Ack-Morrow",
+      "Sable.Nine",
+      "Handshake Lu"
+    ],
+    "underside-cant": [
+      "Nobody-Much",
+      "Last Year's Ivo",
+      "The Girl Who Was",
+      "Once-Called Min",
+      "Whistle"
+    ],
+    "animal-speech": [
+      "a grey gull",
+      "a one-eyed tom",
+      "a heron",
+      "a harbor seal",
+      "a crow in a bottlecap crown"
+    ]
+  }
 }

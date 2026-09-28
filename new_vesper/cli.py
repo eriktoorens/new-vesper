@@ -330,6 +330,7 @@ def play(
     rng: random.Random,
     budget: BudgetConfig | None = None,
     now: Callable[[], datetime] = lambda: datetime.now(UTC),
+    encounter_rng: random.Random | None = None,
 ) -> None:
     seed(conn, content)
     player = players.find_player(conn, handle) or players.create_player(
@@ -365,7 +366,16 @@ def play(
         except StateError as exc:
             say(f"That didn't work: {exc}")
     session = PlaySession(
-        conn, content, client, design_text, rng, me.id, config=config, budget=budget, now=now
+        conn,
+        content,
+        client,
+        design_text,
+        rng,
+        me.id,
+        config=config,
+        budget=budget,
+        now=now,
+        encounter_rng=encounter_rng or random.Random(),
     )
     try:
         recap, notes, opening = session.start()
@@ -500,6 +510,7 @@ def main(
             rng=random.Random(args.seed),
             budget=budget,
             now=now,
+            encounter_rng=random.Random(None if args.seed is None else args.seed + 1),
         )
     finally:
         conn.close()
