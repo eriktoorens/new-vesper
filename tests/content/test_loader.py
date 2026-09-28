@@ -89,6 +89,11 @@ REGION_DOC: dict[str, Any] = {
                 "default": [{"from": "00:00", "to": "24:00", "location": "shrine", "activity": "a"}]
             },
             "goal": {"text": "g", "stages": ["s"], "days_per_stage": 2},
+            "traits": ["t"],
+            "speech": ["s"],
+            "sample_line": "l",
+            "attitude_to_strangers": {"trust": 0, "fondness": 0, "fear": 0},
+            "attitudes": {},
         }
     ],
 }
@@ -155,6 +160,10 @@ def test_bad_knacks_rejected(knack: dict[str, Any]) -> None:
         _region(region__x__languages=[{"language": "registry-standard", "spread": "all"}]),
         _region(locations__0__languages=[{"language": "martian", "spread": "few"}]),
         _region(region__x__culture=""),
+        _region(npcs__0__attitudes={"n": {"trust": 0, "fondness": 0, "fear": 0, "why": "w"}}),
+        _region(npcs__0__attitudes={"ghost": {"trust": 0, "fondness": 0, "fear": 0, "why": "w"}}),
+        _region(npcs__0__attitude_to_strangers={"trust": 4, "fondness": 0, "fear": 0}),
+        _region(npcs__0__traits=[]),
         _region(
             region__x__weather={
                 "states": [{"id": "rain", "name": "R", "description": "d"}],

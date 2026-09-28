@@ -6,6 +6,7 @@ that passes the schema can still be refused by the rules.
 
 from typing import Any
 
+from new_vesper.rules.attitudes import Axis
 from new_vesper.rules.consequences import ConsequenceType
 from new_vesper.rules.light import DeedSize, Direction
 from new_vesper.rules.resolver import Difficulty
@@ -109,6 +110,28 @@ TOOLS: list[dict[str, Any]] = [
                 "evidence": {"type": "string", "description": "What happened, in one sentence."},
             },
             "required": ["trigger_id", "evidence"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "adjust_attitude",
+        "description": (
+            "Record that an NPC's feelings shifted because of something that happened on the "
+            "page. npc is the NPC whose feelings change; toward is 'me' (the acting character) "
+            "or another NPC's id; both must be here. axis is trust, fondness or fear, moved one "
+            "step up or down, at most once per axis per scene. The reason is kept, so the NPC "
+            "can say why later."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "npc": {"type": "string"},
+                "toward": {"type": "string"},
+                "axis": {"type": "string", "enum": _enum(Axis)},
+                "direction": {"type": "string", "enum": _enum(Direction)},
+                "reason": {"type": "string", "description": "Why, in one sentence."},
+            },
+            "required": ["npc", "toward", "axis", "direction", "reason"],
             "additionalProperties": False,
         },
     },

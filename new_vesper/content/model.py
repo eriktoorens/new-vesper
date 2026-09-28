@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any
 
+from new_vesper.rules.attitudes import validate_attitude
 from new_vesper.rules.character import validate_id
 from new_vesper.rules.errors import RulesError, require_range
 from new_vesper.rules.light import LIGHT_MAX, LIGHT_MIN
@@ -75,6 +76,14 @@ class ScheduleBlock:
 
     def minutes(self) -> set[int]:
         return {m for m in range(MINUTES_PER_DAY) if self.covers(m)}
+
+
+@dataclass(frozen=True)
+class AuthoredAttitude:
+    trust: int
+    fondness: int
+    fear: int
+    why: str
 
 
 @dataclass(frozen=True)
@@ -237,6 +246,11 @@ class NpcDef:
     # "default" plus any weekdays that differ.
     schedule: Mapping[str, tuple[ScheduleBlock, ...]]
     goal: NpcGoal
+    traits: tuple[str, ...]
+    speech: tuple[str, ...]
+    sample_line: str
+    attitude_to_strangers: AuthoredAttitude
+    attitudes: Mapping[str, AuthoredAttitude]  # toward other NPCs, with why
 
 
 @dataclass(frozen=True)
@@ -390,6 +404,32 @@ def _parse_schedule(raw: object, where: str) -> Mapping[str, tuple[ScheduleBlock
             raise ContentError(f"{where}.{day}: blocks must cover the whole day exactly once")
         days[day] = tuple(parsed)
     return days
+
+
+def _short_list(r: Reader, key: str, low: int, high: int) -> tuple[str, ...]:
+    values = r.texts(key)
+    if not low <= len(values) <= high or any(len(v) > 200 for v in values):
+        raise ContentError(f"{r.where}.{key}: {low}-{high} short lines")
+    return values
+
+
+def _parse_attitude(raw: object, where: str, *, why: bool) -> AuthoredAttitude:
+    fields = {"trust", "fondness", "fear"}
+    r = Reader(raw, where, fields | ({"why"} if why else set()))
+    try:
+        values = validate_attitude(r.raw["trust"], r.raw["fondness"], r.raw["fear"])
+    except RulesError as exc:
+        raise ContentError(f"{where}: {exc}") from exc
+    reason = r.text("why", 300) if why else ""
+    return AuthoredAttitude(values.trust, values.fondness, values.fear, reason)
+
+
+def _parse_web(raw: object, where: str) -> Mapping[str, AuthoredAttitude]:
+    if not isinstance(raw, dict):
+        raise ContentError(f"{where}: expected an object of npc id -> attitude")
+    return {
+        Reader._slug(k, where): _parse_attitude(v, f"{where}.{k}", why=True) for k, v in raw.items()
+    }
 
 
 def _parse_goal(raw: object, where: str) -> NpcGoal:
@@ -634,7 +674,20 @@ def parse_god(raw: object) -> GodDef:
 
 def parse_npc(raw: object) -> NpcDef:
     fields = {"id", "name", "pronouns", "location", "role", "description", "wants", "voice"}
-    extra = {"tags", "age", "appearance", "languages", "portrait", "schedule", "goal"}
+    extra = {
+        "tags",
+        "age",
+        "appearance",
+        "languages",
+        "portrait",
+        "schedule",
+        "goal",
+        "traits",
+        "speech",
+        "sample_line",
+        "attitude_to_strangers",
+        "attitudes",
+    }
     r = Reader(raw, "npc", fields | extra)
     languages = r.raw["languages"]
     if not isinstance(languages, list) or not languages:
@@ -655,6 +708,13 @@ def parse_npc(raw: object) -> NpcDef:
         portrait=r.art("portrait"),
         schedule=_parse_schedule(r.raw["schedule"], f"npc {r.raw['id']!r} schedule"),
         goal=_parse_goal(r.raw["goal"], f"npc {r.raw['id']!r} goal"),
+        traits=_short_list(r, "traits", 1, 5),
+        speech=_short_list(r, "speech", 1, 4),
+        sample_line=r.text("sample_line", 300),
+        attitude_to_strangers=_parse_attitude(
+            r.raw["attitude_to_strangers"], f"npc {r.raw['id']!r} strangers", why=False
+        ),
+        attitudes=_parse_web(r.raw["attitudes"], f"npc {r.raw['id']!r} attitudes"),
     )
 
 

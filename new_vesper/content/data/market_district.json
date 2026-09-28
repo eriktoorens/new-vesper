@@ -673,6 +673,53 @@
           "writes to the Registry asking for his file",
           "receives a Registry reply stating that the file does not exist"
         ]
+      },
+      "traits": [
+        "watchful",
+        "stubbornly kind",
+        "keeps every promise"
+      ],
+      "speech": [
+        "calls everyone 'child'",
+        "answers a question with a question when she's hiding something"
+      ],
+      "sample_line": "Rent's on Tuesday, child, and your name goes in the book tonight either way.",
+      "attitude_to_strangers": {
+        "trust": 0,
+        "fondness": 1,
+        "fear": 0
+      },
+      "attitudes": {
+        "rahel": {
+          "trust": 2,
+          "fondness": 2,
+          "fear": 0,
+          "why": "Rahel sat up with her the night the boy didn't come back, and never asked for anything."
+        },
+        "clerk-vasil": {
+          "trust": -1,
+          "fondness": 0,
+          "fear": 1,
+          "why": "He wrote her lodging house down as 'a belief hazard' in his first audit."
+        },
+        "tomas-haddad": {
+          "trust": 2,
+          "fondness": 1,
+          "fear": 0,
+          "why": "Thirty years of rice deals and he has never once short-weighed her."
+        },
+        "adaeze-lim": {
+          "trust": -1,
+          "fondness": 0,
+          "fear": 0,
+          "why": "Sold one of Nana's lodgers a luck charm that turned out to be very lucky for Adaeze."
+        },
+        "ferryman-whisker": {
+          "trust": 0,
+          "fondness": 1,
+          "fear": 1,
+          "why": "She leaves him a crust on the Weighhouse stairs; she won't say why."
+        }
       }
     },
     {
@@ -765,6 +812,41 @@
           "has a loud public argument with the franchise's agent",
           "calls a meeting of every cart owner under the biggest tarp"
         ]
+      },
+      "traits": [
+        "generous",
+        "hot-tempered",
+        "loyal to the Row"
+      ],
+      "speech": [
+        "loud, and louder when he's right",
+        "answers questions with food"
+      ],
+      "sample_line": "Eat first. Then tell me who's been bothering you, and I'll tell you who to bother back.",
+      "attitude_to_strangers": {
+        "trust": 0,
+        "fondness": 1,
+        "fear": 0
+      },
+      "attitudes": {
+        "clerk-vasil": {
+          "trust": -2,
+          "fondness": -1,
+          "fear": 0,
+          "why": "Vasil fined his cart for 'unlicensed steam' three times in one winter."
+        },
+        "nana-priya": {
+          "trust": 2,
+          "fondness": 2,
+          "fear": 0,
+          "why": "She fed him through the year the cart burned."
+        },
+        "adaeze-lim": {
+          "trust": 0,
+          "fondness": 1,
+          "fear": 0,
+          "why": "Loud, pricey, but she paid for the Row's new tarps without being asked."
+        }
       }
     },
     {
@@ -840,6 +922,41 @@
           "hides her least licensable stock",
           "books an appointment with Inspector-Clerk Vasil"
         ]
+      },
+      "traits": [
+        "charming",
+        "calculating",
+        "secretly sentimental"
+      ],
+      "speech": [
+        "every sentence ends in a price",
+        "never says 'no', only 'not at that price'"
+      ],
+      "sample_line": "For you? This one only works on Tuesdays, which is why it's half price.",
+      "attitude_to_strangers": {
+        "trust": -1,
+        "fondness": 0,
+        "fear": 0
+      },
+      "attitudes": {
+        "clerk-vasil": {
+          "trust": -1,
+          "fondness": 0,
+          "fear": 2,
+          "why": "He is the only person in the Market who can end her business with a stamp."
+        },
+        "rahel": {
+          "trust": 1,
+          "fondness": 1,
+          "fear": 0,
+          "why": "Rahel fixes her charm-lights for cost and never asks where the charms come from."
+        },
+        "tomas-haddad": {
+          "trust": 1,
+          "fondness": 1,
+          "fear": 0,
+          "why": "His noodles, his noise, his Row: she'd never admit how much she likes all three."
+        }
       }
     },
     {
@@ -921,6 +1038,41 @@
           "discovers the form requires the god's signature",
           "asks around the Market for anyone who can get a god to sign"
         ]
+      },
+      "traits": [
+        "precise",
+        "lonely",
+        "honest to a fault"
+      ],
+      "speech": [
+        "quotes subsection numbers",
+        "sighs before bad news"
+      ],
+      "sample_line": "Under subsection nine, a god may not be reclassified in the rain. It is always raining. You see my difficulty.",
+      "attitude_to_strangers": {
+        "trust": 0,
+        "fondness": 0,
+        "fear": 0
+      },
+      "attitudes": {
+        "adaeze-lim": {
+          "trust": -2,
+          "fondness": 0,
+          "fear": 0,
+          "why": "Her miracles have no paperwork, and some of them clearly work, which is worse."
+        },
+        "tomas-haddad": {
+          "trust": 0,
+          "fondness": 0,
+          "fear": 1,
+          "why": "Shouted at him in front of a queue once; he still remembers the volume."
+        },
+        "nana-priya": {
+          "trust": 1,
+          "fondness": 1,
+          "fear": 0,
+          "why": "Her ledger is the only record in the Market kept better than his own."
+        }
       }
     },
     {
@@ -1008,6 +1160,41 @@
           "keeps a list of everyone who remembered them twice",
           "begins to fear their own name is slipping"
         ]
+      },
+      "traits": [
+        "gentle",
+        "precise",
+        "afraid of being forgotten"
+      ],
+      "speech": [
+        "glitches into old sales scripts when nervous, then apologizes",
+        "never uses contractions"
+      ],
+      "sample_line": "I remember your face. I am told that matters. I would like it to matter.",
+      "attitude_to_strangers": {
+        "trust": 0,
+        "fondness": 0,
+        "fear": 1
+      },
+      "attitudes": {
+        "nana-priya": {
+          "trust": 3,
+          "fondness": 2,
+          "fear": 0,
+          "why": "She wrote Rahel's name in the ledger when no one else would."
+        },
+        "ferryman-whisker": {
+          "trust": 1,
+          "fondness": 1,
+          "fear": 0,
+          "why": "Whisker is the only one who asks Rahel what they remember, not what they sell."
+        },
+        "clerk-vasil": {
+          "trust": 0,
+          "fondness": 0,
+          "fear": 2,
+          "why": "The Registry decides who counts as a person. Vasil is the Registry, here."
+        }
       }
     },
     {
@@ -1090,6 +1277,35 @@
           "leaves small gifts on the Weighhouse stairs",
           "waits every night for someone to call him by name"
         ]
+      },
+      "traits": [
+        "courtly",
+        "patient",
+        "hungry to be remembered"
+      ],
+      "speech": [
+        "old-fashioned courtesy, always 'good traveller'",
+        "tells the fare as a riddle"
+      ],
+      "sample_line": "Fare's a thing you'd miss, good traveller. Not your coin. Something you'd truly miss.",
+      "attitude_to_strangers": {
+        "trust": 0,
+        "fondness": 0,
+        "fear": 0
+      },
+      "attitudes": {
+        "rahel": {
+          "trust": 1,
+          "fondness": 2,
+          "fear": 0,
+          "why": "Rahel remembers him between visits, which almost nobody above does."
+        },
+        "nana-priya": {
+          "trust": 1,
+          "fondness": 1,
+          "fear": 0,
+          "why": "Someone leaves a crust on the Weighhouse stairs; he suspects the landlady."
+        }
       }
     }
   ],

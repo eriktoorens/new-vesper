@@ -14,6 +14,7 @@ class CallType(StrEnum):
     BEAT_SUMMARY = "beat_summary"
     SCENE_SUMMARY = "scene_summary"
     RECAP = "recap"
+    NPC_MEMORY = "npc_memory"
 
 
 @dataclass(frozen=True)

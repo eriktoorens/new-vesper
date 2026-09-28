@@ -115,6 +115,9 @@ def _check_map(content: Content) -> None:
 
 def _check_schedules(content: Content) -> None:
     for npc in content.npcs.values():
+        for other in npc.attitudes:
+            if other not in content.npcs or other == npc.id:
+                raise ContentError(f"npc {npc.id!r} has an attitude toward unknown {other!r}")
         for blocks in npc.schedule.values():
             for block in blocks:
                 if block.location is not None and block.location not in content.locations:

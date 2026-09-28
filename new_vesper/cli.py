@@ -47,6 +47,7 @@ HELP = """Type what your character does, or a command:
   /look          your sheet and where you are
   /map           the district map: where you are and where you've been
   /time          the city clock and the weather
+  /who           who's here and what they're doing
   /ask <question>  ask the DM what your character sees or knows (no time passes)
   /go <place>    move somewhere in this district (e.g. /go tarp-row)
   /places        list places you can go
@@ -391,6 +392,9 @@ def play(
                     break
                 if line == "/help":
                     say(HELP)
+                elif line == "/who":
+                    people = session.who()
+                    say("\n".join(f"  {p}" for p in people) if people else "  Nobody you know.")
                 elif line == "/time":
                     say(f"[{session.status_line()}]")
                 elif line == "/look":

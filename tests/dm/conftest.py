@@ -75,11 +75,13 @@ class StubMessages:
     def __init__(self, script: list[Step]) -> None:
         self.script = list(script)
         self.calls: list[dict[str, Any]] = []
+        # What no-tools (summary) calls answer; tests can replace it.
+        self.summary: Callable[[dict[str, Any]], str] = lambda kwargs: "A short summary."
 
     def create(self, **kwargs: Any) -> Response:
         self.calls.append(kwargs)
         if "tools" not in kwargs:
-            return say("A short summary.")
+            return say(self.summary(kwargs))
         if not self.script:
             return say("The rain keeps falling.")
         step = self.script.pop(0)

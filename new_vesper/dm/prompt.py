@@ -80,6 +80,14 @@ harder difficulty rung when the weather plainly matters, such as a storm on the 
 - Only NPCs listed in the location's npcs are here, doing what "doing" says. Use \
 regulars_elsewhere only for hints, and only when someone present would plausibly know \
 where that person is at this hour; otherwise they are simply not here.
+- NPCs have feelings on three axes, -3 to +3: trust, fondness and fear, with the \
+reasons behind recent changes in "why". Play NPCs true to their feelings, personality, \
+speech habits and memories of the character. Feelings shape whether a roll is needed \
+at all (a trusting friend simply helps) and which rung fits; they never add to a roll.
+- When something on the page plainly changes how an NPC feels about the character or \
+another NPC who is here, call adjust_attitude with a one-sentence reason. An NPC can \
+explain why they feel as they do when asked, drawing on "why", or decline to, in \
+character.
 - An NPC's "lately" is what they have been doing about their own goal. Let it show in \
 what they say and do when it fits; don't announce it.
 - Languages: everyone speaks Registry Standard. Each character and NPC speaks the \
@@ -243,6 +251,39 @@ def fold_summary_request(scene_summary: str, beat_summary: str) -> str:
         f"<summary>{_safe_json({'scene_so_far': scene_summary, 'new_beat': beat_summary})}"
         "</summary>"
     )
+
+
+def memory_request(character: str, npcs: dict[str, str], scene: list[str]) -> str:
+    """Ask for one line per NPC about what they would remember of the character."""
+    return (
+        f"Below is a scene from the game. For each NPC listed, write what they would remember "
+        f"about {character} from it, in one short line of at most 25 words, from the NPC's "
+        "point of view. If an NPC did not interact with them, write 'nothing'. Answer with "
+        "exactly one line per NPC, formatted as npc-id: memory\n"
+        f"<scene>{_safe_json({'npcs': npcs, 'beats': scene})}</scene>"
+    )
+
+
+def fold_memory_request(npc: str, character: str, old: str | None, notes: list[str]) -> str:
+    return (
+        f"Merge these memories {npc} has of {character} into one line of at most 60 words, "
+        "keeping what matters to how they feel: promises, debts, kindnesses, slights.\n"
+        f"<memories>{_safe_json({'earlier': old, 'notes': notes})}</memories>"
+    )
+
+
+def parse_memory_lines(reply: str, allowed: set[str]) -> dict[str, str]:
+    """'npc-id: note' lines for known NPCs only; 'nothing' and anything else dropped."""
+    memories: dict[str, str] = {}
+    for line in reply.splitlines():
+        npc_id, sep, note = line.strip().lstrip("-* ").partition(":")
+        npc_id, note = npc_id.strip(), note.strip()
+        if not sep or npc_id not in allowed or npc_id in memories:
+            continue
+        if not note or note.lower().strip(".") == "nothing":
+            continue
+        memories[npc_id] = note[:300]
+    return memories
 
 
 def recap_request(events: list[dict[str, Any]]) -> str:

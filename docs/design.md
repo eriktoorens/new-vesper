@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D59** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D66** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -348,6 +348,18 @@ Added after layer 3 (2026-09-28).
 - **The harbor (D58):** a quay at the Market's edge, the Tidewater Stairs, and the Mudflats beyond it, with a sea-gate into unmapped tunnels. Tomás buys the night's catch there at dawn.
 - **Tides (D59):** code computes the tide (two highs and two lows a day, about 50 minutes later each day, bigger spring tides near new and full moon). Places can be closed by the tide (the Mudflats at high and rising water; the Drowned Station at a spring high tide), and `/go` refuses a flooded place and says when low water is. Places can impose a minimum difficulty rung at some tide states (the turning tide on the Stairs, the incoming tide on the flats), which code enforces the way it forces raw magic to Desperate. The model's constants are tuning values, not astronomy.
 
+## NPC Memory and Attitudes (D60–D66)
+
+Built in layer 4 (2026-09-28), from D39.
+
+- **Three axes (D60):** an NPC's feelings toward a character or another NPC are trust, fondness and fear, each from −3 to +3, with words for each step (fear runs from contempt through unafraid to terrified). NPCs start from content: how they treat strangers, and an authored web of feelings toward each other.
+- **Slow change (D61):** the DM proposes a change with the `adjust_attitude` tool; code moves one axis one step, at most once per axis per NPC and target per scene. Both NPCs must be present. This is an explicit exception to D1 (no state change without a roll), agreed in D39.
+- **Reasons (D62):** every change is kept with its reason in an append-only log, and every authored feeling has a "why". The DM sees the latest reasons, so an NPC can explain why they feel as they do when asked, or decline to, in character.
+- **Memories (D63):** when a scene closes, one cheap summary call writes a line for each NPC who was present about what they would remember of the character; nothing is written if the player did nothing. Each NPC keeps the last 8 lines per character; older ones fold into a single summary line.
+- **Rolls (D64):** feelings never add to a roll. The DM uses them to decide whether a roll is needed at all and which rung fits.
+- **The NPC web (D65):** NPC-to-NPC feelings are authored in content, seeded once, and then change in play with the same caps and reasons.
+- **Personalities (D66):** each NPC has a few traits, speech habits and a sample line, shown to the DM with their feelings and memories. `/who` shows the player who is here and what they are doing.
+
 ## Planned: A Living World (D37–D43)
 
 Direction agreed after the first playtest (2026-09-28). Each layer's details are decided when it is built, and every mechanic stays code-owned: the DM proposes, code decides.
@@ -388,7 +400,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, and D56–D59 from seasons, moon and tides.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, and D60–D66 from NPC memory and attitudes.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -430,7 +442,7 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D36 | Owed consequences | A 7–9 or 6− roll must get its consequence; code sends the DM back (up to twice) |
 | D37 | Character details | Age, pronouns, appearance, languages for players and NPCs (built: D44–D49) |
 | D38 | Time and weather | Real-time city clock, weather, NPC schedules, daily tick (built: D50–D55) |
-| D39 | NPC memory (planned) | Attitudes per character and interaction notes in code; DM proposes, code caps |
+| D39 | NPC memory | Attitudes and interaction notes in code; DM proposes, code caps (built: D60–D66) |
 | D40 | Encounters (planned) | Code rolls on arrival and about every 5 beats; odds rise as Light falls |
 | D41 | Languages (planned) | Tracked; unknown speech as gibberish; Heart roll for the gist; language knack +1 |
 | D42 | New kinds of people (planned) | Setting-native kinds as origins, not classic fantasy races |
@@ -451,3 +463,10 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D57 | Moon | Real phase; flavor plus new- and full-moon hooks and schedules; no roll modifiers |
 | D58 | Harbor | The Tidewater Stairs quay and the Mudflats with a sea-gate, in the Market |
 | D59 | Tides | Computed; can close places and impose a minimum rung, enforced by code |
+| D60 | Attitude axes | Trust, fondness, fear, each −3 to +3; start from content |
+| D61 | Attitude change | `adjust_attitude`: one step per axis per NPC and target per scene; exception to D1 |
+| D62 | Reasons | Every change and authored feeling has a reason; the NPC can explain or decline |
+| D63 | Memories | One line per present NPC when a scene closes; last 8 kept, older folded |
+| D64 | Rolls | Feelings never add to rolls; they shape whether to roll and the rung |
+| D65 | NPC web | Authored, seeded once, then changes in play with the same caps |
+| D66 | Personalities | Traits, speech habits, a sample line; `/who` for the player |

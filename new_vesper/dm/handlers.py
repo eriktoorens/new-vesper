@@ -17,6 +17,7 @@ from new_vesper.city.npcs import present_at, regulars_elsewhere, whereabouts
 from new_vesper.city.sky import describe_sky, harder, minimum_rung
 from new_vesper.content.loader import Content
 from new_vesper.content.loot import roll_loot
+from new_vesper.rules.attitudes import Attitude, parse_axis
 from new_vesper.rules.character import Sheet, apply_track
 from new_vesper.rules.clock import day_start_utc
 from new_vesper.rules.consequences import (
@@ -41,6 +42,13 @@ from new_vesper.rules.tracks import (
 )
 from new_vesper.rules.xp import XP_PER_TRIGGER, parse_trigger
 from new_vesper.state import characters, clocks, favors, items, rolls, scenes, world
+from new_vesper.state.attitudes import (
+    TargetKind,
+    change_attitude,
+    get_attitude,
+    memory_of,
+    recent_changes,
+)
 from new_vesper.state.characters import Character
 from new_vesper.state.db import atomic
 from new_vesper.state.errors import NotFoundError, StateError
@@ -250,6 +258,55 @@ def describe_character(ctx: TurnContext, character: Character) -> dict[str, Any]
     }
 
 
+def personality(npc: Any) -> dict[str, Any]:
+    return {"traits": list(npc.traits), "speech": list(npc.speech), "sample_line": npc.sample_line}
+
+
+def _default_feeling(
+    ctx: TurnContext, npc: Any, kind: TargetKind, target: str | int
+) -> tuple[Attitude, str | None]:
+    if kind is TargetKind.CHARACTER:
+        s = npc.attitude_to_strangers
+        return Attitude(s.trust, s.fondness, s.fear), None
+    authored = npc.attitudes.get(target)
+    if authored is None:
+        return Attitude(), None
+    return Attitude(authored.trust, authored.fondness, authored.fear), authored.why
+
+
+def feelings(ctx: TurnContext, npc: Any, kind: TargetKind, target: str | int) -> dict[str, Any]:
+    """How the NPC feels, in numbers and words, and why: the reasons behind recent changes."""
+    default, authored_why = _default_feeling(ctx, npc, kind, target)
+    now = get_attitude(ctx.conn, npc.id, kind, target, default)
+    changes = recent_changes(ctx.conn, npc.id, kind, target, limit=3)
+    why = [f"{c.axis.value} {c.before:+d}->{c.after:+d}: {c.reason}" for c in changes]
+    if authored_why:
+        why.append(f"long-standing: {authored_why}")
+    return {
+        "trust": now.trust,
+        "fondness": now.fondness,
+        "fear": now.fear,
+        "in_words": now.words(),
+        "why": why,
+    }
+
+
+def remembered(ctx: TurnContext, npc: Any) -> dict[str, Any] | None:
+    memory = memory_of(ctx.conn, npc.id, ctx.character_id)
+    if memory.summary is None and not memory.notes:
+        return None
+    return {"long_ago": memory.summary, "recently": list(memory.notes)}
+
+
+def _npc_relations(ctx: TurnContext, npc_id: str) -> list[str]:
+    rows = ctx.conn.execute(
+        "SELECT target_id FROM attitudes WHERE holder_npc = ? AND target_kind = 'npc'"
+        " ORDER BY target_id",
+        (npc_id,),
+    )
+    return [r[0] for r in rows if r[0] in ctx.content.npcs]
+
+
 def npc_lately(conn: sqlite3.Connection, npc: Any) -> str | None:
     """The latest step of an NPC's own goal, advanced by the daily tick."""
     row = conn.execute("SELECT stage FROM npc_goals WHERE npc_id = ?", (npc.id,)).fetchone()
@@ -269,6 +326,7 @@ def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
     place = ctx.content.locations[location_id]
     region = world.get_region(ctx.conn, place.region_id)
     god = ctx.content.shrine_god(place.id)
+    present = present_at(ctx.content, place.id, ctx.now)
     lying = ctx.conn.execute(
         "SELECT id, name FROM items WHERE location_id = ? AND destroyed = 0 ORDER BY id",
         (place.id,),
@@ -293,8 +351,16 @@ def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
                 "languages": [ctx.content.languages[lang].name for lang in w.npc.languages],
                 "doing": w.activity,
                 "lately": npc_lately(ctx.conn, w.npc),
+                "personality": personality(w.npc),
+                "feels_about_you": feelings(ctx, w.npc, TargetKind.CHARACTER, ctx.character_id),
+                "remembers_about_you": remembered(ctx, w.npc),
+                "feels_about_others_here": {
+                    other.npc.name: feelings(ctx, w.npc, TargetKind.NPC, other.npc.id)
+                    for other in present
+                    if other.npc.id != w.npc.id
+                },
             }
-            for w in present_at(ctx.content, place.id, ctx.now)
+            for w in present
         ],
         # Only for hints, and only if someone present would plausibly know (D53).
         "regulars_elsewhere": [
@@ -359,6 +425,13 @@ def look(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
                 "description": npc.description,
                 "goal": npc.goal.text,
                 "lately": npc_lately(ctx.conn, npc),
+                "personality": personality(npc),
+                "feels_about_you": feelings(ctx, npc, TargetKind.CHARACTER, ctx.character_id),
+                "remembers_about_you": remembered(ctx, npc),
+                "feels_about_others": {
+                    ctx.content.npcs[other].name: feelings(ctx, npc, TargetKind.NPC, other)
+                    for other in _npc_relations(ctx, npc.id)
+                },
                 "wants": npc.wants,
                 "voice": npc.voice,
             }
@@ -739,6 +812,55 @@ def adjust_light(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
     return {"region": region.id, "light": after.light, "fell": change.fell}
 
 
+# --- adjust_attitude ------------------------------------------------------------
+
+
+def adjust_attitude(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
+    """An NPC's feelings move one step on one axis, with a reason (D61, D62, D65)."""
+    args = _args(raw, {"npc", "toward", "axis", "direction", "reason"})
+    try:
+        axis = parse_axis(args["axis"])
+        direction = parse_direction(args["direction"])
+    except RulesError as exc:
+        raise ToolError(str(exc)) from exc
+    reason = _text(args["reason"], "reason", MAX_REASON)
+    me = _me(ctx)
+    here = {w.npc.id for w in present_at(ctx.content, me.location_id or "", ctx.now)}
+    npc_id = args["npc"]
+    if not isinstance(npc_id, str) or npc_id not in ctx.content.npcs:
+        raise ToolError(f"unknown npc; here now: {sorted(here) or 'nobody'}")
+    if npc_id not in here:
+        raise ToolError(f"{ctx.content.npcs[npc_id].name} is not here")
+    toward = args["toward"]
+    npc = ctx.content.npcs[npc_id]
+    if _is_me(ctx, toward):
+        kind, target = TargetKind.CHARACTER, ctx.character_id
+        label = me.name
+    elif isinstance(toward, str) and toward in ctx.content.npcs:
+        if toward == npc_id:
+            raise ToolError("an NPC's feelings about themselves are not tracked")
+        if toward not in here:
+            raise ToolError(f"{ctx.content.npcs[toward].name} is not here")
+        kind, target, label = TargetKind.NPC, toward, ctx.content.npcs[toward].name
+    else:
+        raise ToolError("toward must be 'me' or the id of another NPC who is here")
+    default, _ = _default_feeling(ctx, npc, kind, target)
+    delta = 1 if direction.value == "raise" else -1
+    try:
+        after = change_attitude(
+            ctx.conn, npc_id, kind, target, axis, delta, reason, ctx.cause, default=default
+        )
+    except StateError as exc:
+        raise ToolError(str(exc)) from exc
+    ctx.changes.append(f"{npc.name}'s {axis.value} toward {label}: {after.words()[axis.value]}")
+    return {
+        "npc": npc_id,
+        "toward": label,
+        axis.value: after.value(axis),
+        "in_words": after.words()[axis.value],
+    }
+
+
 HANDLERS: dict[str, Handler] = {
     "look": look,
     "call_for_roll": call_for_roll,
@@ -746,6 +868,7 @@ HANDLERS: dict[str, Handler] = {
     "grant_from_table": grant_from_table,
     "report_trigger": report_trigger,
     "adjust_light": adjust_light,
+    "adjust_attitude": adjust_attitude,
 }
 
 

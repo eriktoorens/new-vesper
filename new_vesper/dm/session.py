@@ -41,7 +41,7 @@ from new_vesper.rules.errors import RulesError
 from new_vesper.rules.leveling import LevelUpRequest, level_up
 from new_vesper.rules.sky import moon
 from new_vesper.rules.tracks import must_fall_or_endure
-from new_vesper.state import characters, scenes, world
+from new_vesper.state import attitudes, characters, scenes, world
 from new_vesper.state.characters import Character
 from new_vesper.state.errors import StateError
 from new_vesper.state.events import Actor, Cause, Event, append_event, list_events
@@ -56,6 +56,8 @@ SECONDS_PER_DAY = 86_400
 PRIVATE_EVENTS = frozenset(
     {"roll", "presence_changed", "npc_goal_advanced", "npc_met", "neglect", "details_set"}
 )
+# Memory lines each NPC keeps per character before older ones fold into a summary.
+MEMORIES_KEPT = 8
 QUIET_NARRATION = "The rain goes quiet, and so does the city. {message}"
 
 
@@ -119,6 +121,8 @@ class PlaySession:
         self.character_id = character_id
         self.player_id = characters.get_character(conn, character_id).player_id
         self.scene_id: int | None = None
+        # NPCs who were present at some point in the current scene.
+        self.scene_npcs: set[str] = set()
 
     # --- budget ------------------------------------------------------------
 
@@ -214,11 +218,49 @@ class PlaySession:
             return
         scene = scenes.get_scene(self.conn, self.scene_id)
         if scene.open:
+            self._remember_scene(scene.id)
             recent = scenes.recent_beats(self.conn, scene.id, limit=self.config.recent_beats)
             parts = [scene.summary, *(b.summary for b in recent)]
             summary = " ".join(p for p in parts if p).strip() or "Nothing of note happened."
             scenes.close_scene(self.conn, scene.id, summary[:2000], self._cause(Actor.SYSTEM))
         self.scene_id = None
+
+    def _remember_scene(self, scene_id: int) -> None:
+        """When a scene closes, each NPC who was there keeps a line about the character (D63)."""
+        npcs, self.scene_npcs = self.scene_npcs, set()
+        acted = self.conn.execute(
+            "SELECT COUNT(*) FROM beat_intents i JOIN beats b ON b.id = i.beat_id"
+            " WHERE b.scene_id = ? AND i.intent IS NOT NULL",
+            (scene_id,),
+        ).fetchone()[0]
+        if not npcs or not acted:
+            return
+        me = self.character
+        beats = self.conn.execute(
+            "SELECT summary FROM beats WHERE scene_id = ? AND status = 'resolved' ORDER BY number",
+            (scene_id,),
+        ).fetchall()
+        scene = [scenes.get_scene(self.conn, scene_id).summary] + [b[0] for b in beats]
+        names = {n: self.content.npcs[n].name for n in sorted(npcs)}
+        reply = self._summarize(
+            CallType.NPC_MEMORY, prompt.memory_request(me.name, names, [s for s in scene if s])
+        )
+        cause = Cause(Actor.SYSTEM, self.player_id, scene_id)
+        for npc_id, note in prompt.parse_memory_lines(reply, set(names)).items():
+            attitudes.add_memory(self.conn, npc_id, me.id, note, cause)
+            self._fold_memories(npc_id, me)
+
+    def _fold_memories(self, npc_id: str, me: Character) -> None:
+        old = attitudes.notes_to_fold(self.conn, npc_id, me.id, keep=MEMORIES_KEPT)
+        if not old:
+            return
+        earlier = attitudes.memory_of(self.conn, npc_id, me.id).summary
+        name = self.content.npcs[npc_id].name
+        merged = self._summarize(
+            CallType.NPC_MEMORY,
+            prompt.fold_memory_request(name, me.name, earlier, [n for _, n in old]),
+        ) or " ".join(filter(None, [earlier, *(n for _, n in old)]))
+        attitudes.fold_memories(self.conn, npc_id, me.id, [i for i, _ in old], merged[:600])
 
     def _run(self, intent: str | None, direction: str | None) -> TurnOutcome:
         """One beat: record the intent, run the agent, resolve the beat."""
@@ -227,6 +269,9 @@ class PlaySession:
         if intent is not None:
             scenes.submit_intent(self.conn, beat.id, self.character_id, intent, self._cause())
         ctx = self._context()
+        self.scene_npcs |= {
+            w.npc.id for w in present_at(self.content, self.character.location_id or "", ctx.now)
+        }
         message = prompt.turn_message(self._state(ctx), intent, direction)
         quiet = False
         try:
@@ -351,6 +396,12 @@ class PlaySession:
             spring = " spring" if here.tide.spring else ""
             parts.append(f"{here.tide.state.value}{spring} tide{turning}")
         return "; ".join(parts)
+
+    def who(self) -> list[str]:
+        """Who is here right now and what they're visibly doing."""
+        me = self.character
+        present = present_at(self.content, me.location_id or "", self.now())
+        return [f"{w.npc.name}: {w.activity}" for w in present]
 
     def location_art(self) -> str | None:
         me = self.character
