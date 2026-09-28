@@ -4,14 +4,20 @@ No terminal I/O here, so the whole loop is testable with a stubbed model. Each
 player turn is one beat: open it, record the intent, run the agent, resolve it
 with narration and a one-line summary. Older beats fold into the scene summary
 so the prompt stays short.
+
+Every model call is priced and written to the usage ledger against this player
+and scene, and the budget is checked before each call (D21, D22).
 """
 
 import sqlite3
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from typing import Any
 
+from new_vesper.budget.ledger import record_call
+from new_vesper.budget.policy import BudgetConfig, BudgetExhausted, BudgetStatus, budget_status
+from new_vesper.budget.pricing import PRICES, ModelPrice, price_of
 from new_vesper.content.loader import Content
 from new_vesper.dm import prompt
 from new_vesper.dm.agent import ModelClient, TurnResult, UsageHook, run_turn, summarize
@@ -32,6 +38,7 @@ ARRIVAL = (
     "place, who is around, one thing that invites action. No roll."
 )
 SECONDS_PER_DAY = 86_400
+QUIET_NARRATION = "The rain goes quiet, and so does the city. {message}"
 
 
 class SessionError(Exception):
@@ -45,6 +52,8 @@ class TurnOutcome:
     slipped: bool = False
     changes: tuple[str, ...] = ()
     can_level_up: bool = False
+    # The budget ran out during this turn; the city has gone quiet.
+    quiet: bool = False
 
 
 def _parse_time(stamp: str) -> datetime:
@@ -64,6 +73,8 @@ class PlaySession:
         config: DMConfig | None = None,
         now: Callable[[], datetime] = lambda: datetime.now(UTC),
         on_usage: UsageHook | None = None,
+        budget: BudgetConfig | None = None,
+        prices: Mapping[str, ModelPrice] = PRICES,
     ) -> None:
         self.conn = conn
         self.content = content
@@ -71,11 +82,53 @@ class PlaySession:
         self.rng = rng
         self.config = config or DMConfig()
         self.now = now
-        self.on_usage = on_usage
+        self.observer = on_usage
+        self.budget = budget or BudgetConfig()
+        self.prices = prices
+        for call in CallType:
+            # Refuse up front: an unpriced model's spend could not be recorded.
+            price_of(self.config.model_for(call), prices)
         self.system = prompt.system_prompt(design_text, content)
         self.character_id = character_id
         self.player_id = characters.get_character(conn, character_id).player_id
         self.scene_id: int | None = None
+
+    # --- budget ------------------------------------------------------------
+
+    def budget_status(self) -> BudgetStatus:
+        return budget_status(self.conn, self.budget, self.player_id, self.now())
+
+    def _guard(self) -> None:
+        """Runs before every model call: no call once a limit is reached."""
+        status = self.budget_status()
+        if not status.can_play:
+            raise BudgetExhausted(status.blocked_message())
+
+    def on_usage(self, call: CallType, model: str, usage: Any) -> None:
+        """Record every call against this player and scene."""
+        record_call(
+            self.conn,
+            call,
+            model,
+            usage,
+            player_id=self.player_id,
+            scene_id=self.scene_id,
+            prices=self.prices,
+        )
+        if self.observer is not None:
+            self.observer(call, model, usage)
+
+    def _summarize(self, call: CallType, request: str) -> str:
+        """A cheap summary call; empty if the budget is spent, so callers fall back."""
+        try:
+            return summarize(self.client, self.config, call, request, self.on_usage, self._guard)
+        except BudgetExhausted:
+            return ""
+
+    def _require_budget(self) -> None:
+        status = self.budget_status()
+        if not status.can_play:
+            raise SessionError(status.blocked_message())
 
     # --- helpers -----------------------------------------------------------
 
@@ -145,6 +198,7 @@ class PlaySession:
             scenes.submit_intent(self.conn, beat.id, self.character_id, intent, self._cause())
         ctx = self._context()
         message = prompt.turn_message(self._state(ctx), intent, direction)
+        quiet = False
         try:
             result: TurnResult = run_turn(
                 self.client,
@@ -153,7 +207,12 @@ class PlaySession:
                 message,
                 lambda name, raw: dispatch(ctx, name, raw),
                 self.on_usage,
+                self._guard,
             )
+        except BudgetExhausted as exc:
+            # Tool calls already made stand: each was complete and rule-checked.
+            quiet = True
+            result = TurnResult(narration=QUIET_NARRATION.format(message=exc))
         except BaseException:
             # Never leave the region blocked by an open beat.
             scenes.resolve_beat(
@@ -165,12 +224,8 @@ class PlaySession:
             )
             raise
         summary = (
-            summarize(
-                self.client,
-                self.config,
-                CallType.BEAT_SUMMARY,
-                prompt.beat_summary_request(intent, result.narration),
-                self.on_usage,
+            self._summarize(
+                CallType.BEAT_SUMMARY, prompt.beat_summary_request(intent, result.narration)
             )
             or result.narration[:200]
         )
@@ -186,6 +241,7 @@ class PlaySession:
             slipped=ctx.slipped,
             changes=tuple(ctx.changes),
             can_level_up=describe_character(ctx, me)["can_level_up"],
+            quiet=quiet,
         )
 
     def _fold(self, latest: int) -> None:
@@ -201,12 +257,8 @@ class PlaySession:
         if row is None:
             return
         folded = (
-            summarize(
-                self.client,
-                self.config,
-                CallType.SCENE_SUMMARY,
-                prompt.fold_summary_request(scene.summary, row[0]),
-                self.on_usage,
+            self._summarize(
+                CallType.SCENE_SUMMARY, prompt.fold_summary_request(scene.summary, row[0])
             )
             or f"{scene.summary} {row[0]}".strip()
         )
@@ -248,12 +300,7 @@ class PlaySession:
         if not events:
             return None
         brief = [{"kind": e.kind, "region": e.region_id, **e.payload} for e in events[-40:]]
-        return (
-            summarize(
-                self.client, self.config, CallType.RECAP, prompt.recap_request(brief), self.on_usage
-            )
-            or None
-        )
+        return self._summarize(CallType.RECAP, prompt.recap_request(brief)) or None
 
     def start(self) -> tuple[str | None, list[str], TurnOutcome]:
         """Come online, recover at a haven, open a scene and describe it.
@@ -263,6 +310,7 @@ class PlaySession:
         me = self.character
         if me.sheet.fallen:
             raise SessionError(f"{me.name} has fallen; their story is over")
+        self._require_budget()
         logoff = self._last_logoff()
         characters.set_online(self.conn, me.id, True, self._cause())
         notes = self._recover(logoff) if logoff else []
@@ -280,6 +328,7 @@ class PlaySession:
             raise SessionError("say what your character does")
         if len(intent) > scenes.MAX_INTENT_LENGTH:
             raise SessionError(f"keep it under {scenes.MAX_INTENT_LENGTH} characters")
+        self._require_budget()
         return self._run(intent, None)
 
     def fall_or_endure(self, choice: str, scar: str | None = None) -> Character:
@@ -317,6 +366,7 @@ class PlaySession:
             raise SessionError("that's in another district")
         if here is not None and here.id == target.id:
             raise SessionError("you're already there")
+        self._require_budget()
         self._close_scene()
         characters.move_character(self.conn, me.id, target.id, self._cause())
         self._open_scene()

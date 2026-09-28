@@ -8,12 +8,16 @@ import argparse
 import random
 import sys
 from collections.abc import Callable, Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 
+from new_vesper.budget.policy import BudgetConfig
+from new_vesper.budget.pricing import PRICES, price_of
+from new_vesper.budget.report import month_report
 from new_vesper.content.loader import Content, load_content
 from new_vesper.content.seed import seed
 from new_vesper.dm.agent import ModelClient
-from new_vesper.dm.config import DMConfig
+from new_vesper.dm.config import CallType, DMConfig
 from new_vesper.dm.handlers import NEEDS_HANDS, NO_HANDS
 from new_vesper.dm.session import PlaySession, SessionError, TurnOutcome
 from new_vesper.rules.character import create_character as new_sheet
@@ -35,6 +39,7 @@ HELP = """Type what your character does, or a command:
   /go <place>    move somewhere in this district (e.g. /go tarp-row)
   /places        list places you can go
   /level         spend XP on a level
+  /budget        how much of your monthly allowance is left
   /help          this list
   /quit          log off"""
 
@@ -240,6 +245,7 @@ def play(
     design_text: str,
     config: DMConfig,
     rng: random.Random,
+    budget: BudgetConfig | None = None,
 ) -> None:
     seed(conn, content)
     player = players.find_player(conn, handle) or players.create_player(
@@ -253,13 +259,23 @@ def play(
     else:
         pick = choose(ask, say, "Play as:", [(str(c.id), c.name) for c in living])
         me = characters.get_character(conn, int(pick))
-    session = PlaySession(conn, content, client, design_text, rng, me.id, config=config)
-    recap, notes, opening = session.start()
+    session = PlaySession(
+        conn, content, client, design_text, rng, me.id, config=config, budget=budget
+    )
+    try:
+        recap, notes, opening = session.start()
+    except SessionError as exc:
+        say(str(exc))
+        return
+    say(session.budget_status().allowance_message())
     if recap:
         say(f"While you were gone: {recap}")
     for note in notes:
         say(f"  [{note}]")
     report(opening, say)
+    if opening.quiet:
+        session.end()
+        return
     say("(/help for commands)")
     try:
         while True:
@@ -281,11 +297,15 @@ def play(
                     report(session.go(line[3:].strip()), say)
                 elif line == "/level":
                     level_menu(session, content, ask, say)
+                elif line == "/budget":
+                    say(session.budget_status().allowance_message())
                 elif line.startswith("/"):
                     say("Unknown command. /help lists them.")
                 else:
                     outcome = session.turn(line)
                     report(outcome, say)
+                    if outcome.quiet:
+                        break
                     if outcome.fall_or_endure_pending and not fall_or_endure_menu(
                         session, ask, say
                     ):
@@ -316,7 +336,23 @@ def main(
     play_cmd.add_argument("--db", default="vesper.db", help="SQLite file (default vesper.db)")
     play_cmd.add_argument("--handle", required=True, help="your player handle")
     play_cmd.add_argument("--seed", type=int, default=None, help="RNG seed, for testing")
+    budget_cmd = sub.add_parser("budget", help="operator report: this month's spend")
+    budget_cmd.add_argument("--db", default="vesper.db", help="SQLite file (default vesper.db)")
     args = parser.parse_args(argv)
+    budget = BudgetConfig.from_env()
+
+    if args.command == "budget":
+        conn = open_database(args.db)
+        try:
+            for line in month_report(conn, budget, datetime.now(UTC)):
+                say(line)
+        finally:
+            conn.close()
+        return 0
+
+    config = DMConfig.from_env()
+    for call in CallType:
+        price_of(config.model_for(call), PRICES)  # refuse to play with an unpriced model
 
     if client_factory is None:
         import anthropic  # only the real CLI needs the SDK
@@ -332,8 +368,9 @@ def main(
             ask,
             say,
             design_text=DESIGN_DOC.read_text(encoding="utf-8"),
-            config=DMConfig.from_env(),
+            config=config,
             rng=random.Random(args.seed),
+            budget=budget,
         )
     finally:
         conn.close()

@@ -32,6 +32,8 @@ class ModelClient(Protocol):
 
 # (call type, model, usage object from the response)
 UsageHook = Callable[[CallType, str, Any], None]
+# Called before every model call; raises to stop spending (e.g. BudgetExhausted).
+Guard = Callable[[], None]
 # (tool name, raw input) -> (result, is_error)
 Dispatch = Callable[[str, Any], tuple[dict[str, Any], bool]]
 
@@ -65,8 +67,13 @@ def run_turn(
     user_content: str,
     dispatch: Dispatch,
     on_usage: UsageHook | None = None,
+    guard: Guard | None = None,
 ) -> TurnResult:
-    """Run the model until it narrates. Tools are executed through ``dispatch`` only."""
+    """Run the model until it narrates. Tools are executed through ``dispatch`` only.
+
+    ``guard`` runs before every model call and may raise to stop the turn; tool
+    calls already made stay applied, since each one is complete on its own.
+    """
     messages: list[dict[str, Any]] = [{"role": "user", "content": user_content}]
     turn = TurnResult(narration="")
     params: dict[str, Any] = {
@@ -81,6 +88,8 @@ def run_turn(
         last_round = round_number == config.max_tool_rounds
         # Out of rounds: the model must narrate with what it has.
         extra = {"tool_choice": {"type": "none"}} if last_round else {}
+        if guard is not None:
+            guard()
         response = client.messages.create(**params, **extra, messages=messages)
         turn.rounds = round_number + 1
         turn.stop_reason = response.stop_reason
@@ -118,9 +127,12 @@ def summarize(
     call: CallType,
     request: str,
     on_usage: UsageHook | None = None,
+    guard: Guard | None = None,
 ) -> str:
     """One short no-tools call on the cheap model: beat summaries, folds, recaps."""
     model = config.model_for(call)
+    if guard is not None:
+        guard()
     response = client.messages.create(
         model=model,
         max_tokens=config.summary_max_tokens,

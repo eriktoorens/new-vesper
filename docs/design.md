@@ -306,6 +306,7 @@ The DM's tokens are the main running cost; hosting is small. Cost scales with pl
 - **Routing in practice (D20):** one tool-using turn both adjudicates and narrates, so the turn loop runs on Sonnet. Haiku handles beat summaries, "while you were gone" recaps and knack drafting. The model is configurable per call type.
 - **Starting cap (D21):** $50 a month for the whole city, as an operator setting. Retune after step 6 measures cost per player-hour.
 - **Starting allowance (D22):** $10 per player per month, as an operator setting, enforced on measured spend. Players see it as an estimated number of hours left, from their own measured cost per hour.
+- **Enforcement (implements D21, D22):** every call is priced from its token usage (input, output, cache reads and writes) and recorded against its player and scene. The budget is checked before every API call, so spending can pass a limit by at most one call; if a limit is reached mid-turn, the turn ends quietly and any tool writes already made stand. Months are UTC calendar months. A player's hours left are their remaining allowance divided by their own measured cost per hour, where play time is the time between calls, ignoring breaks over 10 minutes.
 - **Later options:** a patron pool, bring-your-own API key, or prepaid credits, all built on the same ledger.
 
 ## Open Questions and Next Steps

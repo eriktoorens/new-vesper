@@ -70,3 +70,26 @@ def test_returning_player_skips_creation(tmp_path: Path) -> None:
     assert "Welcome back." in text
     assert "/go <place>" in text
     assert "Unknown command" in text
+
+
+def test_budget_command_and_operator_report(tmp_path: Path) -> None:
+    out = run(
+        tmp_path,
+        ["1", "1", "1", "1", "1", "1", "1", "1", "Mira", "Jun", "/budget", "/quit"],
+        StubClient(),
+    )
+    assert "Allowance left this month: $9.99." in out  # $9.998..., rounded down
+    report: list[str] = []
+    main(["budget", "--db", str(tmp_path / "v.db")], say=report.append)
+    assert report[1].startswith("City: $0.0")
+    assert report[2].startswith("  ash: $0.0")
+
+
+def test_unpriced_model_is_refused(tmp_path: Path, monkeypatch) -> None:
+    import pytest
+
+    from new_vesper.budget.pricing import UnpricedModel
+
+    monkeypatch.setenv("NEW_VESPER_TURN_MODEL", "claude-mystery-9")
+    with pytest.raises(UnpricedModel):
+        run(tmp_path, [], StubClient())
