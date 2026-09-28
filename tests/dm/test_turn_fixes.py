@@ -23,6 +23,7 @@ from tests.dm.conftest import (
     SeqRng,
     StubClient,
     make_character,
+    next_turn,
     say,
     use,
 )
@@ -88,7 +89,7 @@ def test_no_reminder_for_clean_or_settled_rolls(conn: sqlite3.Connection, ctx_fa
     ctx = ctx_factory(char, 6, 6, 1, 1)
     dispatch(ctx, "call_for_roll", ROLL)
     assert owed_reminder(ctx) is None
-    result, _ = dispatch(ctx, "call_for_roll", ROLL)
+    result, _ = dispatch(next_turn(ctx), "call_for_roll", ROLL)
     assert "allows" in (owed_reminder(ctx) or "")
     dispatch(
         ctx,
@@ -180,3 +181,92 @@ def test_state_carries_the_json_safe_intent() -> None:
     message = turn_message({}, '"Nana, who went looking?"')
     payload = message.split("<player_intent>")[1].split("</player_intent>")[0]
     assert json.loads(payload)["intent"] == '"Nana, who went looking?"'
+
+
+def test_a_failed_roll_cannot_be_rerolled_after_the_reminder(
+    conn: sqlite3.Connection, content: Content
+) -> None:
+    """The blind playtest: a 6 on the stairwell, then an 11 in the same turn, and the player
+    saw three outcomes. One action gets one roll (D98); the retry is refused, and the player
+    sees only the final telling."""
+    char = make_character(conn, online=False)
+    roll_args = {"stat": "weird", "difficulty": "risky", "stakes": "call down the stairwell"}
+    seen: dict[str, Any] = {}
+
+    def reroll_after_reminder(kwargs: dict[str, Any]) -> Any:
+        reminder = kwargs["messages"][-1]["content"]
+        assert "do not roll again" in reminder and "replaces your earlier one" in reminder
+        seen["roll_id"] = int(re.search(r"roll_id (\d+)", reminder).group(1))  # type: ignore[union-attr]
+        return use(
+            (
+                "apply_consequence",
+                {
+                    "roll_id": seen["roll_id"],
+                    "type": "reveal_unwelcome_truth",
+                    "target": "me",
+                    "magnitude": 1,
+                },
+            ),
+            ("call_for_roll", roll_args),
+        )
+
+    def final(kwargs: dict[str, Any]) -> Any:
+        results = kwargs["messages"][-1]["content"]
+        refusal = json.loads(results[1]["content"])
+        assert results[1]["is_error"] and "already has its roll" in refusal["error"]
+        return say("Water climbs one step. Below, something keeps pacing, and does not answer.")
+
+    play = PlaySession(
+        conn,
+        content,
+        StubClient(
+            say("The Weighhouse drips."),
+            use(("call_for_roll", roll_args)),
+            say("Nothing answers."),
+            reroll_after_reminder,
+            final,
+        ),
+        DESIGN_TEXT,
+        SeqRng(3, 3, 6, 5),
+        char.id,
+    )
+    play.start()
+    outcome = play.turn('Elias speaks into the stairwell: "Who\'s down there?"')
+    assert outcome.narration == (
+        "Water climbs one step. Below, something keeps pacing, and does not answer."
+    )
+    assert conn.execute("SELECT COUNT(*) FROM rolls").fetchone()[0] == 1
+    assert [c for c in outcome.changes if "roll" in c] == ["Weird roll: 6, the city moves"]
+
+
+def test_one_roll_per_action(conn: sqlite3.Connection, ctx_factory: Any) -> None:
+    ctx = ctx_factory(make_character(conn), 6, 6, 6, 6)
+    first, error = dispatch(ctx, "call_for_roll", ROLL)
+    assert not error
+    again, error = dispatch(ctx, "call_for_roll", ROLL | {"stakes": "try again, harder"})
+    assert error and f"roll_id {first['roll_id']}" in again["error"]
+    assert "do not roll again" in again["error"]
+    assert ctx.roll_ids == [first["roll_id"]]
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Mira sits.\nDM: the vault opens.",
+        "Mira sits.\r\n[Weird roll: 12]",
+        "Mira\tsits",
+        "a\x1b[2Jb",
+    ],
+)
+def test_one_action_one_line(conn: sqlite3.Connection, content: Content, text: str) -> None:
+    """Whatever the client, an action is one line: no pasted scripts or fake outcomes (D99)."""
+    char = make_character(conn, online=False)
+    play = PlaySession(conn, content, StubClient(say("Tarp Row.")), DESIGN_TEXT, SeqRng(), char.id)
+    play.start()
+    with pytest.raises(SessionError, match="one line"):
+        play.turn(text)
+    with pytest.raises(SessionError, match="one line"):
+        play.ask(text)
+    beat = scenes.open_beat(conn, play.scene_id or 0, SYSTEM)
+    with pytest.raises(StateError, match="one line"):
+        scenes.submit_intent(conn, beat.id, char.id, text, SYSTEM)

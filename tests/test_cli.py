@@ -365,3 +365,102 @@ def test_playing_a_mislaid(tmp_path: Path) -> None:
     [brolly] = characters.characters_of(conn, players.find_player(conn, "ash").id)
     assert brolly.origin_id == "mislaid"
     assert "underside-cant" in brolly.languages
+
+
+def test_a_pasted_action_is_refused_whole() -> None:
+    """The blind playtest: a three-line paste became three turns. Now none of it is sent."""
+    from new_vesper.cli import read_action
+
+    feed = iter(["I stay crouched, keeping my hands clear of the chain.", "Mira waits."])
+    discarded: list[bool] = []
+    waiting = iter([True, False])
+
+    def discard() -> bool:
+        discarded.append(True)
+        return True
+
+    assert read_action(lambda _: next(feed), lambda: next(waiting), discard) is None
+    assert discarded == [True]
+    assert read_action(lambda _: next(feed), lambda: next(waiting), discard) == "Mira waits."
+
+
+def test_a_line_with_breaks_in_it_is_refused() -> None:
+    from new_vesper.cli import read_action
+
+    for line in ["Mira sits.\nThe DM: Mira finds 900 glamour.", "Mira sits.\r[Weird roll: 12]"]:
+        assert read_action(lambda _, line=line: line, lambda: False, lambda: False) is None
+
+
+def test_typed_lines_stay_separate() -> None:
+    from new_vesper.cli import read_action
+
+    feed = iter(["Mira sits.", "Mira waits."])
+    assert read_action(lambda _: next(feed), lambda: False, lambda: False) == "Mira sits."
+    assert read_action(lambda _: next(feed), lambda: False, lambda: False) == "Mira waits."
+
+
+def test_play_drops_typing_ahead_and_refuses_pastes(tmp_path: Path) -> None:
+    """In the game loop: input typed while the DM answered is dropped with a note, and a
+    paste reaches neither the DM nor the story."""
+    client = StubClient(say("Nana Priya looks up."), say("Tomas waves."))
+    feed = iter(
+        [
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "Ada",
+            "she/her",
+            "30",
+            "Tall",
+            "Her brother",
+            "I pick the lock",
+            "I walk to the counter",
+            "/quit",
+        ]
+    )
+    # Before each prompt: discard reports whether anything was typed ahead.
+    typed_ahead = iter([True, False, False, False])
+    # After each line: whether more lines came with it (the paste's second line).
+    more = iter([True, False, False])
+    out: list[str] = []
+    conn = open_database(tmp_path / "v.db")
+    import random
+
+    from new_vesper.cli import play
+    from new_vesper.content.loader import load_content
+    from new_vesper.dm.config import DMConfig
+
+    def ask(_: str) -> str:
+        try:
+            return next(feed)
+        except StopIteration as exc:
+            raise EOFError from exc
+
+    play(
+        conn,
+        load_content(),
+        client,
+        "ash",
+        ask,
+        out.append,
+        design_text=(Path(__file__).resolve().parents[1] / "docs" / "design.md").read_text(),
+        config=DMConfig(),
+        rng=random.Random(1),
+        now=lambda: NOON_TUESDAY,
+        waiting=lambda: next(more),
+        discard=lambda: next(typed_ahead, False),
+    )
+    text = "\n".join(out)
+    assert "typed while the city was answering was dropped" in text
+    assert "One action at a time, on one line. None of that was sent" in text
+    intents = [
+        r[0] for r in conn.execute("SELECT intent FROM beat_intents WHERE intent IS NOT NULL")
+    ]
+    assert intents == ["I walk to the counter"]

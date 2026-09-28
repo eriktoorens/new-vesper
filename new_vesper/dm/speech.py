@@ -221,7 +221,8 @@ def speech_reminder(ctx: "TurnContext", narration: str) -> str | None:
         + "; ".join(problems)
         + '. Every line anyone other than the player character speaks goes in <say who="..." '
         'lang="..." tone="..." gist="...">words</say>, and only someone here who speaks that '
-        "language can say it. Fix it and narrate the whole turn again.</rules_check>"
+        "language can say it. Fix the tags without rolling again, then tell the turn once, "
+        "from the start: this telling replaces your earlier one.</rules_check>"
     )
 
 

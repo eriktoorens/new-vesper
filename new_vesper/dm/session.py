@@ -73,6 +73,8 @@ PRIVATE_EVENTS = frozenset(
 )
 # Memory lines each NPC keeps per character before older ones fold into a summary.
 MEMORIES_KEPT = 8
+# One action per prompt (D99): refused whole, so nothing of it reaches the DM.
+ONE_LINE = "One action at a time, on one line. None of that was sent; try again."
 QUIET_NARRATION = "The rain goes quiet, and so does the city. {message}"
 
 
@@ -504,6 +506,8 @@ class PlaySession:
             raise SessionError("choose Fall or Endure first")
         if not intent.strip():
             raise SessionError("say what your character does")
+        if not scenes.one_line(intent):
+            raise SessionError(ONE_LINE)
         if len(intent) > scenes.MAX_INTENT_LENGTH:
             raise SessionError(f"keep it under {scenes.MAX_INTENT_LENGTH} characters")
         self._require_budget()
@@ -514,6 +518,8 @@ class PlaySession:
         """An out-of-character question. The DM may only look; nothing changes, no beat."""
         if not question.strip():
             raise SessionError("ask a question after /ask")
+        if not scenes.one_line(question):
+            raise SessionError(ONE_LINE)
         if len(question) > scenes.MAX_INTENT_LENGTH:
             raise SessionError(f"keep it under {scenes.MAX_INTENT_LENGTH} characters")
         self._require_budget()

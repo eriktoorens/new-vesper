@@ -563,6 +563,13 @@ def call_for_roll(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
     magic = _flag(args.get("magic", False), "magic")
     me = _me(ctx)
     _require_able(me)
+    if ctx.roll_ids:
+        # One action, one roll (D98): the dice have spoken, and the DM cannot fish again.
+        raise ToolError(
+            f"this action already has its roll (roll_id {ctx.roll_ids[0]}), and its result "
+            "stands: do not roll again this turn. Apply that roll's consequence if it owes "
+            "one, and narrate what it decided."
+        )
     knack = None
     if "knack" in args and args["knack"] is not None:
         knack = _check_knack(ctx, me, args["knack"], stat)
@@ -1045,6 +1052,7 @@ def owed_reminder(ctx: TurnContext) -> str | None:
         "<rules_check>Before you finish: every roll at 7-9 or 6 or less needs exactly one "
         "consequence, applied with apply_consequence. Still owed: "
         + "; ".join(lines)
-        + ". Apply it, then narrate the whole turn again with the consequence in it."
-        "</rules_check>"
+        + ". Apply it to the roll you already made; do not roll again. Then tell the turn "
+        "once, from the start, with the consequence in it: this telling replaces your "
+        "earlier one, so the player sees one outcome, not several.</rules_check>"
     )

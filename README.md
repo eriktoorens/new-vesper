@@ -85,6 +85,7 @@ Check spending from outside the game with `new-vesper budget`.
 
 ### Good to know
 
+- **One action at a time:** type each action on one line, after you've read the city's answer. Anything typed while the city is answering is dropped, and a paste of several lines is refused whole.
 - **Editing what you type:** use ←/→ to move within a line, ↑/↓ to bring back earlier lines, and Ctrl-A/Ctrl-E to jump to the start or end.
 - **The world lives in `vesper.db`** in the folder you run from. Delete it to start over, or use `--db other.db` to keep a separate world.
 - **Each install is its own city for now.** Until multiplayer is built, you and a friend won't meet.
@@ -94,7 +95,7 @@ Check spending from outside the game with `new-vesper budget`.
 
 ## Where we are, what's next
 
-**Done** (all on this branch, 871 tests passing):
+**Done** (all on this branch, 881 tests passing):
 - Build steps 1–5: the rules engine, the SQLite state, the Market District content, the DM agent with its validated tool contract, and the budget with a usage ledger, caps and allowances.
 - Playtest layers 1–5:
   - fixes from the first playtest
@@ -106,7 +107,7 @@ Check spending from outside the game with `new-vesper budget`.
   - languages: speech in a language your character doesn't know shows as gibberish or a note, a Heart roll gets the gist, and `/speak` picks what you speak aloud
   - bodily needs: hunger, thirst, tiredness, cold and heat wear down stats and, at their worst, cost Harm or Fade; `/eat`, `/drink` and `/rest` ease them
   - setting-native kinds: play a Hearsay (a story walking), a Castoff (a dead brand's mascot) or a Mislaid (a lost thing become someone)
-- Decisions D1–D97 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
+- Decisions D1–D99 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
 
 **Next:**
 1. **Playtest layers 6–8: languages, bodily needs and the new kinds (D76–D93).** Watch whether the DM tags every line and keeps translations out of plain narration, whether the needs' rates feel right, and how the DM plays a hearsay, a castoff or a mislaid.

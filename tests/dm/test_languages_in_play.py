@@ -26,6 +26,7 @@ from tests.dm.conftest import (
     SeqRng,
     StubClient,
     make_character,
+    next_turn,
     say,
     use,
 )
@@ -245,10 +246,10 @@ def test_a_language_can_be_followed_once_per_scene(ctx_factory: Any, mira: Any) 
         "apply_consequence",
         {"roll_id": first["roll_id"], "type": "separate_them", "target": "me", "magnitude": 1},
     )
-    again, error = dispatch(ctx, "call_for_roll", gist_roll())
+    again, error = dispatch(next_turn(ctx), "call_for_roll", gist_roll())
     assert error and "already tried" in again["error"]
     # Another language is a fresh try.
-    other, error = dispatch(ctx, "call_for_roll", gist_roll(language="Cantonese"))
+    other, error = dispatch(next_turn(ctx), "call_for_roll", gist_roll(language="Cantonese"))
     assert not error and other["following"] == "Cantonese"
 
 
@@ -279,7 +280,7 @@ def test_the_language_knack_adds_one_once_per_scene(
     assert not error, result
     assert result["knack_bonus"] == 1 and result["total"] == 4 + 4 - 1 + 1
     used, error = dispatch(
-        ctx, "call_for_roll", gist_roll(knack="ear-for-tongues", language="cantonese")
+        next_turn(ctx), "call_for_roll", gist_roll(knack="ear-for-tongues", language="cantonese")
     )
     assert error and "used up" in used["error"]
 
