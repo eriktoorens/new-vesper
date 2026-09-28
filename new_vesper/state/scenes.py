@@ -221,11 +221,19 @@ def _add_intent(
     return get_beat(conn, beat.id)
 
 
+def one_line(value: str) -> bool:
+    """No line breaks, tabs or other control characters: one action, one line (D99)."""
+    return not any(ord(c) < 32 or ord(c) == 127 for c in value)
+
+
 def submit_intent(
     conn: sqlite3.Connection, beat_id: int, character_id: int, intent: str, cause: Cause
 ) -> Beat:
     """Record what a player tries this beat. The text is untrusted and stored as data."""
     words = text(intent, "intent", MAX_INTENT_LENGTH)
+    if not one_line(words):
+        # One action per prompt (D99): no line breaks or control characters.
+        raise StateError("an intent is one action on one line")
     return _add_intent(conn, beat_id, character_id, cause, words, None)
 
 

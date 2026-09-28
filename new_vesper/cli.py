@@ -29,7 +29,7 @@ from new_vesper.content.seed import seed
 from new_vesper.dm.agent import ModelClient
 from new_vesper.dm.config import CallType, DMConfig
 from new_vesper.dm.handlers import NEEDS_HANDS, NO_HANDS
-from new_vesper.dm.session import PlaySession, SessionError, TurnOutcome
+from new_vesper.dm.session import ONE_LINE, PlaySession, SessionError, TurnOutcome
 from new_vesper.rules.character import create_character as new_sheet
 from new_vesper.rules.currency import format_glitter
 from new_vesper.rules.errors import RulesError
@@ -76,14 +76,15 @@ def _ask(ask: Ask, question: str) -> str:
         raise Quit from exc
 
 
-# How long to wait for the rest of a paste before taking what has arrived.
+# How long to wait for the rest of a paste before judging the line alone.
 PASTE_WINDOW = 0.05
+TYPED_AHEAD = "(What you typed while the city was answering was dropped: act on what you've seen.)"
 
 
 def stdin_has_more(timeout: float = PASTE_WINDOW) -> bool:
     """Whether more input is already waiting, such as the next line of a paste.
 
-    POSIX terminals only; elsewhere every line stands alone.
+    POSIX terminals only; elsewhere this is always False.
     """
     try:
         import select
@@ -94,19 +95,31 @@ def stdin_has_more(timeout: float = PASTE_WINDOW) -> bool:
     return bool(ready)
 
 
-def read_action(ask: Ask, more: Callable[[], bool]) -> str:
-    """One player action: a line, plus any lines pasted along with it.
+def discard_waiting() -> bool:
+    """Throw away input that is already waiting. Returns whether there was any."""
+    if not stdin_has_more(0):
+        return False
+    try:
+        import termios
 
-    A multi-line paste arrives as several lines at once. Read one at a time, each
-    line became its own turn, and the DM answered one action three times over.
+        termios.tcflush(sys.stdin.fileno(), termios.TCIFLUSH)
+    except (ImportError, OSError, ValueError):
+        return False
+    return True
+
+
+def read_action(ask: Ask, waiting: Callable[[], bool], discard: Callable[[], bool]) -> str | None:
+    """One player action: one line, typed after they've seen the world's last answer (D99).
+
+    Returns None for a line that came with others, as a multi-line paste does:
+    the whole paste is refused, so no part of it reaches the DM and no action
+    is taken on a world the player hasn't seen yet.
     """
-    lines = [_ask(ask, "> ")]
-    while more():
-        try:
-            lines.append(ask("").strip())
-        except EOFError:
-            break
-    return " ".join(" ".join(line.split()) for line in lines if line.strip())
+    line = _ask(ask, "> ")
+    if waiting() or "\n" in line or "\r" in line:
+        discard()
+        return None
+    return line
 
 
 def choose(ask: Ask, say: Say, title: str, options: Sequence[tuple[str, str]]) -> str:
@@ -373,9 +386,14 @@ def play(
     rng: random.Random,
     budget: BudgetConfig | None = None,
     now: Callable[[], datetime] = lambda: datetime.now(UTC),
-    more: Callable[[], bool] | None = None,
+    waiting: Callable[[], bool] | None = None,
+    discard: Callable[[], bool] | None = None,
 ) -> None:
-    """The terminal game. ``more`` says whether pasted lines are still waiting."""
+    """The terminal game.
+
+    ``waiting`` says whether more input has already arrived; ``discard`` throws
+    it away and says whether there was any. Both default to the real terminal.
+    """
     seed(conn, content)
     player = players.find_player(conn, handle) or players.create_player(
         conn, handle, Cause(Actor.PLAYER)
@@ -435,12 +453,17 @@ def play(
         session.end()
         return
     say("(/help for commands)")
-    if more is None:
-        live = ask is input and sys.stdin.isatty()
-        more = stdin_has_more if live else (lambda: False)
+    live = ask is input and sys.stdin.isatty()
+    waiting = waiting or (stdin_has_more if live else (lambda: False))
+    discard = discard or (discard_waiting if live else (lambda: False))
     try:
         while True:
-            line = read_action(ask, more)
+            if discard():
+                say(TYPED_AHEAD)
+            line = read_action(ask, waiting, discard)
+            if line is None:
+                say(f"({ONE_LINE})")
+                continue
             if not line:
                 continue
             try:

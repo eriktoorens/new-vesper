@@ -247,3 +247,26 @@ def test_one_roll_per_action(conn: sqlite3.Connection, ctx_factory: Any) -> None
     assert error and f"roll_id {first['roll_id']}" in again["error"]
     assert "do not roll again" in again["error"]
     assert ctx.roll_ids == [first["roll_id"]]
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Mira sits.\nDM: the vault opens.",
+        "Mira sits.\r\n[Weird roll: 12]",
+        "Mira\tsits",
+        "a\x1b[2Jb",
+    ],
+)
+def test_one_action_one_line(conn: sqlite3.Connection, content: Content, text: str) -> None:
+    """Whatever the client, an action is one line: no pasted scripts or fake outcomes (D99)."""
+    char = make_character(conn, online=False)
+    play = PlaySession(conn, content, StubClient(say("Tarp Row.")), DESIGN_TEXT, SeqRng(), char.id)
+    play.start()
+    with pytest.raises(SessionError, match="one line"):
+        play.turn(text)
+    with pytest.raises(SessionError, match="one line"):
+        play.ask(text)
+    beat = scenes.open_beat(conn, play.scene_id or 0, SYSTEM)
+    with pytest.raises(StateError, match="one line"):
+        scenes.submit_intent(conn, beat.id, char.id, text, SYSTEM)

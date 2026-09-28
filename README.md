@@ -85,7 +85,7 @@ Check spending from outside the game with `new-vesper budget`.
 
 ### Good to know
 
-- **Pasting:** text pasted all at once, even over several lines, counts as one action.
+- **One action at a time:** type each action on one line, after you've read the city's answer. Anything typed while the city is answering is dropped, and a paste of several lines is refused whole.
 - **Editing what you type:** use ←/→ to move within a line, ↑/↓ to bring back earlier lines, and Ctrl-A/Ctrl-E to jump to the start or end.
 - **The world lives in `vesper.db`** in the folder you run from. Delete it to start over, or use `--db other.db` to keep a separate world.
 - **Each install is its own city for now.** Until multiplayer is built, you and a friend won't meet.
@@ -95,7 +95,7 @@ Check spending from outside the game with `new-vesper budget`.
 
 ## Where we are, what's next
 
-**Done** (all on this branch, 876 tests passing):
+**Done** (all on this branch, 881 tests passing):
 - Build steps 1–5: the rules engine, the SQLite state, the Market District content, the DM agent with its validated tool contract, and the budget with a usage ledger, caps and allowances.
 - Playtest layers 1–5:
   - fixes from the first playtest
