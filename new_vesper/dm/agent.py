@@ -34,6 +34,10 @@ class ModelClient(Protocol):
 UsageHook = Callable[[CallType, str, Any], None]
 # Called before every model call; raises to stop spending (e.g. BudgetExhausted).
 Guard = Callable[[], None]
+# Called when the model wants to end its turn; returns a reminder if it may not yet.
+Completion = Callable[[], str | None]
+# How many times a turn is sent back for unfinished business before it may end anyway.
+MAX_REMINDERS = 2
 # (tool name, raw input) -> (result, is_error)
 Dispatch = Callable[[str, Any], tuple[dict[str, Any], bool]]
 
@@ -68,11 +72,16 @@ def run_turn(
     dispatch: Dispatch,
     on_usage: UsageHook | None = None,
     guard: Guard | None = None,
+    *,
+    tools: list[dict[str, Any]] | None = None,
+    completion: Completion | None = None,
 ) -> TurnResult:
     """Run the model until it narrates. Tools are executed through ``dispatch`` only.
 
     ``guard`` runs before every model call and may raise to stop the turn; tool
     calls already made stay applied, since each one is complete on its own.
+    ``completion`` runs when the model tries to finish; if it returns a reminder
+    (for example, a roll that still owes its consequence), the model is sent back.
     """
     messages: list[dict[str, Any]] = [{"role": "user", "content": user_content}]
     turn = TurnResult(narration="")
@@ -80,8 +89,9 @@ def run_turn(
         "model": config.turn_model,
         "max_tokens": config.turn_max_tokens,
         "system": system,
-        "tools": TOOLS,
+        "tools": TOOLS if tools is None else tools,
     }
+    reminders = 0
     if config.turn_effort:
         params["output_config"] = {"effort": config.turn_effort}
     for round_number in range(config.max_tool_rounds + 1):
@@ -100,6 +110,12 @@ def run_turn(
             return turn
         calls = [b for b in response.content if getattr(b, "type", None) == "tool_use"]
         if response.stop_reason != "tool_use" or not calls:
+            reminder = completion() if completion is not None else None
+            if reminder and reminders < MAX_REMINDERS and not last_round:
+                reminders += 1
+                messages.append({"role": "assistant", "content": response.content})
+                messages.append({"role": "user", "content": reminder})
+                continue
             turn.narration = _text_of(response) or EMPTY_NARRATION
             return turn
         # Send the whole assistant turn back, thinking blocks included.

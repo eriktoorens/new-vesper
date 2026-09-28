@@ -30,6 +30,7 @@ class Character:
     name: str
     origin_id: str
     bond: str
+    pronouns: str | None
     sheet: Sheet
     tags: frozenset[str]  # origin tags plus tags gained in play
     currency: int  # in glitter (D18)
@@ -111,12 +112,14 @@ def create_character(
     cause: Cause,
     *,
     location_id: str | None = None,
+    pronouns: str | None = None,
 ) -> Character:
     """Store a new character. Build ``sheet`` with ``rules.character.create_character``."""
     player = get_player(conn, player_id)
     origin = get_origin(conn, origin_id)
     clean_name = text(name, "name", 60).strip()
     clean_bond = text(bond, "bond", 200).strip()
+    clean_pronouns = None if pronouns is None else text(pronouns, "pronouns", 30).strip()
     if location_id is not None:
         location_id = get_location(conn, location_id).id
     _check_sheet(conn, sheet)
@@ -125,6 +128,7 @@ def create_character(
         "name": clean_name,
         "origin_id": origin.id,
         "bond": clean_bond,
+        "pronouns": clean_pronouns,
         "location_id": location_id,
         "currency": STARTING_GLITTER,
         **_sheet_columns(sheet),
@@ -189,6 +193,7 @@ def get_character(conn: sqlite3.Connection, character_id: int) -> Character:
         name=row["name"],
         origin_id=row["origin_id"],
         bond=row["bond"],
+        pronouns=row["pronouns"],
         sheet=sheet,
         tags=get_origin(conn, row["origin_id"]).tags
         | frozenset(
@@ -352,3 +357,14 @@ def characters_of(conn: sqlite3.Connection, player_id: int) -> list[Character]:
     pid = get_player(conn, player_id).id
     rows = conn.execute("SELECT id FROM characters WHERE player_id = ? ORDER BY id", (pid,))
     return [get_character(conn, row[0]) for row in rows]
+
+
+def set_pronouns(
+    conn: sqlite3.Connection, character_id: int, pronouns: str, cause: Cause
+) -> Character:
+    """Set or change a character's pronouns."""
+    character = get_character(conn, character_id)
+    value = text(pronouns, "pronouns", 30).strip()
+    return _update_field(
+        conn, character, "pronouns", value, "pronouns_set", cause, {"pronouns": value}
+    )

@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D32** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D43** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -227,6 +227,14 @@ One turn runs as a loop:
 
 Every state change goes through a tool, and every tool checks the request against the rules before writing.
 
+**Narration (D33):** the DM narrates in third person, present tense, using the character's name and the pronouns on their sheet. Player characters choose pronouns at creation.
+
+**Player input (D34):** plain text is what the character does, in any grammatical person; text in quotation marks is what the character says, word for word. The DM never rewrites, paraphrases or adds to a player character's words, actions, thoughts or feelings; it narrates the world's response.
+
+**Questions to the DM (D35):** `/ask` puts an out-of-character question to the DM. It may only look: no roll, no state change, no time passing, no beat. The DM answers with only what the character can see, hear or reasonably know.
+
+**Owed consequences (D36):** a roll at 7–9 or 6 or less must get its consequence. If the DM tries to end a turn with one still owed, code sends it back to apply it (up to twice).
+
 **Movement (D27):** the player moves with the `/go <place>` command; code checks the place is real and in the same district, closes the scene and opens one there. The DM never moves characters, since that would be a state change without a roll. When a player says they head somewhere, the DM narrates setting off and points to `/go`.
 
 **Who a roll's consequences land on (D26):** Harm and Fade from a roll land only on the character who rolled. Harming another player's character needs an opposed roll, which comes with multiplayer; until then there is no PvP state change at all.
@@ -309,6 +317,18 @@ The DM's tokens are the main running cost; hosting is small. Cost scales with pl
 - **Enforcement (implements D21, D22):** every call is priced from its token usage (input, output, cache reads and writes) and recorded against its player and scene. The budget is checked before every API call, so spending can pass a limit by at most one call; if a limit is reached mid-turn, the turn ends quietly and any tool writes already made stand. Months are UTC calendar months. A player's hours left are their remaining allowance divided by their own measured cost per hour, where play time is the time between calls, ignoring breaks over 10 minutes.
 - **Later options:** a patron pool, bring-your-own API key, or prepaid credits, all built on the same ledger.
 
+## Planned: A Living World (D37–D43)
+
+Direction agreed after the first playtest (2026-09-28). Each layer's details are decided when it is built, and every mechanic stays code-owned: the DM proposes, code decides.
+
+- **Character details (D37):** every player character and NPC has an age, pronouns, appearance and the languages they speak. NPCs get them in content; players choose them at creation.
+- **Time and weather (D38):** the city clock runs in real time, in one city time zone. Weather comes from per-district tables that code rolls. NPCs follow schedules in content (Nana Priya eats, shops, sleeps), code places them by the clock, and the daily city tick moves their goals along.
+- **NPC memory and attitudes (D39):** code stores each NPC's attitude toward each character and short notes on past interactions. The DM proposes changes through a tool, and code caps how far an attitude moves per scene. NPC-to-NPC attitudes live in content. NPCs get traits, speech habits and a sample line for distinct voices.
+- **Random encounters (D40):** code rolls on arriving somewhere and every few beats (about 5), from per-district tables; the odds rise as region Light falls. The DM narrates what code drew.
+- **Languages (D41):** code tracks who speaks what and what language each line is spoken in. Speech a character does not understand reaches them as gibberish. Common languages can be recognized by name. Getting the gist of an unknown language is a Heart roll: 10+ the gist and tone, 7–9 the tone only or the gist at a cost, 6 or less gibberish and perhaps the speaker notices. A language knack gives +1 to those rolls, with a use limit per the knack budget.
+- **Setting-native kinds (D42):** new kinds of people are invented for New Vesper and added as origins, like made people and awakened animals, rather than classic fantasy races.
+- **Order (D43):** playtest fixes, then character details, then time, weather and schedules, then NPC memory and attitudes, then encounters, then languages, then setting-native kinds, with a playtest after each.
+
 ## Open Questions and Next Steps
 
 The first build is a playable CLI prototype: one player, one district, the full rules loop.
@@ -323,6 +343,8 @@ The first build is a playable CLI prototype: one player, one district, the full 
 - [ ] Beat window length, and whether it adapts to how many players are present.
 - [ ] Alt accounts: how many characters a player may have.
 - [ ] Revisit the knack day boundary (D29) with multiplayer or cloud deployment.
+- [ ] The city's time zone (D38).
+- [ ] The languages of the Market District, and which count as common (D41).
 - [ ] Multiplayer step (D32): shared scenes, opposed-roll PvP with its guards, healing others, being named by another player.
 
 **Prototype plan:**
@@ -335,7 +357,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -371,3 +393,14 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D30 | Treatment knacks | Heal the roller only, 1 Harm on 7+ |
 | D31 | Casting with Wire | Only through a tech-magic knack |
 | D32 | Prototype scope | Single-player through budget and playtest; multiplayer is its own later step |
+| D33 | Narration | Third person, present tense, by name and the sheet's pronouns; players choose pronouns |
+| D34 | Player input | Plain text is action (any person); quotes are exact speech; the DM never rewrites or adds to them |
+| D35 | `/ask` | Out-of-character question: look only, no roll, state change, time or beat |
+| D36 | Owed consequences | A 7–9 or 6− roll must get its consequence; code sends the DM back (up to twice) |
+| D37 | Character details (planned) | Age, pronouns, appearance, languages for players and NPCs |
+| D38 | Time and weather (planned) | Real-time city clock in one time zone; weather tables; NPC schedules; daily tick |
+| D39 | NPC memory (planned) | Attitudes per character and interaction notes in code; DM proposes, code caps |
+| D40 | Encounters (planned) | Code rolls on arrival and about every 5 beats; odds rise as Light falls |
+| D41 | Languages (planned) | Tracked; unknown speech as gibberish; Heart roll for the gist; language knack +1 |
+| D42 | New kinds of people (planned) | Setting-native kinds as origins, not classic fantasy races |
+| D43 | Build order | Fixes; details; time/weather/schedules; NPC memory; encounters; languages; kinds |

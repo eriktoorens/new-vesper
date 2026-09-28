@@ -54,6 +54,11 @@ MAGIC = "magic"
 TREATMENT = "treatment"
 HALF_FADED = "half-faded"
 SUCCESS_TIERS = frozenset({Tier.CLEAN, Tier.COST})
+TIER_WORDS = {
+    Tier.CLEAN: "a clean success",
+    Tier.COST: "success at a cost",
+    Tier.CITY_MOVES: "the city moves",
+}
 # Consequences that only record what happened; they change no numbers.
 NARRATIVE_ONLY = frozenset(
     {
@@ -85,6 +90,7 @@ class TurnContext:
     fall_or_endure_pending: bool = False
     slipped: bool = False
     changes: list[str] = field(default_factory=list)
+    roll_ids: list[int] = field(default_factory=list)
 
     @property
     def cause(self) -> Cause:
@@ -206,6 +212,7 @@ def describe_character(ctx: TurnContext, character: Character) -> dict[str, Any]
     return {
         "id": character.id,
         "name": character.name,
+        "pronouns": character.pronouns,
         "origin": character.origin_id,
         "tags": sorted(character.tags),
         "bond": character.bond,
@@ -438,7 +445,8 @@ def call_for_roll(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
         if treated and result.tier in SUCCESS_TIERS and me.sheet.harm > 0:
             # A treatment knack clears 1 Harm per successful use (D8).
             outcome["treatment"] = _change_track(ctx, Track.HARM, -1, knack.name)
-    ctx.changes.append(f"rolled {result.total} ({result.tier.value})")
+    ctx.changes.append(f"{stat.value.title()} roll: {result.total}, {TIER_WORDS[result.tier]}")
+    ctx.roll_ids.append(roll.id)
     if notes:
         outcome["notes"] = notes
     return outcome
@@ -686,7 +694,7 @@ def dispatch(ctx: TurnContext, name: str, raw: object) -> tuple[dict[str, Any], 
     handler = HANDLERS.get(name)
     if handler is None:
         return {"error": f"unknown tool {str(name)[:40]!r}"}, True
-    flags = (ctx.fall_or_endure_pending, ctx.slipped, len(ctx.changes))
+    flags = (ctx.fall_or_endure_pending, ctx.slipped, len(ctx.changes), len(ctx.roll_ids))
     try:
         with atomic(ctx.conn):
             return handler(ctx, raw), False  # type: ignore[arg-type]
@@ -694,4 +702,37 @@ def dispatch(ctx: TurnContext, name: str, raw: object) -> tuple[dict[str, Any], 
         # The transaction rolled back; the turn's flags roll back with it.
         ctx.fall_or_endure_pending, ctx.slipped = flags[0], flags[1]
         del ctx.changes[flags[2] :]
+        del ctx.roll_ids[flags[3] :]
         return {"error": str(exc)}, True
+
+
+def owed_consequences(ctx: TurnContext) -> list[rolls.Roll]:
+    """Rolls made this turn at 7-9 or 6- that have not had their consequence yet."""
+    owed = []
+    for roll_id in ctx.roll_ids:
+        roll = rolls.get_roll(ctx.conn, roll_id)
+        if roll.tier is not Tier.CLEAN and not roll.consequence_used:
+            owed.append(roll)
+    return owed
+
+
+def owed_reminder(ctx: TurnContext) -> str | None:
+    """The message that sends the DM back to apply a consequence it owes (D1)."""
+    me = characters.get_character(ctx.conn, ctx.character_id)
+    if me.sheet.fallen or must_fall_or_endure(me.sheet.harm):
+        return None  # nothing more can happen to them; the turn may end
+    owed = owed_consequences(ctx)
+    if not owed:
+        return None
+    lines = [
+        f"roll_id {r.id} ({r.tier.value}, stakes: {r.stakes}) allows "
+        + ", ".join(f"{k.value} up to {v}" for k, v in allowed(r.tier, r.magic).items())
+        for r in owed
+    ]
+    return (
+        "<rules_check>Before you finish: every roll at 7-9 or 6 or less needs exactly one "
+        "consequence, applied with apply_consequence. Still owed: "
+        + "; ".join(lines)
+        + ". Apply it, then narrate the whole turn again with the consequence in it."
+        "</rules_check>"
+    )

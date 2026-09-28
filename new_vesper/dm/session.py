@@ -22,7 +22,14 @@ from new_vesper.content.loader import Content
 from new_vesper.dm import prompt
 from new_vesper.dm.agent import ModelClient, TurnResult, UsageHook, run_turn, summarize
 from new_vesper.dm.config import CallType, DMConfig
-from new_vesper.dm.handlers import TurnContext, describe_character, describe_location, dispatch
+from new_vesper.dm.handlers import (
+    TurnContext,
+    describe_character,
+    describe_location,
+    dispatch,
+    owed_reminder,
+)
+from new_vesper.dm.tools import TOOLS
 from new_vesper.rules.character import resolve_full_harm
 from new_vesper.rules.dice import Rng
 from new_vesper.rules.errors import RulesError
@@ -208,6 +215,7 @@ class PlaySession:
                 lambda name, raw: dispatch(ctx, name, raw),
                 self.on_usage,
                 self._guard,
+                completion=lambda: owed_reminder(ctx),
             )
         except BudgetExhausted as exc:
             # Tool calls already made stand: each was complete and rule-checked.
@@ -330,6 +338,37 @@ class PlaySession:
             raise SessionError(f"keep it under {scenes.MAX_INTENT_LENGTH} characters")
         self._require_budget()
         return self._run(intent, None)
+
+    def ask(self, question: str) -> str:
+        """An out-of-character question. The DM may only look; nothing changes, no beat."""
+        if not question.strip():
+            raise SessionError("ask a question after /ask")
+        if len(question) > scenes.MAX_INTENT_LENGTH:
+            raise SessionError(f"keep it under {scenes.MAX_INTENT_LENGTH} characters")
+        self._require_budget()
+        ctx = self._context()
+        look_only = [dict(t) for t in TOOLS if t["name"] == "look"]
+        look_only[0]["cache_control"] = {"type": "ephemeral"}
+
+        def only_look(name: str, raw: Any) -> tuple[dict[str, Any], bool]:
+            if name != "look":
+                return {"error": "only look is available while answering a question"}, True
+            return dispatch(ctx, name, raw)
+
+        try:
+            result = run_turn(
+                self.client,
+                self.config,
+                self.system,
+                prompt.ask_message(self._state(ctx), question),
+                only_look,
+                self.on_usage,
+                self._guard,
+                tools=look_only,
+            )
+        except BudgetExhausted as exc:
+            raise SessionError(str(exc)) from exc
+        return result.narration
 
     def fall_or_endure(self, choice: str, scar: str | None = None) -> Character:
         """The player's choice at full Harm. Death is only ever this choice."""

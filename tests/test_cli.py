@@ -41,6 +41,7 @@ def test_create_play_and_quit(tmp_path: Path) -> None:
             "1",
             "1",  # knacks
             "Biscuit",
+            "they/them",
             "The noodle man",
             "/look",
             "/places",
@@ -52,7 +53,7 @@ def test_create_play_and_quit(tmp_path: Path) -> None:
     text = "\n".join(out)
     assert "Nana Priya looks up from her ledger." in text
     assert "You pay the rent." in text
-    assert "Biscuit, level 1" in text
+    assert "Biscuit (they/them), level 1" in text
     assert "drowned-station: The Drowned Station" in text
     assert "You rest somewhere safe." in text
     conn = open_database(tmp_path / "v.db")
@@ -64,7 +65,11 @@ def test_create_play_and_quit(tmp_path: Path) -> None:
 
 
 def test_returning_player_skips_creation(tmp_path: Path) -> None:
-    run(tmp_path, ["1", "1", "1", "1", "1", "1", "1", "1", "Mira", "Jun", "/quit"], StubClient())
+    run(
+        tmp_path,
+        ["1", "1", "1", "1", "1", "1", "1", "1", "Mira", "she/her", "Jun", "/quit"],
+        StubClient(),
+    )
     out = run(tmp_path, ["/help", "/bogus", "/quit"], StubClient(say("Welcome back.")))
     text = "\n".join(out)
     assert "Welcome back." in text
@@ -75,7 +80,7 @@ def test_returning_player_skips_creation(tmp_path: Path) -> None:
 def test_budget_command_and_operator_report(tmp_path: Path) -> None:
     out = run(
         tmp_path,
-        ["1", "1", "1", "1", "1", "1", "1", "1", "Mira", "Jun", "/budget", "/quit"],
+        ["1", "1", "1", "1", "1", "1", "1", "1", "Mira", "she/her", "Jun", "/budget", "/quit"],
         StubClient(),
     )
     assert "Allowance left this month: $9.99." in out  # $9.998..., rounded down
@@ -93,3 +98,58 @@ def test_unpriced_model_is_refused(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("NEW_VESPER_TURN_MODEL", "claude-mystery-9")
     with pytest.raises(UnpricedModel):
         run(tmp_path, [], StubClient())
+
+
+def test_ask_and_wrapping(tmp_path: Path, monkeypatch) -> None:
+    from new_vesper import cli
+
+    monkeypatch.setattr(cli, "terminal_width", lambda: 39)
+    long_answer = "The Registry " + "audits belief across the whole market district " * 3
+    client = StubClient(say("Open."), say(long_answer))
+    out = run(
+        tmp_path,
+        [
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "Mira",
+            "she/her",
+            "Jun",
+            "/ask what do I know about the Registry?",
+            "/quit",
+        ],
+        client,
+    )
+    answer = next(line for line in out if line.startswith("The Registry"))
+    assert all(len(row) <= 39 for row in answer.split("\n"))
+    assert "distri\nct" not in answer  # words are never split
+    ask_call = client.messages.turn_calls[-1]
+    assert [t["name"] for t in ask_call["tools"]] == ["look"]
+
+
+def test_existing_character_is_asked_for_pronouns(tmp_path: Path) -> None:
+    from new_vesper.content.loader import load_content
+    from new_vesper.content.seed import seed
+    from new_vesper.rules.character import create_character as new_sheet
+    from new_vesper.rules.stats import STARTING_ARRAY, Stat
+    from new_vesper.state.events import SYSTEM
+
+    conn = open_database(tmp_path / "v.db")
+    seed(conn, load_content())
+    player = players.create_player(conn, "ash", SYSTEM)
+    sheet = new_sheet(
+        dict(zip(Stat, STARTING_ARRAY, strict=True)), ("read-the-crowd", "quick-fingers")
+    )
+    characters.create_character(
+        conn, player.id, "Jack", "street-born", "Emily", sheet, SYSTEM, location_id="hundred-hooks"
+    )
+    conn.close()
+    run(tmp_path, ["", "he/him", "/quit"], StubClient())
+    conn = open_database(tmp_path / "v.db")
+    [jack] = characters.characters_of(conn, player.id)
+    assert jack.pronouns == "he/him"

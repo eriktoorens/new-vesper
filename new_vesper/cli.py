@@ -6,7 +6,9 @@ Everything else goes to the DM through PlaySession.
 
 import argparse
 import random
+import shutil
 import sys
+import textwrap
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -36,6 +38,7 @@ DESIGN_DOC = Path(__file__).resolve().parents[1] / "docs" / "design.md"
 START_LOCATION = "hundred-hooks"
 HELP = """Type what your character does, or a command:
   /look          your sheet and where you are
+  /ask <question>  ask the DM what your character sees or knows (no time passes)
   /go <place>    move somewhere in this district (e.g. /go tarp-row)
   /places        list places you can go
   /level         spend XP on a level
@@ -108,7 +111,12 @@ def create_character(conn, content: Content, player_id: int, ask: Ask, say: Say)
     )
     while True:
         name = _ask(ask, "Name: ")
-        bond = _ask(ask, "Bond (a person your character matters to): ")
+        pronouns = _ask(ask, "Pronouns (e.g. she/her, he/him, they/them): ")
+        bond = _ask(
+            ask,
+            "Bond, in a line: someone your character matters to "
+            "(e.g. Emily, my sister who runs a noodle cart): ",
+        )
         try:
             sheet = new_sheet(stats, (first, second))
             return characters.create_character(
@@ -120,6 +128,7 @@ def create_character(conn, content: Content, player_id: int, ask: Ask, say: Say)
                 sheet,
                 Cause(Actor.PLAYER, player_id),
                 location_id=START_LOCATION,
+                pronouns=pronouns,
             )
         except (RulesError, StateError) as exc:
             say(f"That didn't work: {exc}")
@@ -128,7 +137,8 @@ def create_character(conn, content: Content, player_id: int, ask: Ask, say: Say)
 def show_sheet(character: Character, content: Content, say: Say) -> None:
     sheet = character.sheet
     place = content.locations.get(character.location_id or "")
-    say(f"{character.name}, level {sheet.level} ({sheet.xp} XP) - {character.origin_id}")
+    pronouns = f" ({character.pronouns})" if character.pronouns else ""
+    say(f"{character.name}{pronouns}, level {sheet.level} ({sheet.xp} XP) - {character.origin_id}")
     say("  " + "  ".join(f"{s.value.title()} {sheet.stats[s]:+d}" for s in Stat))
     say(
         f"  Harm {sheet.harm}/6 ({harm_status(sheet.harm)})  "
@@ -222,9 +232,26 @@ def fall_or_endure_menu(session: PlaySession, ask: Ask, say: Say) -> bool:
             say(f"Try another name: {exc}")
 
 
+def terminal_width() -> int:
+    """The width to wrap prose at: the terminal's, capped for readability."""
+    return min(shutil.get_terminal_size((88, 24)).columns, 100) - 1
+
+
+def wrap(text: str) -> str:
+    """Wrap prose to the terminal, keeping paragraphs and never splitting words."""
+    width = terminal_width()
+    paragraphs = text.split("\n")
+    return "\n".join(
+        textwrap.fill(p, width=width, break_long_words=False, break_on_hyphens=False)
+        if p.strip()
+        else ""
+        for p in paragraphs
+    )
+
+
 def report(outcome: TurnOutcome, say: Say) -> None:
     say("")
-    say(outcome.narration)
+    say(wrap(outcome.narration))
     if outcome.changes:
         say(f"  [{'; '.join(outcome.changes)}]")
     if outcome.slipped:
@@ -259,6 +286,12 @@ def play(
     else:
         pick = choose(ask, say, "Play as:", [(str(c.id), c.name) for c in living])
         me = characters.get_character(conn, int(pick))
+    while me.pronouns is None:
+        answer = _ask(ask, f"{me.name}'s pronouns (e.g. she/her, he/him, they/them): ")
+        try:
+            me = characters.set_pronouns(conn, me.id, answer, Cause(Actor.PLAYER, player.id))
+        except StateError as exc:
+            say(f"That didn't work: {exc}")
     session = PlaySession(
         conn, content, client, design_text, rng, me.id, config=config, budget=budget
     )
@@ -269,7 +302,7 @@ def play(
         return
     say(session.budget_status().allowance_message())
     if recap:
-        say(f"While you were gone: {recap}")
+        say(wrap(f"While you were gone: {recap}"))
     for note in notes:
         say(f"  [{note}]")
     report(opening, say)
@@ -297,6 +330,10 @@ def play(
                     report(session.go(line[3:].strip()), say)
                 elif line == "/level":
                     level_menu(session, content, ask, say)
+                elif line.startswith("/ask"):
+                    say("")
+                    say(wrap(session.ask(line[4:].strip())))
+                    say("")
                 elif line == "/budget":
                     say(session.budget_status().allowance_message())
                 elif line.startswith("/"):
