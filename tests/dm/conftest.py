@@ -162,3 +162,11 @@ def ctx_factory(conn: sqlite3.Connection, content: Content) -> Callable[..., Tur
         return context_for(conn, content, char, *dice)
 
     return build
+
+
+def next_turn(ctx: TurnContext) -> TurnContext:
+    """The player's next action in the same scene: a fresh turn, allowed its own roll."""
+    ctx.roll_ids.clear()
+    ctx.changes.clear()
+    ctx.encounters = 0
+    return ctx

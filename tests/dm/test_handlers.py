@@ -11,7 +11,7 @@ from new_vesper.dm.handlers import TurnContext, dispatch
 from new_vesper.state import characters, clocks, favors, items, rolls, world
 from new_vesper.state.characters import Character
 from new_vesper.state.events import SYSTEM, list_events
-from tests.dm.conftest import make_character
+from tests.dm.conftest import make_character, next_turn
 
 Ctx = Callable[..., TurnContext]
 
@@ -143,7 +143,7 @@ def test_knack_bonus_and_scene_limit(mira: Character, ctx_factory: Ctx) -> None:
     first = roll(ctx, knack="rooftop-runner")
     assert (first["knack_bonus"], first["total"]) == (1, 9)
     refused(
-        ctx,
+        next_turn(ctx),
         "call_for_roll",
         {"stat": "slick", "difficulty": "risky", "stakes": "again", "knack": "rooftop-runner"},
         "used up",

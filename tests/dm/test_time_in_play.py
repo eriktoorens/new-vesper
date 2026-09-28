@@ -16,6 +16,7 @@ from tests.dm.conftest import (
     SeqRng,
     StubClient,
     make_character,
+    next_turn,
     say,
 )
 
@@ -55,10 +56,10 @@ def test_knack_days_turn_over_at_city_midnight(conn: sqlite3.Connection, ctx_fac
     assert not dispatch(ctx, "call_for_roll", args)[1]
     # The roll happened at noon on Tuesday, city time.
     conn.execute("UPDATE rolls SET created_at = '2026-09-29T16:00:00.000Z'")
-    result, error = dispatch(ctx, "call_for_roll", args)
+    result, error = dispatch(next_turn(ctx), "call_for_roll", args)
     assert error and "used up" in result["error"]
     ctx.now = NOON_TUESDAY + timedelta(hours=12, minutes=30)  # 0:30 am Wednesday, city time
-    assert not dispatch(ctx, "call_for_roll", args)[1]
+    assert not dispatch(next_turn(ctx), "call_for_roll", args)[1]
 
 
 def test_recap_keeps_npc_secrets(conn: sqlite3.Connection, content: Content) -> None:

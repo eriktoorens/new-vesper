@@ -38,7 +38,8 @@ would change the situation in an interesting way. Talking, asking, looking, walk
 buying and ordinary work are not rolls; just narrate the result. When in doubt, don't roll.
 3. If it is risky, call call_for_roll once for the attempt, with the stat that fits, \
 the difficulty rung that fits, and the stakes in one sentence. Name a knack only if \
-the character has it and its trigger fits.
+the character has it and its trigger fits. One action gets one roll, and its result \
+stands: never roll again for the same attempt, even if the first roll failed.
 4. Read the tier. 10+: they get what they wanted, no consequence. 7-9: they get it, \
 and you must apply exactly one cost from allowed_consequences. 6 or less: the attempt \
 fails or goes wrong, and you must apply exactly one move from allowed_consequences. \
