@@ -411,6 +411,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 - [x] The city's time zone (D38): US Eastern (D50).
 - [x] The languages of the Market District, and which count as common (D44, D45).
 - [ ] Multiplayer step (D32): shared scenes, opposed-roll PvP with its guards, healing others, being named by another player.
+- [ ] Bodily conditions: hunger, thirst, heat and cold, sleep and the like. Not yet designed. Open: whether they are tracked by code or only narrated; how they tie into Harm, Fade, weather, seasons (D51, D56) and the city clock (D50); how food, drink, shelter and rest are gotten and paid for; and how they work while a character is offline.
 
 **Prototype plan:**
 
