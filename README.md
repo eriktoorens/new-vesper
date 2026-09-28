@@ -105,7 +105,8 @@ Check spending from outside the game with `new-vesper budget`.
 1. **Layer 6, languages (D41).** Speech in a language you don't know shows as gibberish. A Heart roll gets the gist, and a language knack adds +1.
 2. **Layer 7, setting-native kinds as origins (D42).**
 3. A playtest after each layer.
-4. Then multiplayer (D32): a shared city, and a second look at the city-day rule (D29/D50).
+4. **Nature and Demeanor**, borrowed from World of Darkness. This is proposed, not decided; the open questions are in `docs/design.md`.
+5. Then multiplayer (D32): a shared city, and a second look at the city-day rule (D29/D50).
 
 **Open question, high priority:** D10, who a favor is owed to. The player should understand where a debt accrues and have some choice in it. See the open questions in `docs/design.md`.
 
