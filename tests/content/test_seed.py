@@ -16,7 +16,7 @@ def test_seed_then_play() -> None:
     content = load_content()
     added = seed(conn, content)
     assert "region:market" in added
-    assert len(added) == 10 + 5 + 9 + 1 + 8 + 3 + 19  # 19 authored NPC-to-NPC attitudes
+    assert len(added) == 10 + 8 + 9 + 1 + 8 + 3 + 19  # 19 authored NPC-to-NPC attitudes
     assert world.get_region(conn, "market").light == 6
     assert world.get_location(conn, "hundred-hooks").is_haven
     assert world.get_knack(conn, "rooftop-runner").limits == "1 per scene"

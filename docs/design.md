@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D89** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D93** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -137,6 +137,9 @@ There are no classes. A character is an Origin, five stats, a few Knacks and a B
 | Enclave-raised | Primer-educated, speaks in protocols | networked |
 | Underside-born | Sees things others have forgotten | half-faded |
 | Awakened animal | Speaks with its own kind; nobody suspects a cat | no hands, overlooked, animal-speech |
+| Hearsay (D90) | Born of a story told often enough to stand up and walk | story-born |
+| Castoff (D90) | A mascot that stepped off the billboard when its brand went under | brand-born, glows |
+| Mislaid (D90) | A lost thing that waited so long to be found it became someone | object-born, overlooked |
 
 Tags constrain the DM: an awakened cat cannot pick a lock, but walks where nobody asks questions.
 
@@ -404,6 +407,18 @@ Built in layer 7 (2026-09-28), from D82. Code owns every need; the DM shows them
 - **Offline (D88):** time offline never counts; needs pick up where they were. Logging off at a haven clears them all.
 - **Different people, different needs (D89):** each origin lists its needs. Made people neither eat nor drink, and feel no cold, but tire and overheat; everyone else has all five. New kinds of people (D42) declare their own.
 
+## Setting-native Kinds (D90–D93)
+
+Built in layer 8 (2026-09-28), from D42. New Vesper's own kinds of people come out of its conceit, that attention makes things real. Each is an origin, like made people and awakened animals, with a trait, tags, a language and its own bodily needs.
+
+- **Three new kinds (D90):**
+  - **Hearsay:** born of a story told often enough to stand up and walk, and real for as long as someone keeps telling it. A hearsay can come from any of the city's cultures: a market grandmother's cautionary tale, a dockside ghost story, a rumor about a stall that never closes.
+  - **Castoff:** a mascot that stepped off the billboard when its brand went under. It still glows and still smiles, but it owes nobody a jingle. The corporate gods' leftovers, loose in the street.
+  - **Mislaid:** a lost thing that waited so long to be found it became someone: an umbrella, a key, a child's shoe with opinions. Kin, in their way, to the god of lost umbrellas.
+- **Needs and languages (D91):** a hearsay hungers, thirsts and feels cold and heat, but never tires, since a story doesn't sleep; it waits to be told. A castoff tires (it has to power down) and flickers in the cold. A mislaid feels only cold and heat, rusting and warping. Each speaks a market tongue of the player's choice, the language its story, ad or owner spoke; a mislaid may take Underside Cant instead, having spent its lost years below.
+- **Tags (D92):** `story-born`, `brand-born`, `glows` and `object-born` (and `overlooked` for the mislaid) guide narration only. Code still enforces only `no-hands` (D7).
+- **The DM knows every kind (D93):** the DM's content brief now describes every origin, with its trait, tags and needs, so the DM can play how the city treats each kind of person.
+
 ## Planned: A Living World (D37–D43)
 
 Direction agreed after the first playtest (2026-09-28). Each layer's details are decided when it is built, and every mechanic stays code-owned: the DM proposes, code decides.
@@ -413,7 +428,7 @@ Direction agreed after the first playtest (2026-09-28). Each layer's details are
 - **NPC memory and attitudes (D39):** code stores each NPC's attitude toward each character and short notes on past interactions. The DM proposes changes through a tool, and code caps how far an attitude moves per scene. NPC-to-NPC attitudes live in content. NPCs get traits, speech habits and a sample line for distinct voices.
 - **Random encounters (D40):** code rolls on arriving somewhere and every few beats (about 5), from per-district tables; the odds rise as region Light falls. The DM narrates what code drew.
 - **Languages (D41):** code tracks who speaks what and what language each line is spoken in. Speech a character does not understand reaches them as gibberish. Common languages can be recognized by name. Getting the gist of an unknown language is a Heart roll: 10+ the gist and tone, 7–9 the tone only or the gist at a cost, 6 or less gibberish and perhaps the speaker notices. A language knack gives +1 to those rolls, with a use limit per the knack budget. (Built: D76–D81.)
-- **Setting-native kinds (D42):** new kinds of people are invented for New Vesper and added as origins, like made people and awakened animals, rather than classic fantasy races.
+- **Setting-native kinds (D42):** new kinds of people are invented for New Vesper and added as origins, like made people and awakened animals, rather than classic fantasy races. (Built: D90–D93.)
 - **Order (D43):** playtest fixes, then character details, then time, weather and schedules, then NPC memory and attitudes, then encounters, then languages, then bodily conditions (D82), then setting-native kinds, with a playtest after each.
 
 ## Open Questions and Next Steps
@@ -434,6 +449,8 @@ The first build is a playable CLI prototype: one player, one district, the full 
 - [x] The languages of the Market District, and which count as common (D44, D45).
 - [ ] Multiplayer step (D32): shared scenes, opposed-roll PvP with its guards, healing others, being named by another player.
 - [x] Bodily conditions: hunger, thirst, heat and cold, sleep and the like. Built in layer 7 (D83–D89). Still open: clothing and gear against the weather, food as items and meals given by NPCs, whether resting should take time, and tuning the rates after a playtest.
+- [ ] Setting-native kinds (D90–D93): whether any of their tags should be enforced by code (for example, a hearsay recovering Fade when someone tells its story, or a castoff's glow giving it away in the dark), whether a mislaid object without hands should take `no-hands`, and origin evolutions for each kind.
+- [ ] Attention as a resource. Not yet designed. Attention is the setting's fuel for magic, gods, technology and being real, but in the rules it appears only indirectly, through Fade, Light and favors. Open: whether characters, gods and places hold attention as a tracked amount; how it is earned, spent, traded or stolen; and how it relates to Fade, Light, magic costs, the favor ledger (D10) and currency.
 
 **Prototype plan:**
 
@@ -445,7 +462,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, and D83–D89 from bodily needs (the effects in D84 chosen by the designer).
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), and D90–D93 from setting-native kinds.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -490,7 +507,7 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D39 | NPC memory | Attitudes and interaction notes in code; DM proposes, code caps (built: D60–D66) |
 | D40 | Encounters | Code rolls on arrival and every 5th beat; odds rise as Light falls (built: D67–D71) |
 | D41 | Languages | Tracked; unknown speech as gibberish; Heart roll for the gist; language knack +1 (built: D76–D81) |
-| D42 | New kinds of people (planned) | Setting-native kinds as origins, not classic fantasy races |
+| D42 | New kinds of people | Setting-native kinds as origins, not classic fantasy races (built: D90–D93) |
 | D43 | Build order | Fixes; details; time/weather/schedules; NPC memory; encounters; languages; kinds |
 | D44 | Languages | Registry Standard for everyone; market tongues common; Protocol, Underside Cant, animal-speech rare |
 | D45 | Neighborhood languages | Per-district spread (everyone to few) and culture note; per-place pockets |
@@ -538,3 +555,7 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D87 | Relief | `/eat` and `/drink` buy what a place sells, in glitter; `/rest` at a haven; no roll; the DM points to the command |
 | D88 | Needs offline | Frozen offline; logging off at a haven clears them |
 | D89 | Needs by origin | Each origin lists its needs; made people only tiredness and heat |
+| D90 | Setting-native kinds | Hearsay (a story walking), Castoff (a dead brand's mascot), Mislaid (a lost thing become someone), as origins |
+| D91 | Their needs and languages | Hearsay: all but tiredness; Castoff: tiredness and cold; Mislaid: cold and heat; a market tongue, or Underside Cant for a mislaid |
+| D92 | Their tags | Narrative only; code still enforces only `no-hands` |
+| D93 | Origins in the DM's brief | Every origin's trait, tags and needs are in the content brief |

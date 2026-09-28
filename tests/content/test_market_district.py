@@ -2,6 +2,7 @@
 
 import re
 from itertools import pairwise
+from pathlib import Path
 
 import pytest
 
@@ -72,8 +73,26 @@ def test_origins_match_the_design_doc(content: Content) -> None:
         "enclave-raised",
         "underside-born",
         "awakened-animal",
+        "hearsay",
+        "castoff",
+        "mislaid",
     }
     assert {"no-hands", "overlooked", "animal-speech"} <= content.origins["awakened-animal"].tags
+    design = (Path(__file__).resolve().parents[2] / "docs" / "design.md").read_text()
+    table = design.split("| Origin | Example trait | Example tags |")[1].split("\n\n")[0]
+    for origin in content.origins.values():
+        assert f"| {origin.name.split()[0]}" in table, origin.name
+
+
+def test_setting_native_kinds(content: Content) -> None:
+    """New kinds are invented for the city, and each has its own needs (D90, D91)."""
+    kinds = {"hearsay", "castoff", "mislaid"}
+    for kind in kinds:
+        origin = content.origins[kind]
+        assert origin.tags and origin.language_choices and origin.needs
+        assert origin.needs != content.origins["street-born"].needs
+    assert "underside-cant" in content.origins["mislaid"].language_choices
+    assert "tired" not in {n.value for n in content.origins["hearsay"].needs}
 
 
 def test_starter_knacks_respect_the_balance_budget(content: Content) -> None:

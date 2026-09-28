@@ -69,6 +69,74 @@
       ],
       "language": "animal-speech",
       "language_choices": []
+    },
+    {
+      "id": "hearsay",
+      "name": "Hearsay",
+      "trait": "Born of a story told often enough to stand up and walk; real for as long as someone keeps telling it.",
+      "tags": [
+        "story-born"
+      ],
+      "language": null,
+      "language_choices": [
+        "wolof",
+        "tagalog",
+        "arabic",
+        "cantonese",
+        "hindi",
+        "portuguese"
+      ],
+      "needs": [
+        "hunger",
+        "thirst",
+        "cold",
+        "heat"
+      ]
+    },
+    {
+      "id": "castoff",
+      "name": "Castoff",
+      "trait": "A mascot that stepped off the billboard when its brand went under; still glows, still smiles, owes nobody a jingle.",
+      "tags": [
+        "brand-born",
+        "glows"
+      ],
+      "language": null,
+      "language_choices": [
+        "wolof",
+        "tagalog",
+        "arabic",
+        "cantonese",
+        "hindi",
+        "portuguese"
+      ],
+      "needs": [
+        "tired",
+        "cold"
+      ]
+    },
+    {
+      "id": "mislaid",
+      "name": "Mislaid",
+      "trait": "A lost thing that waited so long to be found it became someone: an umbrella, a key, a child's shoe with opinions.",
+      "tags": [
+        "object-born",
+        "overlooked"
+      ],
+      "language": null,
+      "language_choices": [
+        "underside-cant",
+        "wolof",
+        "tagalog",
+        "arabic",
+        "cantonese",
+        "hindi",
+        "portuguese"
+      ],
+      "needs": [
+        "cold",
+        "heat"
+      ]
     }
   ]
 }

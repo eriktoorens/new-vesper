@@ -94,7 +94,7 @@ Check spending from outside the game with `new-vesper budget`.
 
 ## Where we are, what's next
 
-**Done** (all on this branch, 868 tests passing):
+**Done** (all on this branch, 871 tests passing):
 - Build steps 1–5: the rules engine, the SQLite state, the Market District content, the DM agent with its validated tool contract, and the budget with a usage ledger, caps and allowances.
 - Playtest layers 1–5:
   - fixes from the first playtest
@@ -105,13 +105,13 @@ Check spending from outside the game with `new-vesper budget`.
   - encounters, which the DM writes fresh from a daily pool for each district
   - languages: speech in a language your character doesn't know shows as gibberish or a note, a Heart roll gets the gist, and `/speak` picks what you speak aloud
   - bodily needs: hunger, thirst, tiredness, cold and heat wear down stats and, at their worst, cost Harm or Fade; `/eat`, `/drink` and `/rest` ease them
-- Decisions D1–D89 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
+  - setting-native kinds: play a Hearsay (a story walking), a Castoff (a dead brand's mascot) or a Mislaid (a lost thing become someone)
+- Decisions D1–D93 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
 
 **Next:**
-1. **Playtest layers 6 and 7, languages and bodily needs (D76–D89).** Watch whether the DM tags every line and keeps translations out of plain narration, and whether the needs' rates feel right.
-2. **Layer 8, setting-native kinds as origins (D42).**
-3. A playtest after each layer.
-4. Then multiplayer (D32): a shared city, and a second look at the city-day rule (D29/D50).
+1. **Playtest layers 6–8: languages, bodily needs and the new kinds (D76–D93).** Watch whether the DM tags every line and keeps translations out of plain narration, whether the needs' rates feel right, and how the DM plays a hearsay, a castoff or a mislaid.
+2. **Attention as a resource.** Not yet designed; see the open questions in `docs/design.md`.
+3. Then multiplayer (D32): a shared city, and a second look at the city-day rule (D29/D50).
 
 **Open question, high priority:** D10, who a favor is owed to. The player should understand where a debt accrues and have some choice in it. See the open questions in `docs/design.md`.
 
@@ -125,6 +125,6 @@ ruff check . && ruff format --check .
 
 Start a new Claude Code session with:
 
-> Read CLAUDE.md and docs/design.md, then start layer 8, setting-native kinds.
+> Read CLAUDE.md and docs/design.md, then pick up the next item in "Where we are, what's next".
 
 Tests use a stubbed model client and never call the API.

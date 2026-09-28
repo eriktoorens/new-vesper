@@ -330,3 +330,38 @@ def test_line_editing_loads_readline_when_there_is_one() -> None:
         raise ImportError("no readline on this platform")
 
     assert not enable_line_editing(missing)
+
+
+def test_playing_a_mislaid(tmp_path: Path) -> None:
+    """A setting-native kind (D90): a lost thing become someone, with no need to eat."""
+    client = StubClient(say("The Hooks creak."))
+    out = run(
+        tmp_path,
+        [
+            "8",  # Mislaid
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "6",  # origin language: Underside Cant, sixth of the sorted choices
+            "1",
+            "Brolly",
+            "it/its",
+            "forty years lost",
+            "A green umbrella with a bent rib",
+            "The god of lost umbrellas",
+            "/eat",
+            "/quit",
+        ],
+        client,
+    )
+    text = "\n".join(out)
+    assert "Mislaid: A lost thing" in text
+    assert "(Brolly doesn't need to eat)" in text
+    conn = open_database(tmp_path / "v.db")
+    [brolly] = characters.characters_of(conn, players.find_player(conn, "ash").id)
+    assert brolly.origin_id == "mislaid"
+    assert "underside-cant" in brolly.languages
