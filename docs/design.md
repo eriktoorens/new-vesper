@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D23** (2026-09-27) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D32** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -120,6 +120,8 @@ Without a roll there is no state change, except rewards reported through `report
 - A faction takes notice
 - The dark encroaches (region Light −1)
 
+**Take something (D28):** the item leaves play; the event log records who lost what and why.
+
 **Magnitudes (D6):** Deal harm and Add Fade are 1–3 boxes. The dark encroaches is exactly −1 Light. Every other move is magnitude 1. Threat clocks have 4 segments and are defined in content, per district; the DM can advance a clock by 1 but never creates one.
 
 ## Characters
@@ -193,7 +195,7 @@ Both tracks have 6 boxes. A bad hit deals 1–3, so a track fills after 2–4 se
 **Recovery amounts (D8):**
 
 - Logging off at a haven clears 1 Harm and 1 Fade per real day offline.
-- A treatment knack clears 1 Harm per use.
+- A treatment knack clears 1 Harm per use, on a 7 or better, from the character who rolled. Healing someone else comes with multiplayer (D30).
 - Another player speaking your character's name clears 1 Fade, once per scene.
 
 **Advancement:** experience comes from a fixed list of triggers that code checks: protecting someone, making a sacrifice, keeping a hard promise, raising a region's Light. Killing things earns nothing on its own. See Characters for what XP buys. The DM can report that a trigger happened; code decides whether it pays out.
@@ -204,7 +206,7 @@ Both tracks have 6 boxes. A bad hit deals 1–3, so a track fills after 2–4 se
 
 Magic is bargaining with attention. There are no spell slots and no mana; every working costs something the world remembers.
 
-- **Rolls:** casting is a Weird roll. Tech-magic, such as hacking a god's prayer network, can use Wire.
+- **Rolls:** casting is a Weird roll. Tech-magic, such as hacking a god's prayer network, can use Wire, through a knack tagged tech-magic (D31). Raw magic without a knack uses Weird.
 - **Knacks** define what a character can do reliably, such as asking a shrine's god one question. Anyone can attempt raw magic without a knack, at Desperate difficulty.
 - **Costs on 7–9** come from a magic list: a tick of Fade, a side effect, or a favor owed to a god.
 - **The favor ledger:** code records every favor owed. Gods collect, and debts become story hooks. This is the Tally made mechanical.
@@ -225,6 +227,10 @@ One turn runs as a loop:
 
 Every state change goes through a tool, and every tool checks the request against the rules before writing.
 
+**Movement (D27):** the player moves with the `/go <place>` command; code checks the place is real and in the same district, closes the scene and opens one there. The DM never moves characters, since that would be a state change without a roll. When a player says they head somewhere, the DM narrates setting off and points to `/go`.
+
+**Who a roll's consequences land on (D26):** Harm and Fade from a roll land only on the character who rolled. Harming another player's character needs an opposed roll, which comes with multiplayer; until then there is no PvP state change at all.
+
 | The DM decides | Code owns |
 | --- | --- |
 | Whether a roll is needed | The dice |
@@ -235,9 +241,9 @@ Every state change goes through a tool, and every tool checks the request agains
 
 **Initial tool contract:**
 
-- `call_for_roll(stat, difficulty, stakes)` returns the total, the tier and a single-use roll id (D1).
+- `call_for_roll(stat, difficulty, stakes, knack?, magic?)` returns the total, the tier and a single-use roll id (D1). `knack` names a knack the character holds, so code can apply its bonus, use limit and tags; `magic` marks a casting. A knack tagged magic makes the roll magic (D25).
 - `apply_consequence(roll_id, type, target, magnitude)` checks the roll's tier, the allowed list and the magnitude cap, then writes state (D1, D2).
-- `grant_from_table(table_id)` hands out loot; the DM never invents items.
+- `grant_from_table(roll_id, table_id)` hands out loot from a table; the DM never invents items. It needs a successful roll (7+), and each roll grants loot at most once (D24).
 - `report_trigger(trigger_id, evidence)` flags an XP trigger; code decides the payout.
 - `adjust_light(region, direction, size, reason)` moves a region's Light: `direction` is raise or lower, `size` is deed (±1) or major (±2). At most one change per region per scene; a major change needs an XP trigger reported in the same scene (D3).
 - `look(entity)` reads current state so narration matches the world.
@@ -249,6 +255,8 @@ Players act freely until their actions touch each other; then they share a scene
 **Light scale:** each region runs 0–10. A deed moves it ±1, a major deed ±2. Neglected regions lose 1 per in-game week. The city ticks once per real day.
 
 **Time (D9):** one real day is one in-game day, for everything: knack "per day" limits, the city tick and recovery. An in-game week is 7 real days.
+
+**Day boundary (D29, provisional):** a knack's "per day" limit resets at midnight UTC. Revisit when multiplayer or cloud deployment is addressed (a rolling 24 hours, or an operator time zone, are the alternatives).
 
 **Solo by default.** Outside shared scenes, each player's action resolves immediately.
 
@@ -313,6 +321,8 @@ The first build is a playable CLI prototype: one player, one district, the full 
 - [x] Market District layout: key stalls, NPCs, shrines, the drowned station.
 - [ ] Beat window length, and whether it adapts to how many players are present.
 - [ ] Alt accounts: how many characters a player may have.
+- [ ] Revisit the knack day boundary (D29) with multiplayer or cloud deployment.
+- [ ] Multiplayer step (D32): shared scenes, opposed-roll PvP with its guards, healing others, being named by another player.
 
 **Prototype plan:**
 
@@ -320,10 +330,11 @@ The first build is a playable CLI prototype: one player, one district, the full 
 2. Rules engine: the 2d6 resolver, tiers, tracks, XP triggers, all unit-tested.
 3. DM agent on the Claude API with the tool contract above and a setting prompt built from this doc.
 4. One playable scene end to end, then playtest and tune the prompt.
+5. Multiplayer, after the single-player playtest (D32).
 
 ## Decision log
 
-Decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -350,3 +361,12 @@ Decided 2026-09-27, in the repository, from the open questions raised after the 
 | D21 | Monthly cap | $50 per month, operator setting |
 | D22 | Per-player allowance | $10 per player per month on spend, shown to players as estimated hours left |
 | D23 | Where decisions live | Written into this file and tagged; to be copied back to the living doc |
+| D24 | Loot needs a roll | `grant_from_table(roll_id, table_id)`: a 7+ roll, one grant per roll |
+| D25 | `call_for_roll` fields | Optional `knack` (held knack; bonus, limits, tags) and `magic` (a casting) |
+| D26 | Consequence targets | Harm and Fade land on the roller only; PvP waits for opposed rolls |
+| D27 | Movement | Player's `/go` command; the DM never moves characters |
+| D28 | Taken items | Leave play; the log records it |
+| D29 | Knack day boundary | **Provisional.** Midnight UTC; revisit with multiplayer or cloud deployment |
+| D30 | Treatment knacks | Heal the roller only, 1 Harm on 7+ |
+| D31 | Casting with Wire | Only through a tech-magic knack |
+| D32 | Prototype scope | Single-player through budget and playtest; multiplayer is its own later step |
