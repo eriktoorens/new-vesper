@@ -15,10 +15,13 @@
     {"id": "portuguese", "name": "Portuguese", "common": true,
      "description": "A market language of the docks and the old trading families."},
     {"id": "protocol", "name": "Protocol", "common": false,
-     "description": "The enclaves' spoken code: clipped, structured, half of it acknowledgements. Sounds like polite static to outsiders."},
+     "description": "The enclaves' spoken code: clipped, structured, half of it acknowledgements. Sounds like polite static to outsiders.",
+     "sounds": ["ack", "nak", "sync", "hold", "ping", "tx", "rx", "ok", "q", "zer", "ver", "-ack"]},
     {"id": "underside-cant", "name": "Underside Cant", "common": false,
-     "description": "The tongue of Old Vesper's forgotten, full of words for things that no longer exist. Hard to hear clearly, harder to remember."},
+     "description": "The tongue of Old Vesper's forgotten, full of words for things that no longer exist. Hard to hear clearly, harder to remember.",
+     "sounds": ["hssh", "vel", "orr", "ith", "mar", "sko", "dhu", "ven", "lo", "keth", "ssa", "uun"]},
     {"id": "animal-speech", "name": "Animal-speech", "common": false,
-     "description": "What awakened animals speak with their own kind: chirps, flicks and silences that mean far more than they seem."}
+     "description": "What awakened animals speak with their own kind: chirps, flicks and silences that mean far more than they seem.",
+     "sounds": ["chirr", "tk", "mrrp", "hff", "prrt", "sss", "k-k", "rrr"]}
   ]
 }

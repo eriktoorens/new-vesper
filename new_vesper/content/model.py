@@ -39,8 +39,6 @@ class UseLimit:
         return f"{self.uses} per {self.per}"
 
 
-# Everyone in the city speaks Registry Standard.
-COMMON_TONGUE = "registry-standard"
 # ASCII art limits: small enough for any terminal.
 ART_MAX_WIDTH = 60
 ART_MAX_LINES = 10
@@ -179,6 +177,8 @@ class LanguageDef:
     name: str
     common: bool  # recognizable by name even to those who don't speak it
     description: str
+    # Sounds for made-up gibberish, only for languages invented for the setting (D77).
+    sounds: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -629,9 +629,14 @@ def _parse_weather(raw: object) -> WeatherDef:
 
 
 def parse_language(raw: object) -> LanguageDef:
-    r = Reader(raw, "language", {"id", "name", "common", "description"})
+    r = Reader(raw, "language", {"id", "name", "common", "description"}, {"sounds"})
+    sounds = r.texts("sounds") if "sounds" in r.raw else ()
+    if any(len(s) > 8 or not s.isascii() or not s.strip() for s in sounds):
+        raise ContentError(f"language {r.raw['id']!r}: sounds are short ASCII syllables")
+    if "sounds" in r.raw and len(sounds) < 4:
+        raise ContentError(f"language {r.raw['id']!r}: give at least 4 sounds, or none")
     return LanguageDef(
-        r.slug("id"), r.text("name", 40), r.boolean("common"), r.text("description", 300)
+        r.slug("id"), r.text("name", 40), r.boolean("common"), r.text("description", 300), sounds
     )
 
 

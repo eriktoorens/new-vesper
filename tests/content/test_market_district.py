@@ -190,3 +190,15 @@ def test_neighborhood_languages_vary(content: Content) -> None:
 def test_common_and_rare_languages(content: Content) -> None:
     rare = {lang.id for lang in content.languages.values() if not lang.common}
     assert rare == {"protocol", "underside-cant", "animal-speech"}
+
+
+def test_only_invented_languages_have_gibberish_sounds(content: Content) -> None:
+    """Real-world tongues are never mocked with made-up syllables (D77)."""
+    with_sounds = {lang.id for lang in content.languages.values() if lang.sounds}
+    assert with_sounds == {"protocol", "underside-cant", "animal-speech"}
+
+
+def test_there_is_a_language_knack(content: Content) -> None:
+    knack = content.knacks["ear-for-tongues"]
+    assert knack.stat.value == "heart" and "language" in knack.tags
+    assert knack.roll_bonus == 1 and knack.limit is not None

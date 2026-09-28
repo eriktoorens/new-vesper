@@ -41,7 +41,8 @@ TOOLS: list[dict[str, Any]] = [
             "interesting. Returns the total, the tier (clean 10+, cost 7-9, city_moves 6-), a "
             "single-use roll_id and the consequences that tier allows. Name a knack only if the "
             "character has it and it fits; set magic for a casting. Raw magic without a knack is "
-            "always Desperate."
+            "always Desperate. To follow speech in a language the character doesn't speak, roll "
+            "Heart and name the language: what the tier earns holds for the rest of the scene."
         ),
         "input_schema": {
             "type": "object",
@@ -54,6 +55,10 @@ TOOLS: list[dict[str, Any]] = [
                 },
                 "knack": {"type": "string", "description": "Optional knack id."},
                 "magic": {"type": "boolean", "description": "True for a casting."},
+                "language": {
+                    "type": "string",
+                    "description": "Optional: the language a Heart roll tries to follow.",
+                },
             },
             "required": ["stat", "difficulty", "stakes"],
             "additionalProperties": False,

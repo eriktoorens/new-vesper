@@ -9,7 +9,6 @@ from types import MappingProxyType
 from typing import Any
 
 from new_vesper.content.model import (
-    COMMON_TONGUE,
     CalendarDef,
     ClockDef,
     ContentError,
@@ -37,6 +36,7 @@ from new_vesper.content.model import (
     parse_region,
     parse_stranger_names,
 )
+from new_vesper.rules.languages import COMMON_TONGUE
 
 UNDERSIDE_ENTRANCE_TAG = "underside-entrance"
 SHRINE_TAG = "shrine"

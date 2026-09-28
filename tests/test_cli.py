@@ -241,3 +241,38 @@ def test_map_art_and_languages(tmp_path: Path) -> None:
     assert "[4] The Hundred Hooks (hundred-hooks)" in last_map
     assert "[@] Tarp Row (tarp-row) <- you are here" in last_map
     assert text.count("-- Nana Priya Seshadri --") == 1
+
+
+def test_speak_chooses_the_language_spoken_aloud(tmp_path: Path) -> None:
+    client = StubClient(say("Nana Priya looks up from her ledger."))
+    out = run(
+        tmp_path,
+        [
+            "5",  # origin: awakened animal, which speaks animal-speech
+            "2",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "Biscuit",
+            "they/them",
+            "three",
+            "A ginger tom",
+            "The noodle man",
+            "/speak",
+            "/speak Animal-speech",
+            "/speak Protocol",
+            "/look",
+            "/quit",
+        ],
+        client,
+    )
+    text = "\n".join(out)
+    assert "[Biscuit speaks Registry Standard aloud.]" in text
+    assert "They know: " in text and "Animal-speech" in text
+    assert "[Biscuit speaks Animal-speech aloud.]" in text
+    assert "(Biscuit speaks " in text  # Protocol refused, with what they do speak
+    assert "(speaking aloud: Animal-speech)" in text

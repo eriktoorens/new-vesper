@@ -23,7 +23,6 @@ from new_vesper.content.languages import (
 )
 from new_vesper.content.loader import Content, load_content
 from new_vesper.content.maps import render_map
-from new_vesper.content.model import COMMON_TONGUE
 from new_vesper.content.seed import seed
 from new_vesper.dm.agent import ModelClient
 from new_vesper.dm.config import CallType, DMConfig
@@ -32,6 +31,7 @@ from new_vesper.dm.session import PlaySession, SessionError, TurnOutcome
 from new_vesper.rules.character import create_character as new_sheet
 from new_vesper.rules.currency import format_glitter
 from new_vesper.rules.errors import RulesError
+from new_vesper.rules.languages import COMMON_TONGUE
 from new_vesper.rules.leveling import LevelUpRequest, can_level_up, is_milestone
 from new_vesper.rules.stats import STARTING_ARRAY, Stat
 from new_vesper.rules.tracks import fade_status, harm_status
@@ -49,6 +49,7 @@ HELP = """Type what your character does, or a command:
   /time          the city clock and the weather
   /who           who's here and what they're doing
   /ask <question>  ask the DM what your character sees or knows (no time passes)
+  /speak <language>  choose the language your character speaks aloud
   /go <place>    move somewhere in this district (e.g. /go tarp-row)
   /places        list places you can go
   /level         spend XP on a level
@@ -198,7 +199,8 @@ def show_sheet(character: Character, content: Content, say: Say) -> None:
         say(wrap(f"  Looks: {character.appearance}"))
     if character.languages:
         spoken = [content.languages[lang].name for lang in character.languages]
-        say(f"  Speaks: {', '.join(spoken)}")
+        aloud = content.languages[character.speaking].name
+        say(f"  Speaks: {', '.join(spoken)}  (speaking aloud: {aloud})")
     if place is not None:
         say(f"  At: {place.name}{' (haven)' if place.is_haven else ''}")
 
@@ -432,6 +434,15 @@ def play(
                     say("")
                     say(wrap(session.ask(line[4:].strip())))
                     say("")
+                elif line.startswith("/speak"):
+                    choice = line[len("/speak") :].strip()
+                    me = session.character
+                    if choice:
+                        me = session.speak(choice)
+                    known = ", ".join(content.languages[lang].name for lang in sorted(me.speaks))
+                    say(f"  [{me.name} speaks {content.languages[me.speaking].name} aloud.]")
+                    if not choice:
+                        say(f"  [They know: {known}. /speak <language> to change.]")
                 elif line == "/budget":
                     say(session.budget_status().allowance_message())
                 elif line.startswith("/"):

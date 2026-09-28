@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 
 from new_vesper.content.loader import load_content, load_documents
-from new_vesper.content.model import ContentError
+from new_vesper.content.model import ContentError, parse_language
 
 KNACK = {
     "id": "k",
@@ -252,3 +252,25 @@ def test_directory_loading(tmp_path: Path) -> None:
     (tmp_path / "knacks.json").write_text(json.dumps({"knacks": [KNACK]}))
     (tmp_path / "notes.txt").write_text("ignored")
     assert set(load_content(tmp_path).knacks) == {"k"}
+
+
+@pytest.mark.parametrize(
+    "sounds",
+    [
+        ["ack", "nak", "sync"],  # too few to sound like anything
+        ["ack", "nak", "sync", "much-too-long"],
+        ["ack", "nak", "sync", "ñak"],
+        ["ack", "nak", "sync", " "],
+        "ack nak",
+    ],
+)
+def test_bad_language_sounds_rejected(sounds: Any) -> None:
+    raw = {"id": "hush", "name": "Hush", "common": False, "description": "x", "sounds": sounds}
+    with pytest.raises(ContentError):
+        parse_language(raw)
+
+
+def test_language_sounds_are_optional() -> None:
+    raw = {"id": "hush", "name": "Hush", "common": False, "description": "x"}
+    assert parse_language(raw).sounds == ()
+    assert parse_language(raw | {"sounds": ["a", "b", "c", "d"]}).sounds == ("a", "b", "c", "d")

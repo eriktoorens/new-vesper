@@ -24,7 +24,7 @@ from new_vesper.city.sky import season, tide_at
 from new_vesper.city.tick import run_due_ticks
 from new_vesper.city.weather import current_weather
 from new_vesper.content.loader import Content
-from new_vesper.dm import prompt
+from new_vesper.dm import prompt, speech
 from new_vesper.dm.agent import ModelClient, TurnResult, UsageHook, run_turn, summarize
 from new_vesper.dm.config import CallType, DMConfig
 from new_vesper.dm.handlers import (
@@ -55,7 +55,15 @@ SECONDS_PER_DAY = 86_400
 # Events the recap leaves out: bookkeeping, or things the character couldn't know
 # (an NPC's private progress surfaces in play through what the DM sees instead).
 PRIVATE_EVENTS = frozenset(
-    {"roll", "presence_changed", "npc_goal_advanced", "npc_met", "neglect", "details_set"}
+    {
+        "roll",
+        "presence_changed",
+        "npc_goal_advanced",
+        "npc_met",
+        "neglect",
+        "details_set",
+        "speaking_changed",
+    }
 )
 # Memory lines each NPC keeps per character before older ones fold into a summary.
 MEMORIES_KEPT = 8
@@ -201,6 +209,7 @@ class PlaySession:
             },
             "character": describe_character(ctx, me),
             "location": describe_location(ctx, me.location_id) if me.location_id else None,
+            "speech": speech.for_dm(ctx, me),
             "scene": {
                 "id": scene.id,
                 "region": scene.region_id,
@@ -291,7 +300,7 @@ class PlaySession:
                 lambda name, raw: dispatch(ctx, name, raw),
                 self.on_usage,
                 self._guard,
-                completion=lambda: owed_reminder(ctx),
+                completion=lambda text: owed_reminder(ctx) or speech.speech_reminder(ctx, text),
             )
         except BudgetExhausted as exc:
             # Tool calls already made stand: each was complete and rule-checked.
@@ -307,6 +316,8 @@ class PlaySession:
                 self._cause(Actor.SYSTEM),
             )
             raise
+        # The player sees, and the beat keeps, only what the character understood (D81).
+        result.narration = speech.finish_speech(ctx, result.narration)
         summary = (
             self._summarize(
                 CallType.BEAT_SUMMARY, prompt.beat_summary_request(intent, result.narration)
@@ -515,7 +526,24 @@ class PlaySession:
             )
         except BudgetExhausted as exc:
             raise SessionError(str(exc)) from exc
-        return result.narration
+        return speech.render(ctx, result.narration, speech.check_speech(ctx, result.narration))
+
+    def speak(self, language: str) -> Character:
+        """Choose the language the character speaks aloud, from those they know (D80)."""
+        me = self.character
+        key = language.strip().casefold()
+        match = next(
+            (
+                lang.id
+                for lang in self.content.languages.values()
+                if key in (lang.id, lang.name.casefold())
+            ),
+            None,
+        )
+        if match is None or match not in me.speaks:
+            known = ", ".join(self.content.languages[lang].name for lang in sorted(me.speaks))
+            raise SessionError(f"{me.name} speaks {known}")
+        return characters.set_speaking(self.conn, me.id, match, self._cause())
 
     def fall_or_endure(self, choice: str, scar: str | None = None) -> Character:
         """The player's choice at full Harm. Death is only ever this choice."""

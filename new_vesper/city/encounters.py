@@ -16,10 +16,11 @@ from new_vesper.budget.policy import stamp
 from new_vesper.city.sky import season
 from new_vesper.city.weather import current_weather
 from new_vesper.content.loader import Content
-from new_vesper.content.model import COMMON_TONGUE, EncounterIdea, Spread
+from new_vesper.content.model import EncounterIdea, Spread
 from new_vesper.rules import clock
 from new_vesper.rules.dice import Rng
 from new_vesper.rules.encounters import Kind, roll_pool
+from new_vesper.rules.languages import COMMON_TONGUE
 from new_vesper.rules.sky import moon, tide
 from new_vesper.state import world
 from new_vesper.state.events import Cause, append_event

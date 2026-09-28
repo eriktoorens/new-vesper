@@ -11,6 +11,7 @@ from typing import Any
 from new_vesper.rules.character import Sheet
 from new_vesper.rules.currency import STARTING_GLITTER
 from new_vesper.rules.errors import require_int, require_range
+from new_vesper.rules.languages import COMMON_TONGUE
 from new_vesper.rules.stats import Stat, validate_stats
 from new_vesper.rules.tracks import TRACK_MAX
 from new_vesper.state.db import atomic
@@ -40,6 +41,13 @@ class Character:
     online: bool
     location_id: str | None
     version: int
+    # The language they speak aloud (D80).
+    speaking: str = COMMON_TONGUE
+
+    @property
+    def speaks(self) -> frozenset[str]:
+        """Every language they understand: their own, and Registry Standard (D44)."""
+        return frozenset(self.languages) | {COMMON_TONGUE}
 
 
 def _check_sheet(conn: sqlite3.Connection, sheet: Sheet) -> None:
@@ -242,6 +250,7 @@ def get_character(conn: sqlite3.Connection, character_id: int) -> Character:
         online=bool(row["online"]),
         location_id=row["location_id"],
         version=row["version"],
+        speaking=row["speaking"] or COMMON_TONGUE,
     )
 
 
@@ -432,6 +441,19 @@ def set_details(
             conn, "details_set", cause, {"languages": list(spoken)}, character_id=character.id
         )
     return get_character(conn, character.id)
+
+
+def set_speaking(
+    conn: sqlite3.Connection, character_id: int, language_id: str, cause: Cause
+) -> Character:
+    """Choose the language the character speaks aloud: one they know (D80)."""
+    character = get_character(conn, character_id)
+    lang = slug(language_id, "language")
+    if lang not in character.speaks:
+        raise StateError(f"{character.name} doesn't speak {lang!r}")
+    return _update_field(
+        conn, character, "speaking", lang, "speaking_changed", cause, {"language": lang}
+    )
 
 
 def played_locations(conn: sqlite3.Connection, character_id: int) -> frozenset[str]:

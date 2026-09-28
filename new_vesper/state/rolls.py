@@ -33,6 +33,9 @@ class Roll:
     consequence_used: bool
     loot_used: bool
     created_at: str
+    # A gist roll's language (D78), and the consequence a roll paid, once it has.
+    language_id: str | None = None
+    consequence_type: str | None = None
 
 
 def _roll(row: sqlite3.Row) -> Roll:
@@ -51,6 +54,8 @@ def _roll(row: sqlite3.Row) -> Roll:
         consequence_used=bool(row["consequence_used"]),
         loot_used=bool(row["loot_used"]),
         created_at=row["created_at"],
+        language_id=row["language_id"],
+        consequence_type=row["consequence_type"],
     )
 
 
@@ -75,13 +80,14 @@ def record_roll(
     *,
     knack_id: str | None = None,
     magic: bool = False,
+    language_id: str | None = None,
 ) -> Roll:
     what = text(stakes, "stakes", 300)
     with atomic(conn):
         cursor = conn.execute(
             "INSERT INTO rolls (character_id, scene_id, stat, difficulty, knack_id, magic, stakes,"
-            " die_1, die_2, stat_value, modifier, bonus, total, tier)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " die_1, die_2, stat_value, modifier, bonus, total, tier, language_id)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 row_id(character_id, "character id"),
                 row_id(scene_id, "scene id"),
@@ -96,6 +102,7 @@ def record_roll(
                 result.bonus,
                 result.total,
                 result.tier.value,
+                language_id,
             ),
         )
         roll_id = int(cursor.lastrowid or 0)
@@ -113,21 +120,42 @@ def record_roll(
                 "total": result.total,
                 "tier": result.tier.value,
                 "stakes": what,
+                "language": language_id,
             },
             character_id=character_id,
         )
     return get_roll(conn, roll_id)
 
 
-def use_roll(conn: sqlite3.Connection, roll_id: int, use: RollUse) -> Roll:
-    """Mark a roll as used for a consequence or a loot grant. Each use happens once."""
+def use_roll(
+    conn: sqlite3.Connection, roll_id: int, use: RollUse, consequence_type: str | None = None
+) -> Roll:
+    """Mark a roll as used for a consequence or a loot grant. Each use happens once.
+
+    A consequence records its type, since a gist roll's cost decides what is heard.
+    """
     column = f"{RollUse(use).value}_used"
     with atomic(conn):
         roll = get_roll(conn, roll_id)
         if getattr(roll, column):
             raise StateError(f"roll {roll.id} has already been used for {use}")
         conn.execute(f"UPDATE rolls SET {column} = 1 WHERE id = ?", (roll.id,))
+        if use is RollUse.CONSEQUENCE and consequence_type is not None:
+            conn.execute(
+                "UPDATE rolls SET consequence_type = ? WHERE id = ?",
+                (text(consequence_type, "consequence type", 40), roll.id),
+            )
     return get_roll(conn, roll.id)
+
+
+def gist_rolls(conn: sqlite3.Connection, character_id: int, scene_id: int) -> list[Roll]:
+    """This character's rolls to follow a language in this scene (D78)."""
+    rows = conn.execute(
+        "SELECT * FROM rolls WHERE character_id = ? AND scene_id = ? AND language_id IS NOT NULL"
+        " ORDER BY id",
+        (row_id(character_id, "character id"), row_id(scene_id, "scene id")),
+    )
+    return [_roll(row) for row in rows]
 
 
 def knack_uses(

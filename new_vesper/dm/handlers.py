@@ -18,6 +18,7 @@ from new_vesper.city.npcs import present_at, regulars_elsewhere, whereabouts
 from new_vesper.city.sky import describe_sky, harder, minimum_rung
 from new_vesper.content.loader import Content
 from new_vesper.content.loot import roll_loot
+from new_vesper.dm.speech import SpeechError, check_gist_roll
 from new_vesper.rules.attitudes import Attitude, parse_axis
 from new_vesper.rules.character import Sheet, apply_track
 from new_vesper.rules.clock import day_start_utc
@@ -30,6 +31,7 @@ from new_vesper.rules.currency import format_glitter
 from new_vesper.rules.dice import Rng
 from new_vesper.rules.encounters import Kind as EncounterKind
 from new_vesper.rules.errors import RulesError, parse_enum
+from new_vesper.rules.languages import check_gist_stat
 from new_vesper.rules.leveling import can_level_up, xp_to_advance
 from new_vesper.rules.light import apply_deed, encroach, parse_deed_size, parse_direction
 from new_vesper.rules.magic import casting_difficulty, casting_stat
@@ -67,7 +69,18 @@ TECH_MAGIC = "tech-magic"
 MAGIC = "magic"
 TREATMENT = "treatment"
 HALF_FADED = "half-faded"
+# A language knack helps only to follow a language you don't speak (D79).
+LANGUAGE = "language"
 SUCCESS_TIERS = frozenset({Tier.CLEAN, Tier.COST})
+# What a gist roll's tier means, for the DM (D78). Code applies it to every say tag.
+GIST_OUTCOMES = {
+    Tier.CLEAN: "the gist and the tone, for the rest of this scene",
+    Tier.COST: (
+        "the tone only if you apply narrative_cost; the gist too if you apply a real cost "
+        "(harm, fade, take_something, dark_encroaches); for the rest of this scene"
+    ),
+    Tier.CITY_MOVES: "nothing: it stays gibberish; your move may be that the speaker notices",
+}
 TIER_WORDS = {
     Tier.CLEAN: "a clean success",
     Tier.COST: "success at a cost",
@@ -255,6 +268,9 @@ def describe_character(ctx: TurnContext, character: Character) -> dict[str, Any]
             for f in favors.favors_owed(ctx.conn, character.id)
         ],
         "location": character.location_id,
+        "speaking_aloud": ctx.content.languages[character.speaking].name
+        if character.speaking in ctx.content.languages
+        else character.speaking,
         "fallen": sheet.fallen,
         "slipped": sheet.slipped,
         "fall_or_endure_pending": must_fall_or_endure(sheet.harm) and not sheet.fallen,
@@ -330,6 +346,7 @@ def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
     region = world.get_region(ctx.conn, place.region_id)
     god = ctx.content.shrine_god(place.id)
     present = present_at(ctx.content, place.id, ctx.now)
+    speaking = _me(ctx).speaking
     lying = ctx.conn.execute(
         "SELECT id, name FROM items WHERE location_id = ? AND destroyed = 0 ORDER BY id",
         (place.id,),
@@ -352,6 +369,8 @@ def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
                 "appearance": w.npc.appearance,
                 "role": w.npc.role,
                 "languages": [ctx.content.languages[lang].name for lang in w.npc.languages],
+                # Whether they understand what the character speaks aloud (D80).
+                "understands_you": speaking in w.npc.languages,
                 "doing": w.activity,
                 "lately": npc_lately(ctx.conn, w.npc),
                 "personality": personality(w.npc),
@@ -518,7 +537,7 @@ def _check_knack(ctx: TurnContext, me: Character, knack_id: object, stat: Stat) 
 
 
 def call_for_roll(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
-    args = _args(raw, {"stat", "difficulty", "stakes"}, {"knack", "magic"})
+    args = _args(raw, {"stat", "difficulty", "stakes"}, {"knack", "magic", "language"})
     try:
         stat = parse_stat(args["stat"])
         difficulty = parse_difficulty(args["difficulty"])
@@ -532,6 +551,20 @@ def call_for_roll(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
     if "knack" in args and args["knack"] is not None:
         knack = _check_knack(ctx, me, args["knack"], stat)
         magic = magic or MAGIC in knack.tags
+    language = None
+    if args.get("language") is not None:
+        # A gist roll: following speech in a language the character doesn't speak (D78).
+        if magic:
+            raise ToolError("following a language is not a casting; don't set magic")
+        try:
+            check_gist_stat(stat)
+            language = check_gist_roll(
+                ctx, me, args["language"], None if knack is None else LANGUAGE in knack.tags
+            )
+        except (RulesError, SpeechError) as exc:
+            raise ToolError(str(exc)) from exc
+    elif knack is not None and LANGUAGE in knack.tags:
+        raise ToolError(f"{knack.name} is for following a language: name it in language")
     notes = []
     if magic:
         tech = knack is not None and TECH_MAGIC in knack.tags
@@ -563,6 +596,7 @@ def call_for_roll(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
             ctx.cause,
             knack_id=knack.id if knack else None,
             magic=magic,
+            language_id=language,
         )
         outcome: dict[str, Any] = {
             "roll_id": roll.id,
@@ -577,6 +611,9 @@ def call_for_roll(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
             "magic": magic,
             "allowed_consequences": {k.value: v for k, v in allowed(result.tier, magic).items()},
         }
+        if language is not None:
+            outcome["following"] = ctx.content.languages[language].name
+            outcome["understanding"] = GIST_OUTCOMES[result.tier]
         treated = knack is not None and TREATMENT in knack.tags
         if treated and result.tier in SUCCESS_TIERS and me.sheet.harm > 0:
             # A treatment knack clears 1 Harm per successful use (D8).
@@ -705,7 +742,7 @@ def apply_consequence(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
             )
             result["recorded"] = True
             assert kind in NARRATIVE_ONLY
-        rolls.use_roll(ctx.conn, roll.id, rolls.RollUse.CONSEQUENCE)
+        rolls.use_roll(ctx.conn, roll.id, rolls.RollUse.CONSEQUENCE, kind.value)
     return result
 
 
