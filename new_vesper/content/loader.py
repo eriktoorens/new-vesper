@@ -9,19 +9,23 @@ from types import MappingProxyType
 from typing import Any
 
 from new_vesper.content.model import (
+    COMMON_TONGUE,
     ClockDef,
     ContentError,
     GodDef,
     KnackDef,
+    LanguageDef,
     LocationDef,
     LootTable,
     NpcDef,
     OriginDef,
     Reader,
     RegionDef,
+    Spread,
     parse_clock,
     parse_god,
     parse_knack,
+    parse_language,
     parse_location,
     parse_loot_table,
     parse_npc,
@@ -43,6 +47,7 @@ class Content:
     npcs: Mapping[str, NpcDef]
     loot_tables: Mapping[str, LootTable]
     clocks: Mapping[str, ClockDef]
+    languages: Mapping[str, LanguageDef]
 
     def npcs_at(self, location_id: str) -> list[NpcDef]:
         return [npc for npc in self.npcs.values() if npc.location == location_id]
@@ -70,7 +75,44 @@ def _index[T](items: Iterable[T], what: str) -> Mapping[str, T]:
     return MappingProxyType(index)
 
 
+def _check_languages(content: Content) -> None:
+    if content.languages and COMMON_TONGUE not in content.languages:
+        raise ContentError(f"the common tongue {COMMON_TONGUE!r} must be defined")
+    for origin in content.origins.values():
+        for lang in (origin.language, *origin.language_choices):
+            if lang is not None and lang not in content.languages:
+                raise ContentError(f"origin {origin.id!r} names unknown language {lang!r}")
+    for region in content.regions.values():
+        if region.languages.get(COMMON_TONGUE) is not Spread.EVERYONE:
+            raise ContentError(f"region {region.id!r}: everyone speaks {COMMON_TONGUE}")
+    for place in (*content.regions.values(), *content.locations.values()):
+        for lang in place.languages:
+            if lang not in content.languages:
+                raise ContentError(f"{place.id!r} lists unknown language {lang!r}")
+    for npc in content.npcs.values():
+        for lang in npc.languages:
+            if lang not in content.languages:
+                raise ContentError(f"npc {npc.id!r} speaks unknown language {lang!r}")
+        if len(set(npc.languages)) != len(npc.languages):
+            raise ContentError(f"npc {npc.id!r} lists a language twice")
+
+
+def _check_map(content: Content) -> None:
+    for region in content.regions.values():
+        drawn = "\n".join(region.map)
+        places = {loc.id for loc in content.locations_in(region.id)}
+        if set(region.map_marks.values()) != places or len(region.map_marks) != len(places):
+            raise ContentError(f"region {region.id!r}: every location needs exactly one map mark")
+        for mark in region.map_marks:
+            if drawn.count(f"[{mark}]") != 1:
+                raise ContentError(
+                    f"region {region.id!r}: mark [{mark}] must appear once on the map"
+                )
+
+
 def _check_references(content: Content) -> None:
+    _check_languages(content)
+    _check_map(content)
     for npc in content.npcs.values():
         if npc.location not in content.locations:
             raise ContentError(f"npc {npc.id!r} is at unknown location {npc.location!r}")
@@ -98,7 +140,17 @@ def load_documents(documents: Iterable[Mapping[str, Any]]) -> Content:
     locations: list[LocationDef] = []
     regions: list[RegionDef] = []
     clocks: list[ClockDef] = []
-    allowed = {"origins", "knacks", "region", "locations", "gods", "npcs", "loot_tables", "clocks"}
+    allowed = {
+        "origins",
+        "knacks",
+        "region",
+        "locations",
+        "gods",
+        "npcs",
+        "loot_tables",
+        "clocks",
+        "languages",
+    }
     for doc in documents:
         reader = Reader(doc, "content file", set(), allowed)
         if ("locations" in doc or "clocks" in doc) and "region" not in doc:
@@ -121,6 +173,7 @@ def load_documents(documents: Iterable[Mapping[str, Any]]) -> Content:
         npcs=_index(map(parse_npc, sections.get("npcs", [])), "npc"),
         loot_tables=_index(map(parse_loot_table, sections.get("loot_tables", [])), "loot table"),
         clocks=_index(clocks, "clock"),
+        languages=_index(map(parse_language, sections.get("languages", [])), "language"),
     )
     _check_references(content)
     return content

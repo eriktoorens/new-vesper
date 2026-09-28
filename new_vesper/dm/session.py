@@ -38,7 +38,7 @@ from new_vesper.rules.tracks import must_fall_or_endure
 from new_vesper.state import characters, scenes, world
 from new_vesper.state.characters import Character
 from new_vesper.state.errors import StateError
-from new_vesper.state.events import Actor, Cause, Event, list_events
+from new_vesper.state.events import Actor, Cause, Event, append_event, list_events
 
 ARRIVAL = (
     "The player's character has just arrived here. Set the scene in a few sentences: the "
@@ -61,6 +61,13 @@ class TurnOutcome:
     can_level_up: bool = False
     # The budget ran out during this turn; the city has gone quiet.
     quiet: bool = False
+    # ASCII art to show before the narration: a new place, a new face.
+    art: tuple[str, ...] = ()
+
+
+def art_block(caption: str, lines: tuple[str, ...]) -> str:
+    """ASCII art with a caption underneath."""
+    return "\n".join([*lines, f"  -- {caption} --"])
 
 
 def _parse_time(stamp: str) -> datetime:
@@ -274,6 +281,47 @@ class PlaySession:
             self.conn, self.scene_id, folded[:2000], self._cause(Actor.SYSTEM)
         )
 
+    # --- art -----------------------------------------------------------------
+
+    def _arrival_art(self) -> tuple[str, ...]:
+        """Before opening a scene: the place's vignette on a first visit, new faces' portraits.
+
+        Portraits show once per character, the first time they share a place with the NPC.
+        """
+        me = self.character
+        if me.location_id is None:
+            return ()
+        place = self.content.locations[me.location_id]
+        blocks = []
+        if place.id not in characters.played_locations(self.conn, me.id):
+            blocks.append(art_block(place.name, place.art))
+        met = {
+            e.payload.get("npc_id")
+            for e in list_events(self.conn, character_id=me.id, kind="npc_met", limit=100_000)
+        }
+        for npc in self.content.npcs_at(place.id):
+            if npc.id not in met:
+                blocks.append(art_block(npc.name, npc.portrait))
+                append_event(
+                    self.conn,
+                    "npc_met",
+                    self._cause(Actor.SYSTEM),
+                    {"npc_id": npc.id},
+                    character_id=me.id,
+                )
+        return tuple(blocks)
+
+    @staticmethod
+    def _with_art(outcome: TurnOutcome, art: tuple[str, ...]) -> TurnOutcome:
+        return replace(outcome, art=art)
+
+    def location_art(self) -> str | None:
+        me = self.character
+        if me.location_id is None:
+            return None
+        place = self.content.locations[me.location_id]
+        return art_block(place.name, place.art)
+
     # --- lifecycle -----------------------------------------------------------
 
     def _last_logoff(self) -> Event | None:
@@ -323,8 +371,9 @@ class PlaySession:
         characters.set_online(self.conn, me.id, True, self._cause())
         notes = self._recover(logoff) if logoff else []
         recap = self._recap(logoff) if logoff else None
+        art = self._arrival_art()
         self._open_scene()
-        return recap, notes, self._run(None, ARRIVAL)
+        return recap, notes, self._with_art(self._run(None, ARRIVAL), art)
 
     def turn(self, intent: str) -> TurnOutcome:
         me = self.character
@@ -408,8 +457,9 @@ class PlaySession:
         self._require_budget()
         self._close_scene()
         characters.move_character(self.conn, me.id, target.id, self._cause())
+        art = self._arrival_art()
         self._open_scene()
-        return self._run(None, ARRIVAL)
+        return self._with_art(self._run(None, ARRIVAL), art)
 
     def end(self) -> None:
         """Log off: close the scene and go offline (safe at a haven, lying low elsewhere)."""

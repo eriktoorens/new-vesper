@@ -16,7 +16,14 @@ from pathlib import Path
 from new_vesper.budget.policy import BudgetConfig
 from new_vesper.budget.pricing import PRICES, price_of
 from new_vesper.budget.report import month_report
+from new_vesper.content.languages import (
+    extra_language_options,
+    origin_language_options,
+    starting_languages,
+)
 from new_vesper.content.loader import Content, load_content
+from new_vesper.content.maps import render_map
+from new_vesper.content.model import COMMON_TONGUE
 from new_vesper.content.seed import seed
 from new_vesper.dm.agent import ModelClient
 from new_vesper.dm.config import CallType, DMConfig
@@ -38,6 +45,7 @@ DESIGN_DOC = Path(__file__).resolve().parents[1] / "docs" / "design.md"
 START_LOCATION = "hundred-hooks"
 HELP = """Type what your character does, or a command:
   /look          your sheet and where you are
+  /map           the district map: where you are and where you've been
   /ask <question>  ask the DM what your character sees or knows (no time passes)
   /go <place>    move somewhere in this district (e.g. /go tarp-row)
   /places        list places you can go
@@ -109,9 +117,11 @@ def create_character(conn, content: Content, player_id: int, ask: Ask, say: Say)
         "Second knack:",
         [(k.id, f"{k.name} ({k.stat.value}): {k.trigger}") for k in usable if k.id != first],
     )
+    languages = choose_languages(content, origin, ask, say)
     while True:
         name = _ask(ask, "Name: ")
         pronouns = _ask(ask, "Pronouns (e.g. she/her, he/him, they/them): ")
+        age, appearance = ask_age_and_looks(ask)
         bond = _ask(
             ask,
             "Bond, in a line: someone your character matters to "
@@ -129,9 +139,41 @@ def create_character(conn, content: Content, player_id: int, ask: Ask, say: Say)
                 Cause(Actor.PLAYER, player_id),
                 location_id=START_LOCATION,
                 pronouns=pronouns,
+                age=age,
+                appearance=appearance,
+                languages=languages,
             )
         except (RulesError, StateError) as exc:
             say(f"That didn't work: {exc}")
+
+
+def choose_languages(content: Content, origin: str, ask: Ask, say: Say) -> tuple[str, ...]:
+    """Registry Standard, the origin's language, and one more (D37)."""
+    names = {lang.id: lang.name for lang in content.languages.values()}
+    options = origin_language_options(content, origin)
+    if len(options) == 1:
+        pick = options[0]
+        say(f"You speak Registry Standard, like everyone, and {names[pick]} from your origin.")
+    else:
+        say("You speak Registry Standard, like everyone.")
+        pick = choose(ask, say, "Your origin's language:", [(o, names[o]) for o in options])
+    extras = extra_language_options(content, (COMMON_TONGUE, pick))
+    extra = choose(
+        ask,
+        say,
+        "One more language:",
+        [
+            (e, f"{names[e]} ({'common' if content.languages[e].common else 'rare'})")
+            for e in extras
+        ],
+    )
+    return starting_languages(content, origin, pick, extra)
+
+
+def ask_age_and_looks(ask: Ask) -> tuple[str, str]:
+    age = _ask(ask, "Age, in a few words (e.g. mid-twenties, built three winters ago): ")
+    looks = _ask(ask, "Appearance, in a line (what people notice first): ")
+    return age, looks
 
 
 def show_sheet(character: Character, content: Content, say: Say) -> None:
@@ -148,6 +190,13 @@ def show_sheet(character: Character, content: Content, say: Say) -> None:
     if sheet.scars:
         say(f"  Scars: {', '.join(sheet.scars)}")
     say(f"  Purse: {format_glitter(character.currency)}   Bond: {character.bond}")
+    if character.age:
+        say(f"  Age: {character.age}")
+    if character.appearance:
+        say(wrap(f"  Looks: {character.appearance}"))
+    if character.languages:
+        spoken = [content.languages[lang].name for lang in character.languages]
+        say(f"  Speaks: {', '.join(spoken)}")
     if place is not None:
         say(f"  At: {place.name}{' (haven)' if place.is_haven else ''}")
 
@@ -251,6 +300,9 @@ def wrap(text: str) -> str:
 
 def report(outcome: TurnOutcome, say: Say) -> None:
     say("")
+    for block in outcome.art:
+        say(block)
+        say("")
     say(wrap(outcome.narration))
     if outcome.changes:
         say(f"  [{'; '.join(outcome.changes)}]")
@@ -292,6 +344,21 @@ def play(
             me = characters.set_pronouns(conn, me.id, answer, Cause(Actor.PLAYER, player.id))
         except StateError as exc:
             say(f"That didn't work: {exc}")
+    while me.age is None or me.appearance is None or not me.languages:
+        say(f"The city wants to know a little more about {me.name}.")
+        languages = choose_languages(content, me.origin_id, ask, say)
+        age, looks = ask_age_and_looks(ask)
+        try:
+            me = characters.set_details(
+                conn,
+                me.id,
+                Cause(Actor.PLAYER, player.id),
+                age=age,
+                appearance=looks,
+                languages=languages,
+            )
+        except StateError as exc:
+            say(f"That didn't work: {exc}")
     session = PlaySession(
         conn, content, client, design_text, rng, me.id, config=config, budget=budget
     )
@@ -321,7 +388,19 @@ def play(
                 if line == "/help":
                     say(HELP)
                 elif line == "/look":
+                    art = session.location_art()
+                    if art:
+                        say(art)
                     show_sheet(session.character, content, say)
+                elif line == "/map":
+                    me = session.character
+                    here = content.locations.get(me.location_id or "")
+                    if here is None:
+                        say("You're nowhere on any map.")
+                    else:
+                        visited = characters.visited_locations(conn, me.id)
+                        for row in render_map(content, here.region_id, here.id, visited):
+                            say(row)
                 elif line == "/places":
                     here = content.locations.get(session.character.location_id or "")
                     for loc in content.locations_in(here.region_id if here else "market"):

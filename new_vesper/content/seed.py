@@ -28,6 +28,10 @@ def seed(conn: sqlite3.Connection, content: Content) -> list[str]:
     """Insert missing origins, knacks, regions and locations. Returns what was added."""
     added: list[str] = []
     with atomic(conn):
+        for language in content.languages.values():
+            if not _exists(world.get_language, conn, language.id):
+                world.add_language(conn, language.id, language.name, language.common, SYSTEM)
+                added.append(f"language:{language.id}")
         for origin in content.origins.values():
             if not _exists(world.get_origin, conn, origin.id):
                 world.add_origin(conn, origin.id, origin.name, origin.trait, origin.tags, SYSTEM)

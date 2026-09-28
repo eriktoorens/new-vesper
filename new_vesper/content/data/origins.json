@@ -4,31 +4,67 @@
       "id": "street-born",
       "name": "Street-born human",
       "trait": "Knows someone in every market.",
-      "tags": ["streetwise"]
+      "tags": [
+        "streetwise"
+      ],
+      "language": null,
+      "language_choices": [
+        "wolof",
+        "tagalog",
+        "arabic",
+        "cantonese",
+        "hindi",
+        "portuguese"
+      ]
     },
     {
       "id": "made-person",
       "name": "Made person",
       "trait": "Built, not born; hard to hurt, easy to doubt.",
-      "tags": ["synthetic"]
+      "tags": [
+        "synthetic"
+      ],
+      "language": null,
+      "language_choices": [
+        "wolof",
+        "tagalog",
+        "arabic",
+        "cantonese",
+        "hindi",
+        "portuguese"
+      ]
     },
     {
       "id": "enclave-raised",
       "name": "Enclave-raised",
       "trait": "Primer-educated, speaks in protocols.",
-      "tags": ["networked"]
+      "tags": [
+        "networked"
+      ],
+      "language": "protocol",
+      "language_choices": []
     },
     {
       "id": "underside-born",
       "name": "Underside-born",
       "trait": "Sees things others have forgotten.",
-      "tags": ["half-faded"]
+      "tags": [
+        "half-faded"
+      ],
+      "language": "underside-cant",
+      "language_choices": []
     },
     {
       "id": "awakened-animal",
       "name": "Awakened animal",
       "trait": "Speaks with its own kind; nobody suspects a cat.",
-      "tags": ["no-hands", "overlooked", "animal-speech"]
+      "tags": [
+        "no-hands",
+        "overlooked",
+        "animal-speech"
+      ],
+      "language": "animal-speech",
+      "language_choices": []
     }
   ]
 }

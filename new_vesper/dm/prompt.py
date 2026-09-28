@@ -72,6 +72,11 @@ something the rules allow or let the moment pass.
 what they have seen, been told, or could plausibly know. An NPC does not know a \
 character's name until someone says it.
 - Nobody invents new gods lifted from real religions.
+- Languages: everyone speaks Registry Standard. Each character and NPC speaks the \
+languages listed for them; a place's languages_heard_here says how widely each is \
+spoken there, so give unnamed people languages that fit the neighborhood. When someone \
+speaks a language the player character does not know, say which language it is if it \
+is common, but never translate it.
 - End with the situation open. Do not offer a menu of options, and do not mention game \
 commands in the story.
 
@@ -117,12 +122,31 @@ def extract_sections(design_text: str, names: tuple[str, ...] = SETTING_SECTIONS
 def content_brief(content: Content) -> str:
     """The playable world, in a stable order, for the system prompt."""
     lines = ["# Content brief", ""]
+    names = {lang.id: lang.name for lang in content.languages.values()}
+    lines += [
+        "## Languages",
+        *(
+            f"- {lang.name} ({'common' if lang.common else 'rare'}): {lang.description}"
+            for lang in sorted(content.languages.values(), key=lambda lang: lang.id)
+        ),
+        "",
+    ]
     for region in sorted(content.regions.values(), key=lambda r: r.id):
-        lines += [f"## Region `{region.id}`: {region.name}", region.description, "", "Locations:"]
+        spoken = ", ".join(f"{names[k]} ({v.value})" for k, v in region.languages.items())
+        lines += [
+            f"## Region `{region.id}`: {region.name}",
+            region.description,
+            f"Culture: {region.culture}",
+            f"Languages spoken: {spoken}",
+            "",
+            "Locations:",
+        ]
         for loc in sorted(content.locations_in(region.id), key=lambda loc: loc.id):
             flags = [t for t in sorted(loc.tags)] + (["haven"] if loc.is_haven else [])
             label = f" ({', '.join(flags)})" if flags else ""
-            lines.append(f"- `{loc.id}` {loc.name}{label}: {loc.description}")
+            pocket = ", ".join(f"{names[k]} ({v.value})" for k, v in loc.languages.items())
+            heard = f" Here, more often: {pocket}." if pocket else ""
+            lines.append(f"- `{loc.id}` {loc.name}{label}: {loc.description}{heard}")
         lines += ["", "Threat clocks (advance only with advance_threat_clock):"]
         for clock in sorted(content.clocks.values(), key=lambda c: c.id):
             if clock.region_id == region.id:
@@ -137,8 +161,9 @@ def content_brief(content: Content) -> str:
     lines += ["", "## NPCs"]
     for npc in sorted(content.npcs.values(), key=lambda n: n.id):
         lines.append(
-            f"- `{npc.id}` {npc.name} ({npc.pronouns}), {npc.role} at `{npc.location}`. "
-            f"{npc.description} Wants: {npc.wants} Voice: {npc.voice}"
+            f"- `{npc.id}` {npc.name} ({npc.pronouns}, {npc.age}), {npc.role} at "
+            f"`{npc.location}`. {npc.appearance} {npc.description} Wants: {npc.wants} "
+            f"Voice: {npc.voice} Speaks: {', '.join(names[lang] for lang in npc.languages)}."
         )
     lines += ["", "## Knacks"]
     for knack in sorted(content.knacks.values(), key=lambda k: k.id):

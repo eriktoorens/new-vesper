@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D43** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D49** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -317,6 +317,17 @@ The DM's tokens are the main running cost; hosting is small. Cost scales with pl
 - **Enforcement (implements D21, D22):** every call is priced from its token usage (input, output, cache reads and writes) and recorded against its player and scene. The budget is checked before every API call, so spending can pass a limit by at most one call; if a limit is reached mid-turn, the turn ends quietly and any tool writes already made stand. Months are UTC calendar months. A player's hours left are their remaining allowance divided by their own measured cost per hour, where play time is the time between calls, ignoring breaks over 10 minutes.
 - **Later options:** a patron pool, bring-your-own API key, or prepaid credits, all built on the same ledger.
 
+## Characters in Detail (D44–D49)
+
+Built in layer 2 (2026-09-28), from D37.
+
+- **Languages (D44):** Registry Standard is the common tongue; everyone in the city speaks it. The market tongues (Wolof, Tagalog, Arabic, Cantonese, Hindi and Portuguese) are common: anyone recognizes them by name. Protocol (the enclaves), Underside Cant (Old Vesper) and animal-speech are rare.
+- **Neighborhoods (D45):** each district has a language profile saying how widely each language is spoken (everyone, most, many, some, few) and a note on its cultural flavor, and a place can have its own pocket (Tarp Row leans Cantonese and Arabic). Unnamed people speak what fits the neighborhood, and random encounters will draw their speakers from it. The Market District is the most mixed; other neighborhoods will be more concentrated.
+- **A character's languages (D46):** Registry Standard, the origin's language (enclave-raised: Protocol; underside-born: Underside Cant; awakened animal: animal-speech; street-born and made people choose a market tongue), and one more of the player's choice.
+- **Age and appearance (D47):** short free text, for narration only, with no rules effect. NPCs have them in content.
+- **Maps (D48):** each district has a hand-drawn ASCII map. `/map` marks where the character is with [@]; places they have never played a scene in stay ??? until they go there.
+- **Art (D49):** hand-authored ASCII only (plain printable characters, at most 60 columns by 10 lines); the model never draws. A place's vignette shows on a character's first visit and with `/look`; an NPC's portrait shows the first time a character shares a place with them.
+
 ## Planned: A Living World (D37–D43)
 
 Direction agreed after the first playtest (2026-09-28). Each layer's details are decided when it is built, and every mechanic stays code-owned: the DM proposes, code decides.
@@ -344,7 +355,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 - [ ] Alt accounts: how many characters a player may have.
 - [ ] Revisit the knack day boundary (D29) with multiplayer or cloud deployment.
 - [ ] The city's time zone (D38).
-- [ ] The languages of the Market District, and which count as common (D41).
+- [x] The languages of the Market District, and which count as common (D44, D45).
 - [ ] Multiplayer step (D32): shared scenes, opposed-roll PvP with its guards, healing others, being named by another player.
 
 **Prototype plan:**
@@ -357,7 +368,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, and D44–D49 from building character details.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -397,10 +408,16 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D34 | Player input | Plain text is action (any person); quotes are exact speech; the DM never rewrites or adds to them |
 | D35 | `/ask` | Out-of-character question: look only, no roll, state change, time or beat |
 | D36 | Owed consequences | A 7–9 or 6− roll must get its consequence; code sends the DM back (up to twice) |
-| D37 | Character details (planned) | Age, pronouns, appearance, languages for players and NPCs |
+| D37 | Character details | Age, pronouns, appearance, languages for players and NPCs (built: D44–D49) |
 | D38 | Time and weather (planned) | Real-time city clock in one time zone; weather tables; NPC schedules; daily tick |
 | D39 | NPC memory (planned) | Attitudes per character and interaction notes in code; DM proposes, code caps |
 | D40 | Encounters (planned) | Code rolls on arrival and about every 5 beats; odds rise as Light falls |
 | D41 | Languages (planned) | Tracked; unknown speech as gibberish; Heart roll for the gist; language knack +1 |
 | D42 | New kinds of people (planned) | Setting-native kinds as origins, not classic fantasy races |
 | D43 | Build order | Fixes; details; time/weather/schedules; NPC memory; encounters; languages; kinds |
+| D44 | Languages | Registry Standard for everyone; market tongues common; Protocol, Underside Cant, animal-speech rare |
+| D45 | Neighborhood languages | Per-district spread (everyone to few) and culture note; per-place pockets |
+| D46 | A character's languages | Registry Standard + origin's language + one of choice |
+| D47 | Age and appearance | Short free text, narrative only |
+| D48 | Maps | Hand-drawn per district; [@] for here; unvisited places stay ??? |
+| D49 | Art | Hand-authored ASCII vignettes and NPC portraits; the model never draws |

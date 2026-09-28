@@ -163,3 +163,29 @@ def _all_text(content: Content) -> str:
 @pytest.mark.parametrize("name", LIVING_RELIGION_NAMES)
 def test_no_gods_from_living_religions(content: Content, name: str) -> None:
     assert not re.search(rf"\b{re.escape(name)}\b", _all_text(content))
+
+
+def test_every_npc_has_details_and_a_portrait(content: Content) -> None:
+    for npc in content.npcs.values():
+        assert npc.age and npc.appearance and npc.portrait
+        assert "registry-standard" in npc.languages
+
+
+def test_origins_grant_a_language(content: Content) -> None:
+    assert content.origins["enclave-raised"].language == "protocol"
+    assert content.origins["awakened-animal"].language == "animal-speech"
+    street = content.origins["street-born"]
+    assert street.language is None and "cantonese" in street.language_choices
+
+
+def test_neighborhood_languages_vary(content: Content) -> None:
+    market = content.regions["market"]
+    assert market.languages["registry-standard"].value == "everyone"
+    assert content.locations["tarp-row"].languages["cantonese"].value == "most"
+    assert content.locations["drowned-station"].languages["underside-cant"].value == "most"
+    assert market.culture
+
+
+def test_common_and_rare_languages(content: Content) -> None:
+    rare = {lang.id for lang in content.languages.values() if not lang.common}
+    assert rare == {"protocol", "underside-cant", "animal-speech"}

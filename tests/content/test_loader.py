@@ -22,9 +22,35 @@ KNACK = {
     "tags": [],
 }
 REGION_DOC: dict[str, Any] = {
-    "region": {"id": "r", "name": "R", "starting_light": 5, "description": "d"},
+    "languages": [
+        {
+            "id": "registry-standard",
+            "name": "Registry Standard",
+            "common": True,
+            "description": "d",
+        },
+        {"id": "hush", "name": "Hush", "common": False, "description": "d"},
+    ],
+    "region": {
+        "id": "r",
+        "name": "R",
+        "starting_light": 5,
+        "description": "d",
+        "map": ["  [1]  "],
+        "map_marks": {"1": "shrine"},
+        "languages": [{"language": "registry-standard", "spread": "everyone"}],
+        "culture": "c",
+    },
     "locations": [
-        {"id": "shrine", "name": "S", "is_haven": True, "tags": ["shrine"], "description": "d"},
+        {
+            "id": "shrine",
+            "name": "S",
+            "is_haven": True,
+            "tags": ["shrine"],
+            "description": "d",
+            "art": ["  /\\  "],
+            "languages": [{"language": "hush", "spread": "some"}],
+        },
     ],
     "gods": [
         {
@@ -50,6 +76,10 @@ REGION_DOC: dict[str, Any] = {
             "wants": "w",
             "voice": "v",
             "tags": [],
+            "age": "old",
+            "appearance": "a",
+            "languages": ["registry-standard"],
+            "portrait": [" :) "],
         }
     ],
 }
@@ -104,6 +134,18 @@ def test_bad_knacks_rejected(knack: dict[str, Any]) -> None:
         _region(npcs__0__pronouns=""),
         {"locations": REGION_DOC["locations"]},  # locations without a region
         {"monsters": []},
+        _region(npcs__0__languages=["klingon"]),
+        _region(npcs__0__languages=[]),
+        _region(npcs__0__portrait=["\tmisaligned"]),
+        _region(npcs__0__portrait=["x" * 61]),
+        _region(locations__0__art=["caf\u00e9"]),
+        _region(region__x__map_marks={"1": "nowhere"}),
+        _region(region__x__map=["no marks at all"]),
+        _region(region__x__map=["[1] and again [1]"]),
+        _region(region__x__languages=[{"language": "hush", "spread": "everyone"}]),
+        _region(region__x__languages=[{"language": "registry-standard", "spread": "all"}]),
+        _region(locations__0__languages=[{"language": "martian", "spread": "few"}]),
+        _region(region__x__culture=""),
         {"clocks": []},  # clocks without a region
         {**_region(), "clocks": [{"id": "c", "name": "C", "segments": 6, "description": "d"}]},
     ],

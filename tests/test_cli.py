@@ -40,8 +40,11 @@ def test_create_play_and_quit(tmp_path: Path) -> None:
             "1",  # stats in order: slick +2, then the rest
             "1",
             "1",  # knacks
+            "1",  # extra language (origin gives animal-speech)
             "Biscuit",
             "they/them",
+            "three, which is middle-aged for a cat",
+            "A ginger tom with one torn ear",
             "The noodle man",
             "/look",
             "/places",
@@ -67,7 +70,24 @@ def test_create_play_and_quit(tmp_path: Path) -> None:
 def test_returning_player_skips_creation(tmp_path: Path) -> None:
     run(
         tmp_path,
-        ["1", "1", "1", "1", "1", "1", "1", "1", "Mira", "she/her", "Jun", "/quit"],
+        [
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "Mira",
+            "she/her",
+            "thirties",
+            "Tall, rain-soaked",
+            "Jun",
+            "/quit",
+        ],
         StubClient(),
     )
     out = run(tmp_path, ["/help", "/bogus", "/quit"], StubClient(say("Welcome back.")))
@@ -80,7 +100,25 @@ def test_returning_player_skips_creation(tmp_path: Path) -> None:
 def test_budget_command_and_operator_report(tmp_path: Path) -> None:
     out = run(
         tmp_path,
-        ["1", "1", "1", "1", "1", "1", "1", "1", "Mira", "she/her", "Jun", "/budget", "/quit"],
+        [
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "Mira",
+            "she/her",
+            "thirties",
+            "Tall, rain-soaked",
+            "Jun",
+            "/budget",
+            "/quit",
+        ],
         StubClient(),
     )
     assert "Allowance left this month: $9.99." in out  # $9.998..., rounded down
@@ -117,8 +155,12 @@ def test_ask_and_wrapping(tmp_path: Path, monkeypatch) -> None:
             "1",
             "1",
             "1",
+            "1",
+            "1",
             "Mira",
             "she/her",
+            "thirties",
+            "Tall",
             "Jun",
             "/ask what do I know about the Registry?",
             "/quit",
@@ -149,7 +191,52 @@ def test_existing_character_is_asked_for_pronouns(tmp_path: Path) -> None:
         conn, player.id, "Jack", "street-born", "Emily", sheet, SYSTEM, location_id="hundred-hooks"
     )
     conn.close()
-    run(tmp_path, ["", "he/him", "/quit"], StubClient())
+    run(tmp_path, ["", "he/him", "1", "1", "twenties", "Lean, quick hands", "/quit"], StubClient())
     conn = open_database(tmp_path / "v.db")
     [jack] = characters.characters_of(conn, player.id)
     assert jack.pronouns == "he/him"
+    assert (jack.age, jack.appearance) == ("twenties", "Lean, quick hands")
+    assert jack.languages == ("registry-standard", "arabic", "wolof")
+
+
+def test_map_art_and_languages(tmp_path: Path) -> None:
+    client = StubClient(say("Open."), say("Tarp Row steams."))
+    out = run(
+        tmp_path,
+        [
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "3",
+            "1",
+            "Mira",
+            "she/her",
+            "thirties",
+            "Tall",
+            "Jun",
+            "/map",
+            "/look",
+            "/go tarp-row",
+            "/map",
+            "/quit",
+        ],
+        client,
+    )
+    text = "\n".join(out)
+    # First arrival at the Hundred Hooks: its vignette and Nana Priya's portrait.
+    assert "-- The Hundred Hooks --" in text
+    assert "-- Nana Priya Seshadri --" in text
+    first_map = text.split("The Market District", 1)[1]
+    assert "[@] The Hundred Hooks (hundred-hooks) <- you are here" in first_map
+    assert "[1] ???" in first_map
+    assert "Speaks: Registry Standard, Hindi, Wolof" in text
+    assert "-- Tomas Haddad-Reyes --" in text or "-- Tomás Haddad-Reyes --" in text
+    last_map = text.rsplit("The Market District", 1)[1]
+    assert "[4] The Hundred Hooks (hundred-hooks)" in last_map
+    assert "[@] Tarp Row (tarp-row) <- you are here" in last_map
+    assert text.count("-- Nana Priya Seshadri --") == 1

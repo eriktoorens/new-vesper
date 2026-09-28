@@ -18,7 +18,7 @@ from new_vesper.state.errors import StaleStateError, StateError
 from new_vesper.state.events import Cause, append_event
 from new_vesper.state.players import get_player
 from new_vesper.state.validate import as_state_error, flag, require_row, row_id, slug, text
-from new_vesper.state.world import get_knack, get_location, get_origin
+from new_vesper.state.world import get_knack, get_language, get_location, get_origin
 
 _STAT_COLUMNS = tuple(stat.value for stat in Stat)
 
@@ -31,6 +31,9 @@ class Character:
     origin_id: str
     bond: str
     pronouns: str | None
+    age: str | None
+    appearance: str | None
+    languages: tuple[str, ...]  # language ids, as chosen
     sheet: Sheet
     tags: frozenset[str]  # origin tags plus tags gained in play
     currency: int  # in glitter (D18)
@@ -89,6 +92,25 @@ def _write_children(conn: sqlite3.Connection, character_id: int, sheet: Sheet) -
     )
 
 
+def _check_languages(conn: sqlite3.Connection, languages: object) -> tuple[str, ...]:
+    if not isinstance(languages, tuple):
+        raise StateError("languages must be a tuple of language ids")
+    ids = tuple(slug(lang, "language") for lang in languages)
+    if len(set(ids)) != len(ids):
+        raise StateError("a language is listed twice")
+    for lang in ids:
+        get_language(conn, lang)
+    return ids
+
+
+def _write_languages(conn: sqlite3.Connection, character_id: int, ids: tuple[str, ...]) -> None:
+    conn.execute("DELETE FROM character_languages WHERE character_id = ?", (character_id,))
+    conn.executemany(
+        "INSERT INTO character_languages (character_id, language_id) VALUES (?, ?)",
+        [(character_id, lang) for lang in ids],
+    )
+
+
 def _sheet_columns(sheet: Sheet) -> dict[str, Any]:
     return {
         "level": sheet.level,
@@ -113,6 +135,9 @@ def create_character(
     *,
     location_id: str | None = None,
     pronouns: str | None = None,
+    age: str | None = None,
+    appearance: str | None = None,
+    languages: tuple[str, ...] = (),
 ) -> Character:
     """Store a new character. Build ``sheet`` with ``rules.character.create_character``."""
     player = get_player(conn, player_id)
@@ -120,6 +145,9 @@ def create_character(
     clean_name = text(name, "name", 60).strip()
     clean_bond = text(bond, "bond", 200).strip()
     clean_pronouns = None if pronouns is None else text(pronouns, "pronouns", 30).strip()
+    clean_age = None if age is None else text(age, "age", 60).strip()
+    clean_look = None if appearance is None else text(appearance, "appearance", 300).strip()
+    spoken = _check_languages(conn, languages)
     if location_id is not None:
         location_id = get_location(conn, location_id).id
     _check_sheet(conn, sheet)
@@ -129,6 +157,8 @@ def create_character(
         "origin_id": origin.id,
         "bond": clean_bond,
         "pronouns": clean_pronouns,
+        "age": clean_age,
+        "appearance": clean_look,
         "location_id": location_id,
         "currency": STARTING_GLITTER,
         **_sheet_columns(sheet),
@@ -141,6 +171,7 @@ def create_character(
         )
         character_id = int(cursor.lastrowid or 0)
         _write_children(conn, character_id, sheet)
+        _write_languages(conn, character_id, spoken)
         append_event(
             conn,
             "character_created",
@@ -194,6 +225,13 @@ def get_character(conn: sqlite3.Connection, character_id: int) -> Character:
         origin_id=row["origin_id"],
         bond=row["bond"],
         pronouns=row["pronouns"],
+        age=row["age"],
+        appearance=row["appearance"],
+        languages=_ids(
+            conn,
+            "SELECT language_id FROM character_languages WHERE character_id = ? ORDER BY rowid",
+            cid,
+        ),
         sheet=sheet,
         tags=get_origin(conn, row["origin_id"]).tags
         | frozenset(
@@ -368,3 +406,47 @@ def set_pronouns(
     return _update_field(
         conn, character, "pronouns", value, "pronouns_set", cause, {"pronouns": value}
     )
+
+
+def set_details(
+    conn: sqlite3.Connection,
+    character_id: int,
+    cause: Cause,
+    *,
+    age: str,
+    appearance: str,
+    languages: tuple[str, ...],
+) -> Character:
+    """Fill in age, appearance and languages, e.g. for a character made before they existed."""
+    character = get_character(conn, character_id)
+    clean_age = text(age, "age", 60).strip()
+    clean_look = text(appearance, "appearance", 300).strip()
+    spoken = _check_languages(conn, languages)
+    with atomic(conn), as_state_error():
+        conn.execute(
+            "UPDATE characters SET age = ?, appearance = ?, version = version + 1 WHERE id = ?",
+            (clean_age, clean_look, character.id),
+        )
+        _write_languages(conn, character.id, spoken)
+        append_event(
+            conn, "details_set", cause, {"languages": list(spoken)}, character_id=character.id
+        )
+    return get_character(conn, character.id)
+
+
+def played_locations(conn: sqlite3.Connection, character_id: int) -> frozenset[str]:
+    """Places this character has played a scene in."""
+    rows = conn.execute(
+        "SELECT DISTINCT s.location_id FROM scene_participants p"
+        " JOIN scenes s ON s.id = p.scene_id"
+        " WHERE p.character_id = ? AND s.location_id IS NOT NULL",
+        (row_id(character_id, "character id"),),
+    )
+    return frozenset(row[0] for row in rows)
+
+
+def visited_locations(conn: sqlite3.Connection, character_id: int) -> frozenset[str]:
+    """Places this character has played a scene in, plus where they are now."""
+    character = get_character(conn, character_id)
+    here = {character.location_id} if character.location_id else set()
+    return played_locations(conn, character.id) | here

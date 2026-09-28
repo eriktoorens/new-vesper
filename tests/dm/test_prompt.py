@@ -29,7 +29,7 @@ def test_content_brief_names_the_world(content: Content) -> None:
     for needle in (
         "`drowned-station`",
         "`paru-of-lost-umbrellas`",
-        "(they/them)",
+        "(they/them, built nine years ago)",
         "`registry-audit`",
         "`market-stalls`",
     ):

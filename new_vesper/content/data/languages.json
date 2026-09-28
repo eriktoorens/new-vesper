@@ -1,0 +1,24 @@
+{
+  "languages": [
+    {"id": "registry-standard", "name": "Registry Standard", "common": true,
+     "description": "The city's paperwork tongue: flat, precise, full of subsections. Everyone speaks it; nobody dreams in it."},
+    {"id": "wolof", "name": "Wolof", "common": true,
+     "description": "A market language of traders and storytellers, quick with proverbs."},
+    {"id": "tagalog", "name": "Tagalog", "common": true,
+     "description": "A market language heard all along the Lantern Arcade, bright with borrowed words."},
+    {"id": "arabic", "name": "Arabic", "common": true,
+     "description": "A market language of spice sellers and haggling, spoken in several dialects."},
+    {"id": "cantonese", "name": "Cantonese", "common": true,
+     "description": "A market language of the food carts and the chip stalls, fast and tonal."},
+    {"id": "hindi", "name": "Hindi", "common": true,
+     "description": "A market language of the lodging houses and tea stands."},
+    {"id": "portuguese", "name": "Portuguese", "common": true,
+     "description": "A market language of the docks and the old trading families."},
+    {"id": "protocol", "name": "Protocol", "common": false,
+     "description": "The enclaves' spoken code: clipped, structured, half of it acknowledgements. Sounds like polite static to outsiders."},
+    {"id": "underside-cant", "name": "Underside Cant", "common": false,
+     "description": "The tongue of Old Vesper's forgotten, full of words for things that no longer exist. Hard to hear clearly, harder to remember."},
+    {"id": "animal-speech", "name": "Animal-speech", "common": false,
+     "description": "What awakened animals speak with their own kind: chirps, flicks and silences that mean far more than they seem."}
+  ]
+}

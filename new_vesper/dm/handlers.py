@@ -213,6 +213,13 @@ def describe_character(ctx: TurnContext, character: Character) -> dict[str, Any]
         "id": character.id,
         "name": character.name,
         "pronouns": character.pronouns,
+        "age": character.age,
+        "appearance": character.appearance,
+        "languages": [
+            ctx.content.languages[lang].name
+            for lang in character.languages
+            if lang in ctx.content.languages
+        ],
         "origin": character.origin_id,
         "tags": sorted(character.tags),
         "bond": character.bond,
@@ -239,6 +246,13 @@ def describe_character(ctx: TurnContext, character: Character) -> dict[str, Any]
     }
 
 
+def _languages_here(ctx: TurnContext, location_id: str) -> dict[str, str]:
+    """How widely each language is spoken here: the district's, sharpened by the place's."""
+    place = ctx.content.locations[location_id]
+    spread = dict(ctx.content.regions[place.region_id].languages) | dict(place.languages)
+    return {ctx.content.languages[lang].name: level.value for lang, level in spread.items()}
+
+
 def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
     place = ctx.content.locations[location_id]
     region = world.get_region(ctx.conn, place.region_id)
@@ -255,8 +269,17 @@ def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
         "is_haven": place.is_haven,
         "tags": sorted(place.tags),
         "description": place.description,
+        "languages_heard_here": _languages_here(ctx, place.id),
         "npcs": [
-            {"id": n.id, "name": n.name, "pronouns": n.pronouns, "role": n.role}
+            {
+                "id": n.id,
+                "name": n.name,
+                "pronouns": n.pronouns,
+                "age": n.age,
+                "appearance": n.appearance,
+                "role": n.role,
+                "languages": [ctx.content.languages[lang].name for lang in n.languages],
+            }
             for n in ctx.content.npcs_at(place.id)
         ],
         "shrine_of": god.id if god else None,

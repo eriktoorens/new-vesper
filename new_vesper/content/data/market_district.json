@@ -3,7 +3,71 @@
     "id": "market",
     "name": "The Market District",
     "starting_light": 6,
-    "description": "Part souk, part night market: covered lanes of lantern-lit stalls, spice smoke, haggling in a dozen languages, food carts under tarps, and shrine-stalls where you can make an offering to whichever god fits your budget. Noodles, charms, bootleg firmware and secondhand miracles sell side by side."
+    "description": "Part souk, part night market: covered lanes of lantern-lit stalls, spice smoke, haggling in a dozen languages, food carts under tarps, and shrine-stalls where you can make an offering to whichever god fits your budget. Noodles, charms, bootleg firmware and secondhand miracles sell side by side.",
+    "map": [
+      "  ~ ' ~ ' ~ ' ~ ' ~ ' ~ ' ~ ' ~ ' ~ ' ~ ' ~ ' ~ ' ~ ' ~",
+      "  .-----------------------.       .----------------.",
+      "  | o   o   o   o   o   o |       | ^^^^^^^^^^^^^^ |",
+      "  |          [1]          |=======|      [2]       |",
+      "  | o   o   o   o   o   o |       | ^^^^^^^^^^^^^^ |",
+      "  '-----------+-----------'       '-------+--------'",
+      "       [3]    |                           |    [4]",
+      "    ---+------+-------------+-------------+-----+---",
+      "                            |",
+      "              .-------------+-------------.",
+      "              |  _   _     [5]     _   _  |",
+      "              | | | | |           | | | | |",
+      "              '-------------+-------------'",
+      "                            :",
+      "                   ~~~~~~~ [6] ~~~~~~~"
+    ],
+    "map_marks": {
+      "1": "lantern-arcade",
+      "2": "tarp-row",
+      "3": "umbrella-shrine",
+      "4": "hundred-hooks",
+      "5": "weighhouse",
+      "6": "drowned-station"
+    },
+    "culture": "The most mixed neighborhood in the city: a crossroads where traders from every quarter set up stalls, so a single lane can hold five languages. Families have run the same stalls for generations; newcomers rent by the week. Everyone haggles, everyone eats standing up, and every shrine is somebody's grandmother's.",
+    "languages": [
+      {
+        "language": "registry-standard",
+        "spread": "everyone"
+      },
+      {
+        "language": "cantonese",
+        "spread": "many"
+      },
+      {
+        "language": "tagalog",
+        "spread": "many"
+      },
+      {
+        "language": "arabic",
+        "spread": "some"
+      },
+      {
+        "language": "wolof",
+        "spread": "some"
+      },
+      {
+        "language": "hindi",
+        "spread": "some"
+      },
+      {
+        "language": "portuguese",
+        "spread": "few"
+      },
+      {
+        "language": "protocol",
+        "spread": "few"
+      },
+      {
+        "language": "underside-cant",
+        "spread": "few"
+      }
+    ]
   },
   "locations": [
     {
@@ -11,14 +75,50 @@
       "name": "The Lantern Arcade",
       "is_haven": false,
       "tags": [],
-      "description": "The main covered lane. Paper and neon lanterns hang so thick the rain comes through orange. Stallholders call prices in Wolof, Tagalog, Arabic, Cantonese and Registry Standard, sometimes in one sentence."
+      "description": "The main covered lane. Paper and neon lanterns hang so thick the rain comes through orange. Stallholders call prices in Wolof, Tagalog, Arabic, Cantonese and Registry Standard, sometimes in one sentence.",
+      "art": [
+        "   o     o     o     o     o     o",
+        "  (_)   (_)   (_)   (_)   (_)   (_)",
+        "   |     |     |     |     |     |",
+        " __|_____|_____|_____|_____|_____|__",
+        " | charms | chips | spice | miracles |",
+        " '''''''''''''''''''''''''''''''''''"
+      ],
+      "languages": [
+        {
+          "language": "tagalog",
+          "spread": "most"
+        },
+        {
+          "language": "wolof",
+          "spread": "many"
+        }
+      ]
     },
     {
       "id": "tarp-row",
       "name": "Tarp Row",
       "is_haven": false,
       "tags": [],
-      "description": "Food carts packed under a patchwork of tarps that drum in the rain. Hand-pulled noodles, jollof by the scoop, grilled skewers, cardamom tea. The steam hides a lot of quiet deals."
+      "description": "Food carts packed under a patchwork of tarps that drum in the rain. Hand-pulled noodles, jollof by the scoop, grilled skewers, cardamom tea. The steam hides a lot of quiet deals.",
+      "art": [
+        "  /\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\",
+        " /  ' , ' , ' , ' , ' , ' , ' , '  \\",
+        " |   ______    ) )     _____   ( (  |",
+        " |  |noodle|  ( (     | tea |   ) ) |",
+        " |  |______|   ) )    |_____|  ( (  |",
+        " |__o______o___________o___o________|"
+      ],
+      "languages": [
+        {
+          "language": "cantonese",
+          "spread": "most"
+        },
+        {
+          "language": "arabic",
+          "spread": "many"
+        }
+      ]
     },
     {
       "id": "umbrella-shrine",
@@ -27,7 +127,17 @@
       "tags": [
         "shrine"
       ],
-      "description": "A shrine bolted to the side of a dead vending machine, hung three deep with lost umbrellas in every color. Offerings go in the coin slot. It is always, somehow, dry underneath."
+      "description": "A shrine bolted to the side of a dead vending machine, hung three deep with lost umbrellas in every color. Offerings go in the coin slot. It is always, somehow, dry underneath.",
+      "art": [
+        "    ___       ___       ___",
+        "   /   \\     /   \\     /   \\",
+        "     |   .------------.   |",
+        "     J   |  [  coin  ] |   J",
+        "         |  [  slot  ] |",
+        "         |   .------.  |",
+        "         '---'      '--'"
+      ],
+      "languages": []
     },
     {
       "id": "hundred-hooks",
@@ -36,14 +146,48 @@
       "tags": [
         "lodging"
       ],
-      "description": "Capsule lodging above a spice warehouse: a hundred bunks, a hundred coat hooks, one landlady who remembers every guest's name and makes sure the city does too."
+      "description": "Capsule lodging above a spice warehouse: a hundred bunks, a hundred coat hooks, one landlady who remembers every guest's name and makes sure the city does too.",
+      "art": [
+        "  J  J  J  J  J  J  J  J  J  J  J  J",
+        "  |  |  |  |  |  |  |  |  |  |  |  |",
+        "  [__][__][__][__][__][__][__][__][]",
+        "  [__][__][__][__][__][__][__][__][]",
+        "   _____________",
+        "  | ledger  |||| |      ( tea )",
+        "  '-------------'"
+      ],
+      "languages": [
+        {
+          "language": "hindi",
+          "spread": "many"
+        },
+        {
+          "language": "portuguese",
+          "spread": "some"
+        }
+      ]
     },
     {
       "id": "weighhouse",
       "name": "The Old Weighhouse",
       "is_haven": false,
       "tags": [],
-      "description": "The oldest bazaar hall, all cast-iron ribs and cracked tile. Its brass scales still weigh things nobody sells any more. A stairwell at the back is chained shut, and the chain is always damp."
+      "description": "The oldest bazaar hall, all cast-iron ribs and cracked tile. Its brass scales still weigh things nobody sells any more. A stairwell at the back is chained shut, and the chain is always damp.",
+      "art": [
+        "   /\\       /\\       /\\       /\\",
+        "  /  \\_____/  \\_____/  \\_____/  \\",
+        "  |    _____________________    |",
+        "  |   |     _|_       _|_   |   |",
+        "  |   |    /   \\     /   \\  |   |",
+        "  |   |   '-----'   '-----' |   |",
+        "  |___|_____________________|_#_|"
+      ],
+      "languages": [
+        {
+          "language": "arabic",
+          "spread": "many"
+        }
+      ]
     },
     {
       "id": "drowned-station",
@@ -52,7 +196,26 @@
       "tags": [
         "underside-entrance"
       ],
-      "description": "Beneath the Weighhouse, a subway station the maps stopped showing. Black water stands to the second step. The platform signs name a line that never existed, and a rat with a lantern-boat runs a ferry into Old Vesper."
+      "description": "Beneath the Weighhouse, a subway station the maps stopped showing. Black water stands to the second step. The platform signs name a line that never existed, and a rat with a lantern-boat runs a ferry into Old Vesper.",
+      "art": [
+        "  _____________________________________",
+        " | [ LINE 9 ]         NOT IN SERVICE   |",
+        " |_____________________________________|",
+        "    ||   ||   ||   ||   ||   ||   ||",
+        "  __||___||___||___||___||___||___||__",
+        "  ~~~~~~~~~~~~~~~~~ (o) ~~~~~~~~~~~~~~~",
+        "     ~~~~~~~~~~~~ __/|\\__ ~~~~~~~~~~"
+      ],
+      "languages": [
+        {
+          "language": "underside-cant",
+          "spread": "most"
+        },
+        {
+          "language": "animal-speech",
+          "spread": "some"
+        }
+      ]
     }
   ],
   "gods": [
@@ -84,6 +247,21 @@
       "voice": "Brisk and fond; calls everyone 'child', including the made people.",
       "tags": [
         "haven-keeper"
+      ],
+      "age": "seventy-odd",
+      "appearance": "Small and sharp-eyed, silver braid, reading glasses on a chain, a cardigan with a pencil behind every button.",
+      "languages": [
+        "registry-standard",
+        "hindi",
+        "portuguese"
+      ],
+      "portrait": [
+        "    .-\"\"\"-.",
+        "   / .---. \\",
+        "   | o---o |",
+        "   \\   ~   /",
+        "  __'-----'__",
+        " /  ledger  \\"
       ]
     },
     {
@@ -97,6 +275,21 @@
       "voice": "Loud, warm, answers questions with food.",
       "tags": [
         "fixer"
+      ],
+      "age": "forties",
+      "appearance": "Broad shoulders, flour to the elbows, a burn scar across one forearm, a laugh you hear before you see him.",
+      "languages": [
+        "registry-standard",
+        "arabic",
+        "portuguese"
+      ],
+      "portrait": [
+        "     _____",
+        "    ( o o )",
+        "   --\\ ~ /--",
+        "  /| '---' |\\",
+        "   | ~~~~~ |",
+        "   |_______|"
       ]
     },
     {
@@ -110,6 +303,22 @@
       "voice": "Silky sales patter; every sentence ends in a price.",
       "tags": [
         "merchant"
+      ],
+      "age": "thirties",
+      "appearance": "Tall and immaculate in a long coat sewn with dozens of pockets, each one clinking faintly.",
+      "languages": [
+        "registry-standard",
+        "wolof",
+        "cantonese",
+        "tagalog"
+      ],
+      "portrait": [
+        "      .-.",
+        "     (o o)",
+        "    /|[_]|\\",
+        "   [_|[_]|_]",
+        "     |[_]|",
+        "     /   \\"
       ]
     },
     {
@@ -123,6 +332,20 @@
       "voice": "Dry, exact, quietly despairing; quotes subsection numbers.",
       "tags": [
         "registry"
+      ],
+      "age": "late fifties",
+      "appearance": "Grey raincoat, grey clipboard, grey stubble; ink on the fingers of both hands.",
+      "languages": [
+        "registry-standard",
+        "protocol"
+      ],
+      "portrait": [
+        "      ___",
+        "     |___|",
+        "     (-_-)",
+        "    /| = |\\  [==]",
+        "     |___|   |~~|",
+        "     /   \\   '--'"
       ]
     },
     {
@@ -136,6 +359,22 @@
       "voice": "Soft, precise, occasionally glitches into old sales scripts and apologizes.",
       "tags": [
         "synthetic"
+      ],
+      "age": "built nine years ago",
+      "appearance": "A made person with a hand-painted face, careful brushwork around the eyes, and a smile designed by a marketing department.",
+      "languages": [
+        "registry-standard",
+        "cantonese",
+        "tagalog",
+        "protocol"
+      ],
+      "portrait": [
+        "    .-----.",
+        "   | *   * |",
+        "   |   ^   |",
+        "   | \\___/ |",
+        "    '--+--'",
+        "   [|||||||]"
       ]
     },
     {
@@ -150,6 +389,20 @@
       "tags": [
         "underside",
         "half-faded"
+      ],
+      "age": "old for a rat; nobody knows how old",
+      "appearance": "A grey rat in a waxed coat, whiskers beaded with water; you can see the tiles through his tail.",
+      "languages": [
+        "registry-standard",
+        "underside-cant",
+        "animal-speech"
+      ],
+      "portrait": [
+        "        __    _",
+        "    .--'  '--' )",
+        "   ( o         )'",
+        "    '--.____.'",
+        "       \"    \""
       ]
     }
   ],

@@ -258,3 +258,32 @@ def get_location(conn: sqlite3.Connection, location_id: str) -> Location:
         location_id,
     )
     return Location(row["id"], row["region_id"], row["name"], bool(row["is_haven"]))
+
+
+@dataclass(frozen=True)
+class Language:
+    id: str
+    name: str
+    common: bool
+
+
+def add_language(
+    conn: sqlite3.Connection, language_id: str, name: str, common: bool, cause: Cause
+) -> Language:
+    lid = slug(language_id, "language id")
+    with atomic(conn), as_state_error():
+        conn.execute(
+            "INSERT INTO languages (id, name, common) VALUES (?, ?, ?)",
+            (lid, text(name, "language name", 40), int(flag(common, "common"))),
+        )
+        append_event(conn, "language_added", cause, {"language_id": lid})
+    return get_language(conn, lid)
+
+
+def get_language(conn: sqlite3.Connection, language_id: str) -> Language:
+    row = require_row(
+        conn.execute("SELECT * FROM languages WHERE id = ?", (language_id,)).fetchone(),
+        "language",
+        language_id,
+    )
+    return Language(row["id"], row["name"], bool(row["common"]))
