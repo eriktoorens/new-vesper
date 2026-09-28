@@ -18,7 +18,7 @@ from typing import Any
 from new_vesper.budget.ledger import record_call
 from new_vesper.budget.policy import BudgetConfig, BudgetExhausted, BudgetStatus, budget_status
 from new_vesper.budget.pricing import PRICES, ModelPrice, price_of
-from new_vesper.city.encounters import Encounter, check_for_encounter
+from new_vesper.city.encounters import ideas_here, left_today, recent_in_district
 from new_vesper.city.npcs import present_at
 from new_vesper.city.sky import season, tide_at
 from new_vesper.city.tick import run_due_ticks
@@ -38,7 +38,6 @@ from new_vesper.dm.tools import TOOLS
 from new_vesper.rules import clock
 from new_vesper.rules.character import resolve_full_harm
 from new_vesper.rules.dice import Rng
-from new_vesper.rules.encounters import is_check_beat
 from new_vesper.rules.errors import RulesError
 from new_vesper.rules.leveling import LevelUpRequest, level_up
 from new_vesper.rules.sky import moon
@@ -60,10 +59,6 @@ PRIVATE_EVENTS = frozenset(
 )
 # Memory lines each NPC keeps per character before older ones fold into a summary.
 MEMORIES_KEPT = 8
-ENCOUNTER_DIRECTION = (
-    "An encounter happens now (scene_state.encounter), drawn by the game: bring it into "
-    "this turn's narration naturally, then leave the player free to engage or ignore it."
-)
 QUIET_NARRATION = "The rain goes quiet, and so does the city. {message}"
 
 
@@ -110,7 +105,6 @@ class PlaySession:
         on_usage: UsageHook | None = None,
         budget: BudgetConfig | None = None,
         prices: Mapping[str, ModelPrice] = PRICES,
-        encounter_rng: Rng | None = None,
     ) -> None:
         self.conn = conn
         self.content = content
@@ -121,8 +115,6 @@ class PlaySession:
         self.observer = on_usage
         self.budget = budget or BudgetConfig()
         self.prices = prices
-        # Random encounters need their own dice; without them, encounters are off.
-        self.encounter_rng = encounter_rng
         for call in CallType:
             # Refuse up front: an unpriced model's spend could not be recorded.
             price_of(self.config.model_for(call), prices)
@@ -200,6 +192,13 @@ class PlaySession:
         return {
             "time": clock.describe(ctx.now),
             "weather": {"now": sky.name, "description": sky.description},
+            "encounters": {
+                "left_today_in_district": left_today(self.conn, scene.region_id, ctx.now),
+                "ideas_that_fit_here": ideas_here(self.conn, self.content, me.location_id, ctx.now)
+                if me.location_id
+                else [],
+                "recently_in_district": recent_in_district(self.conn, scene.region_id, ctx.now),
+            },
             "character": describe_character(ctx, me),
             "location": describe_location(ctx, me.location_id) if me.location_id else None,
             "scene": {
@@ -271,24 +270,7 @@ class PlaySession:
         ) or " ".join(filter(None, [earlier, *(n for _, n in old)]))
         attitudes.fold_memories(self.conn, npc_id, me.id, [i for i, _ in old], merged[:600])
 
-    def _encounter(self) -> Encounter | None:
-        """One encounter check where the character stands (D67)."""
-        me = self.character
-        if self.encounter_rng is None or me.location_id is None:
-            return None
-        return check_for_encounter(
-            self.conn,
-            self.content,
-            me.id,
-            me.location_id,
-            self.now(),
-            self.encounter_rng,
-            self._cause(Actor.SYSTEM),
-        )
-
-    def _run(
-        self, intent: str | None, direction: str | None, encounter: Encounter | None = None
-    ) -> TurnOutcome:
+    def _run(self, intent: str | None, direction: str | None) -> TurnOutcome:
         """One beat: record the intent, run the agent, resolve the beat."""
         assert self.scene_id is not None
         beat = scenes.open_beat(self.conn, self.scene_id, self._cause(Actor.SYSTEM))
@@ -298,11 +280,7 @@ class PlaySession:
         self.scene_npcs |= {
             w.npc.id for w in present_at(self.content, self.character.location_id or "", ctx.now)
         }
-        state = self._state(ctx)
-        if encounter is not None:
-            state["encounter"] = encounter.for_dm(self.content)
-            direction = " ".join(filter(None, [direction, ENCOUNTER_DIRECTION]))
-        message = prompt.turn_message(state, intent, direction)
+        message = prompt.turn_message(self._state(ctx), intent, direction)
         quiet = False
         try:
             result: TurnResult = run_turn(
@@ -492,7 +470,7 @@ class PlaySession:
         recap = self._recap(logoff) if logoff else None
         art = self._arrival_art()
         self._open_scene()
-        return recap, notes, self._with_art(self._run(None, ARRIVAL, self._encounter()), art)
+        return recap, notes, self._with_art(self._run(None, ARRIVAL), art)
 
     def turn(self, intent: str) -> TurnOutcome:
         me = self.character
@@ -506,12 +484,7 @@ class PlaySession:
             raise SessionError(f"keep it under {scenes.MAX_INTENT_LENGTH} characters")
         self._require_budget()
         run_due_ticks(self.conn, self.content, self.now())  # a session can cross midnight
-        assert self.scene_id is not None
-        beats = self.conn.execute(
-            "SELECT COUNT(*) FROM beats WHERE scene_id = ?", (self.scene_id,)
-        ).fetchone()[0]
-        encounter = self._encounter() if is_check_beat(beats + 1) else None
-        return self._run(intent, None, encounter)
+        return self._run(intent, None)
 
     def ask(self, question: str) -> str:
         """An out-of-character question. The DM may only look; nothing changes, no beat."""
@@ -588,7 +561,7 @@ class PlaySession:
         characters.move_character(self.conn, me.id, target.id, self._cause())
         art = self._arrival_art()
         self._open_scene()
-        return self._with_art(self._run(None, ARRIVAL, self._encounter()), art)
+        return self._with_art(self._run(None, ARRIVAL), art)
 
     def end(self) -> None:
         """Log off: close the scene and go offline (safe at a haven, lying low elsewhere)."""

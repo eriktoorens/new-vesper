@@ -13,6 +13,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from new_vesper.budget.policy import stamp
+from new_vesper.city.encounters import NoSuchEncounter, spend
 from new_vesper.city.npcs import present_at, regulars_elsewhere, whereabouts
 from new_vesper.city.sky import describe_sky, harder, minimum_rung
 from new_vesper.content.loader import Content
@@ -27,7 +28,8 @@ from new_vesper.rules.consequences import (
 )
 from new_vesper.rules.currency import format_glitter
 from new_vesper.rules.dice import Rng
-from new_vesper.rules.errors import RulesError
+from new_vesper.rules.encounters import Kind as EncounterKind
+from new_vesper.rules.errors import RulesError, parse_enum
 from new_vesper.rules.leveling import can_level_up, xp_to_advance
 from new_vesper.rules.light import apply_deed, encroach, parse_deed_size, parse_direction
 from new_vesper.rules.magic import casting_difficulty, casting_stat
@@ -103,6 +105,7 @@ class TurnContext:
     slipped: bool = False
     changes: list[str] = field(default_factory=list)
     roll_ids: list[int] = field(default_factory=list)
+    encounters: int = 0  # created this turn
 
     @property
     def cause(self) -> Cause:
@@ -861,6 +864,44 @@ def adjust_attitude(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+# --- create_encounter ---------------------------------------------------------
+
+MAX_ENCOUNTER_TEXT = 300
+MAX_ROLE = 120
+
+
+def create_encounter(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
+    """The DM writes an encounter; code spends a slot of that kind from today's pool (D73)."""
+    args = _args(raw, {"kind", "what_happens"}, {"stranger_role"})
+    try:
+        kind = parse_enum(EncounterKind, args["kind"], "encounter kind")
+    except RulesError as exc:
+        raise ToolError(str(exc)) from exc
+    what = _text(args["what_happens"], "what_happens", MAX_ENCOUNTER_TEXT)
+    role = args.get("stranger_role")
+    if role is not None:
+        role = _text(role, "stranger_role", MAX_ROLE)
+    if ctx.encounters >= 1:
+        raise ToolError("one encounter per turn")
+    me = _me(ctx)
+    _require_able(me)
+    if me.location_id is None:
+        raise ToolError("this character is nowhere")
+    try:
+        underside, stranger = spend(
+            ctx.conn, ctx.content, me.id, me.location_id, kind, what, role, ctx.now, ctx.cause
+        )
+    except NoSuchEncounter as exc:
+        raise ToolError(str(exc)) from exc
+    ctx.encounters += 1
+    result: dict[str, Any] = {"kind": kind.value, "underside": underside}
+    if underside:
+        result["note"] = "this is Old Vesper bleeding through: make it uncanny"
+    if stranger is not None:
+        result["stranger"] = stranger.for_dm(ctx.content)
+    return result
+
+
 HANDLERS: dict[str, Handler] = {
     "look": look,
     "call_for_roll": call_for_roll,
@@ -869,6 +910,7 @@ HANDLERS: dict[str, Handler] = {
     "report_trigger": report_trigger,
     "adjust_light": adjust_light,
     "adjust_attitude": adjust_attitude,
+    "create_encounter": create_encounter,
 }
 
 
@@ -877,7 +919,13 @@ def dispatch(ctx: TurnContext, name: str, raw: object) -> tuple[dict[str, Any], 
     handler = HANDLERS.get(name)
     if handler is None:
         return {"error": f"unknown tool {str(name)[:40]!r}"}, True
-    flags = (ctx.fall_or_endure_pending, ctx.slipped, len(ctx.changes), len(ctx.roll_ids))
+    flags = (
+        ctx.fall_or_endure_pending,
+        ctx.slipped,
+        len(ctx.changes),
+        len(ctx.roll_ids),
+        ctx.encounters,
+    )
     try:
         with atomic(ctx.conn):
             return handler(ctx, raw), False  # type: ignore[arg-type]
@@ -886,6 +934,7 @@ def dispatch(ctx: TurnContext, name: str, raw: object) -> tuple[dict[str, Any], 
         ctx.fall_or_endure_pending, ctx.slipped = flags[0], flags[1]
         del ctx.changes[flags[2] :]
         del ctx.roll_ids[flags[3] :]
+        ctx.encounters = flags[4]
         return {"error": str(exc)}, True
 
 

@@ -94,11 +94,12 @@ class EncounterWhen:
 
 
 @dataclass(frozen=True)
-class EncounterDef:
+class EncounterIdea:
+    """Inspiration for the DM, who writes every encounter fresh (D73)."""
+
     id: str
     region_id: str
     kind: Kind
-    weight: int
     text: str
     underside: bool
     stranger_role: str | None  # a generated stranger takes this role, if set
@@ -436,8 +437,8 @@ def _parse_schedule(raw: object, where: str) -> Mapping[str, tuple[ScheduleBlock
 ENCOUNTER_WHEN = ("locations", "parts_of_day", "weather", "weather_not", "tide", "seasons", "moon")
 
 
-def parse_encounter(raw: object, region_id: str) -> EncounterDef:
-    r = Reader(raw, "encounter", {"id", "kind", "weight", "text", "underside", "stranger", "when"})
+def parse_encounter_idea(raw: object, region_id: str) -> EncounterIdea:
+    r = Reader(raw, "encounter idea", {"id", "kind", "text", "underside", "stranger", "when"})
     where = f"encounter {r.raw.get('id')!r}"
     if r.raw["kind"] not in {k.value for k in Kind}:
         raise ContentError(f"{where}: kind is color, opportunity or trouble")
@@ -457,11 +458,10 @@ def parse_encounter(raw: object, region_id: str) -> EncounterDef:
     for name in when.moon:
         if name not in PHASES:
             raise ContentError(f"{where}: {name!r} is not a moon phase")
-    return EncounterDef(
+    return EncounterIdea(
         r.slug("id"),
         region_id,
         Kind(r.raw["kind"]),
-        r.integer("weight", 1, 20),
         r.text("text", 400),
         r.boolean("underside"),
         role,

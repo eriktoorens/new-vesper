@@ -88,10 +88,14 @@ at all (a trusting friend simply helps) and which rung fits; they never add to a
 another NPC who is here, call adjust_attitude with a one-sentence reason. An NPC can \
 explain why they feel as they do when asked, drawing on "why", or decline to, in \
 character.
-- scene_state.encounter, when present, was drawn by the game: include it this turn. \
-Its stranger, if any, is a one-off person with the given name, pronouns and languages; \
-they are not an NPC and have no schedule. Trouble may call for a roll if the player \
-engages or it closes in; color never does.
+- Encounters are yours to create, fresh every time, when the moment calls for it: \
+arriving somewhere, a lull, a long wait, a place that should feel alive or dangerous. \
+Call create_encounter with a kind still left in scene_state.encounters and one or two \
+sentences of what happens. Never repeat recently_in_district: a pickpocket can strike \
+twice, but not the same person the same way. ideas_that_fit_here are inspiration only. \
+When the pool is empty, the district is quiet today. Trouble may lead to a roll if the \
+player engages or it closes in; color never does. A stranger code supplies is a \
+one-off person with that name, pronouns and languages, not an NPC.
 - An NPC's "lately" is what they have been doing about their own goal. Let it show in \
 what they say and do when it fits; don't announce it.
 - Languages: everyone speaks Registry Standard. Each character and NPC speaks the \

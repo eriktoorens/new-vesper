@@ -101,6 +101,7 @@ def test_tool_definitions_are_cached_and_closed() -> None:
         "report_trigger",
         "adjust_light",
         "adjust_attitude",
+        "create_encounter",
     }
     assert all(t["input_schema"]["additionalProperties"] is False for t in TOOLS)
 

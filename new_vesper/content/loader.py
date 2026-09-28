@@ -13,7 +13,7 @@ from new_vesper.content.model import (
     CalendarDef,
     ClockDef,
     ContentError,
-    EncounterDef,
+    EncounterIdea,
     GodDef,
     KnackDef,
     LanguageDef,
@@ -26,7 +26,7 @@ from new_vesper.content.model import (
     Spread,
     parse_calendar,
     parse_clock,
-    parse_encounter,
+    parse_encounter_idea,
     parse_god,
     parse_knack,
     parse_language,
@@ -54,7 +54,7 @@ class Content:
     clocks: Mapping[str, ClockDef]
     languages: Mapping[str, LanguageDef]
     calendar: CalendarDef | None
-    encounters: Mapping[str, EncounterDef]
+    encounter_ideas: Mapping[str, EncounterIdea]
     stranger_names: Mapping[str, tuple[str, ...]]
 
     def npcs_at(self, location_id: str) -> list[NpcDef]:
@@ -140,8 +140,8 @@ def _check_seasons(content: Content) -> None:
 
 
 def _check_encounters(content: Content) -> None:
-    for enc in content.encounters.values():
-        when, where = enc.when, f"encounter {enc.id!r}"
+    for enc in content.encounter_ideas.values():
+        when, where = enc.when, f"encounter idea {enc.id!r}"
         places = {loc.id for loc in content.locations_in(enc.region_id)}
         if not when.locations <= places:
             raise ContentError(f"{where}: places must be in its district")
@@ -190,7 +190,7 @@ def load_documents(documents: Iterable[Mapping[str, Any]]) -> Content:
     regions: list[RegionDef] = []
     clocks: list[ClockDef] = []
     calendar: CalendarDef | None = None
-    encounters: list[EncounterDef] = []
+    encounters: list[EncounterIdea] = []
     stranger_names: dict[str, tuple[str, ...]] = {}
     allowed = {
         "origins",
@@ -203,22 +203,24 @@ def load_documents(documents: Iterable[Mapping[str, Any]]) -> Content:
         "clocks",
         "languages",
         "calendar",
-        "encounters",
+        "encounter_ideas",
         "stranger_names",
     }
     for doc in documents:
         reader = Reader(doc, "content file", set(), allowed)
-        if ("locations" in doc or "clocks" in doc or "encounters" in doc) and "region" not in doc:
-            raise ContentError("locations, clocks and encounters sit in a file with their region")
+        if (
+            "locations" in doc or "clocks" in doc or "encounter_ideas" in doc
+        ) and "region" not in doc:
+            raise ContentError("places, clocks and encounter ideas sit in their region's file")
         if "region" in doc:
             region = parse_region(doc["region"])
             regions.append(region)
             locations += [parse_location(raw, region.id) for raw in reader.items("locations")]
             if "clocks" in doc:
                 clocks += [parse_clock(raw, region.id) for raw in reader.items("clocks")]
-            if "encounters" in doc:
+            if "encounter_ideas" in doc:
                 encounters += [
-                    parse_encounter(raw, region.id) for raw in reader.items("encounters")
+                    parse_encounter_idea(raw, region.id) for raw in reader.items("encounter_ideas")
                 ]
         if "stranger_names" in doc:
             for lang, names in parse_stranger_names(doc["stranger_names"]).items():
@@ -229,7 +231,7 @@ def load_documents(documents: Iterable[Mapping[str, Any]]) -> Content:
             if calendar is not None:
                 raise ContentError("only one calendar")
             calendar = parse_calendar(doc["calendar"])
-        skip = {"region", "locations", "clocks", "calendar", "encounters", "stranger_names"}
+        skip = {"region", "locations", "clocks", "calendar", "encounter_ideas", "stranger_names"}
         for key in allowed - skip:
             if key in doc:
                 sections.setdefault(key, []).extend(reader.items(key))
@@ -244,7 +246,7 @@ def load_documents(documents: Iterable[Mapping[str, Any]]) -> Content:
         clocks=_index(clocks, "clock"),
         languages=_index(map(parse_language, sections.get("languages", [])), "language"),
         calendar=calendar,
-        encounters=_index(encounters, "encounter"),
+        encounter_ideas=_index(encounters, "encounter idea"),
         stranger_names=MappingProxyType(stranger_names),
     )
     _check_references(content)

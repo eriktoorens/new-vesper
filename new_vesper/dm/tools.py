@@ -8,6 +8,7 @@ from typing import Any
 
 from new_vesper.rules.attitudes import Axis
 from new_vesper.rules.consequences import ConsequenceType
+from new_vesper.rules.encounters import Kind
 from new_vesper.rules.light import DeedSize, Direction
 from new_vesper.rules.resolver import Difficulty
 from new_vesper.rules.stats import Stat
@@ -132,6 +133,30 @@ TOOLS: list[dict[str, Any]] = [
                 "reason": {"type": "string", "description": "Why, in one sentence."},
             },
             "required": ["npc", "toward", "axis", "direction", "reason"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "create_encounter",
+        "description": (
+            "Something happens to the acting character that nobody planned: you write it, "
+            "fresh, fitting the place, hour, weather and tide. Spends one encounter of that "
+            "kind from the district's pool for today (see scene_state.encounters); refused if "
+            "none is left. At most one per turn. If a person is involved, give their role and "
+            "code will supply their name, pronouns and language. Trouble may lead to a roll; "
+            "consequences still only come from rolls."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "kind": {"type": "string", "enum": _enum(Kind)},
+                "what_happens": {"type": "string", "description": "One or two sentences."},
+                "stranger_role": {
+                    "type": "string",
+                    "description": "Optional: who the stranger is, e.g. 'a pickpocket'.",
+                },
+            },
+            "required": ["kind", "what_happens"],
             "additionalProperties": False,
         },
     },
