@@ -5,6 +5,7 @@ Everything else goes to the DM through PlaySession.
 """
 
 import argparse
+import importlib
 import random
 import shutil
 import sys
@@ -12,6 +13,7 @@ import textwrap
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from new_vesper.budget.policy import BudgetConfig
 from new_vesper.budget.pricing import PRICES, price_of
@@ -478,6 +480,25 @@ def play(
             say("You lie low until you return.")
 
 
+# Lines kept for the up arrow within a session.
+HISTORY_LENGTH = 500
+
+
+def enable_line_editing(load: Callable[[], Any] | None = None) -> bool:
+    """Arrow keys, history and the usual shortcuts when typing at the prompt.
+
+    ``input()`` only edits lines if the readline module is loaded; without it,
+    a Mac terminal allows nothing but backspace. Windows has no readline, but its
+    console already edits lines. Returns whether line editing is on.
+    """
+    try:
+        module = load() if load is not None else importlib.import_module("readline")
+    except ImportError:
+        return False
+    module.set_history_length(HISTORY_LENGTH)
+    return True
+
+
 def main(
     argv: Sequence[str] | None = None,
     *,
@@ -514,6 +535,8 @@ def main(
         import anthropic  # only the real CLI needs the SDK
 
         client_factory = anthropic.Anthropic
+    if ask is input and sys.stdin.isatty():
+        enable_line_editing()
     conn = open_database(args.db)
     try:
         play(

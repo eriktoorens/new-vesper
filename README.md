@@ -85,6 +85,7 @@ Check spending from outside the game with `new-vesper budget`.
 
 ### Good to know
 
+- **Editing what you type:** use ←/→ to move within a line, ↑/↓ to bring back earlier lines, and Ctrl-A/Ctrl-E to jump to the start or end.
 - **The world lives in `vesper.db`** in the folder you run from. Delete it to start over, or use `--db other.db` to keep a separate world.
 - **Each install is its own city for now.** Until multiplayer is built, you and a friend won't meet.
 - **Spending limits:** by default, the city goes quiet at $50 a month in total, and each player gets $10 a month. You can change these with `NEW_VESPER_MONTHLY_CAP_USD` and `NEW_VESPER_PLAYER_ALLOWANCE_USD`.
@@ -93,7 +94,7 @@ Check spending from outside the game with `new-vesper budget`.
 
 ## Where we are, what's next
 
-**Done** (all on this branch, 867 tests passing):
+**Done** (all on this branch, 868 tests passing):
 - Build steps 1–5: the rules engine, the SQLite state, the Market District content, the DM agent with its validated tool contract, and the budget with a usage ledger, caps and allowances.
 - Playtest layers 1–5:
   - fixes from the first playtest

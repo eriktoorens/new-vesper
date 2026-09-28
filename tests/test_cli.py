@@ -311,3 +311,22 @@ def test_eat_drink_and_rest(tmp_path: Path) -> None:
     assert "[Ada has tea from the landlady's kettle for 1 glitter.]" in text
     assert "[Ada sleeps, and wakes rested.]" in text
     assert "Food here: dal and rice from the landlady's pot, 4 glitter" in text
+
+
+def test_line_editing_loads_readline_when_there_is_one() -> None:
+    from new_vesper.cli import HISTORY_LENGTH, enable_line_editing
+
+    class FakeReadline:
+        length = 0
+
+        def set_history_length(self, n: int) -> None:
+            self.length = n
+
+    fake = FakeReadline()
+    assert enable_line_editing(lambda: fake)
+    assert fake.length == HISTORY_LENGTH
+
+    def missing() -> None:
+        raise ImportError("no readline on this platform")
+
+    assert not enable_line_editing(missing)
