@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D93** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D95** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -11,7 +11,7 @@ New Vesper is a persistent, shared, text-based RPG where an AI dungeon master ru
 - **Format:** persistent shared world, many players, asynchronous play.
 - **DM:** a Claude API agent that narrates and adjudicates; code owns all game state.
 - **Tone:** grimbright. The world is cruel but not nihilistic. Effort counts, kindness matters, and small victories stay on the page.
-- **Inspirations:** Blade Runner (rain, noir, made people), Shadowrun (magic meets corporate tech), The Diamond Age (nanotech enclaves, primers), American Gods (gods fed by belief), Neverwhere (a hidden city of the forgotten), and a splash of Discworld for bureaucratic absurdity.
+- **Inspirations:** Blade Runner (rain, noir, made people), Shadowrun (magic meets corporate tech), The Diamond Age (nanotech enclaves, primers), American Gods (gods fed by belief), Neverwhere (a hidden city of the forgotten), China Miéville's Perdido Street Station (D95), and a splash of Discworld for bureaucratic absurdity.
 
 The core conceit: every power in the city, a corporate god, a spell, a network, a neighborhood, exists only as long as enough people pay attention to it.
 
@@ -419,6 +419,24 @@ Built in layer 8 (2026-09-28), from D42. New Vesper's own kinds of people come o
 - **Tags (D92):** `story-born`, `brand-born`, `glows` and `object-born` (and `overlooked` for the mislaid) guide narration only. Code still enforces only `no-hands` (D7).
 - **The DM knows every kind (D93):** the DM's content brief now describes every origin, with its trait, tags and needs, so the DM can play how the city treats each kind of person.
 
+## Planned: Attention (D94)
+
+Direction from the designer (2026-09-28). The details are decided when it is built; everything below the first two points is open.
+
+- **The sustaining force (D94):** attention is what holds New Vesper up. The game leans into it: it is tracked by code, not only implied through Fade, Light and favors.
+- **A set amount per day:** each character has a fixed budget of attention each city day (D50).
+- **What it is spent on:**
+  - **Pushing the world where it doesn't want to go:** fueling an attempt to change the world against its grain, the way Paradox works in Mage: the Ascension. The world pushes back.
+  - **Remembrance:** keeping a person, place or thing real.
+  - **Prayer:** feeding a god.
+- **Open:**
+  - The daily amount: the same for everyone, or varying by level, origin or Bond; and whether any unspent attention carries over.
+  - What the world's push-back costs: Fade, Harm, a backlash track of its own, or something the DM draws from a list; and whether it builds up over time as Paradox does.
+  - What spending looks like in the rules: a bonus to a roll, a way to act without a roll, or both; and who decides how much is spent (the player, as with `/speak` and `/eat`, rather than the DM).
+  - How remembrance ties to Fade (someone speaking your name, D8) and to region Light.
+  - How prayer ties to gods, their wants and the favor ledger (D10); whether gods, places and factions hold attention too, and corporate gods harvest it.
+  - How it relates to magic and its costs, knacks and currency; whether it can be given, traded or stolen, including between players.
+
 ## Planned: A Living World (D37–D43)
 
 Direction agreed after the first playtest (2026-09-28). Each layer's details are decided when it is built, and every mechanic stays code-owned: the DM proposes, code decides.
@@ -450,7 +468,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 - [ ] Multiplayer step (D32): shared scenes, opposed-roll PvP with its guards, healing others, being named by another player.
 - [x] Bodily conditions: hunger, thirst, heat and cold, sleep and the like. Built in layer 7 (D83–D89). Still open: clothing and gear against the weather, food as items and meals given by NPCs, whether resting should take time, and tuning the rates after a playtest.
 - [ ] Setting-native kinds (D90–D93): whether any of their tags should be enforced by code (for example, a hearsay recovering Fade when someone tells its story, or a castoff's glow giving it away in the dark), whether a mislaid object without hands should take `no-hands`, and origin evolutions for each kind.
-- [ ] Attention as a resource. Not yet designed. Attention is the setting's fuel for magic, gods, technology and being real, but in the rules it appears only indirectly, through Fade, Light and favors. Open: whether characters, gods and places hold attention as a tracked amount; how it is earned, spent, traded or stolen; and how it relates to Fade, Light, magic costs, the favor ledger (D10) and currency.
+- [ ] Attention as a resource: direction set (D94), details open. See Planned: Attention.
 
 **Prototype plan:**
 
@@ -462,7 +480,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), and D90–D93 from setting-native kinds.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, and D94–D95 from the designer after layer 8.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -559,3 +577,5 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D91 | Their needs and languages | Hearsay: all but tiredness; Castoff: tiredness and cold; Mislaid: cold and heat; a market tongue, or Underside Cant for a mislaid |
 | D92 | Their tags | Narrative only; code still enforces only `no-hands` |
 | D93 | Origins in the DM's brief | Every origin's trait, tags and needs are in the content brief |
+| D94 | Attention (planned) | The world's sustaining force, tracked by code; a set amount per character per day; spent on pushing the world against its grain (like Paradox in Mage: the Ascension, with push-back), remembrance and prayer; details open |
+| D95 | Inspiration | China Miéville's work, especially Perdido Street Station, joins the influences |
