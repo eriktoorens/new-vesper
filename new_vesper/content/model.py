@@ -3,6 +3,7 @@
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
+from types import MappingProxyType
 from typing import Any
 
 from new_vesper.rules.attitudes import validate_attitude
@@ -11,6 +12,7 @@ from new_vesper.rules.clock import PARTS_OF_DAY
 from new_vesper.rules.encounters import Kind
 from new_vesper.rules.errors import RulesError, require_range
 from new_vesper.rules.light import LIGHT_MAX, LIGHT_MIN
+from new_vesper.rules.needs import Climate, Exposure, Need
 from new_vesper.rules.resolver import MAX_ROLL_BONUS
 from new_vesper.rules.sky import PHASES, TIDE_CONDITIONS
 from new_vesper.rules.stats import Stat, parse_stat
@@ -124,6 +126,8 @@ class WeatherState:
     id: str
     name: str
     description: str
+    # Whether this weather is cold or hot on the skin, whatever the season (D86).
+    exposure: Exposure | None = None
 
 
 @dataclass(frozen=True)
@@ -145,6 +149,8 @@ class SeasonDef:
     name: str
     months: tuple[int, ...]
     description: str
+    # Whether the season is cold or hot out of doors, unless the weather says otherwise.
+    exposure: Exposure | None = None
 
 
 @dataclass(frozen=True)
@@ -190,6 +196,16 @@ class OriginDef:
     # The origin's language: fixed, or one chosen from these at creation.
     language: str | None
     language_choices: tuple[str, ...]
+    # The bodily needs people of this origin have (D89).
+    needs: frozenset[Need] = frozenset(Need)
+
+
+@dataclass(frozen=True)
+class Provision:
+    """Food or drink a place sells, at a price in glitter (D87)."""
+
+    what: str
+    price: int
 
 
 @dataclass(frozen=True)
@@ -232,6 +248,9 @@ class LocationDef:
     # Languages more common here than in the district as a whole.
     languages: Mapping[str, Spread]
     tide: TideRules | None
+    # How the place shields a body from the weather, and what it sells (D86, D87).
+    climate: Climate = Climate.EXPOSED
+    provisions: Mapping[Need, Provision] = MappingProxyType({})
 
 
 @dataclass(frozen=True)
@@ -553,7 +572,7 @@ def parse_calendar(raw: object) -> CalendarDef:
     seasons: dict[str, SeasonDef] = {}
     months: list[int] = []
     for entry in r.items("seasons"):
-        e = Reader(entry, "calendar season", {"id", "name", "months", "description"})
+        e = Reader(entry, "calendar season", {"id", "name", "months", "description"}, {"exposure"})
         these = e.raw["months"]
         if (
             not isinstance(these, list)
@@ -564,7 +583,11 @@ def parse_calendar(raw: object) -> CalendarDef:
         ):
             raise ContentError("calendar season: months are 1-12")
         season = SeasonDef(
-            e.slug("id"), e.text("name", 40), tuple(these), e.text("description", 400)
+            e.slug("id"),
+            e.text("name", 40),
+            tuple(these),
+            e.text("description", 400),
+            _exposure(e.raw.get("exposure"), f"season {e.raw['id']!r}"),
         )
         seasons[season.id] = season
         months += these
@@ -611,8 +634,13 @@ def _parse_weather(raw: object) -> WeatherDef:
     r = Reader(raw, "region.weather", {"states", "seasons"})
     states: dict[str, WeatherState] = {}
     for entry in r.items("states"):
-        s = Reader(entry, "region.weather.states", {"id", "name", "description"})
-        state = WeatherState(s.slug("id"), s.text("name", 40), s.text("description", 300))
+        s = Reader(entry, "region.weather.states", {"id", "name", "description"}, {"exposure"})
+        state = WeatherState(
+            s.slug("id"),
+            s.text("name", 40),
+            s.text("description", 300),
+            _exposure(s.raw.get("exposure"), f"weather {s.raw['id']!r}"),
+        )
         if state.id in states:
             raise ContentError(f"weather state {state.id!r} listed twice")
         states[state.id] = state
@@ -640,16 +668,56 @@ def parse_language(raw: object) -> LanguageDef:
     )
 
 
+def _exposure(raw: object, where: str) -> Exposure | None:
+    """A cold or hot feel, or none. 'none' is implied, never written."""
+    if raw is None:
+        return None
+    if raw not in (Exposure.COLD.value, Exposure.HOT.value):
+        raise ContentError(f"{where}: exposure is cold or hot")
+    return Exposure(raw)
+
+
+def _needs(raw: object, where: str) -> frozenset[Need]:
+    if not isinstance(raw, list) or not all(isinstance(n, str) for n in raw):
+        raise ContentError(f"{where}: needs is a list of {[n.value for n in Need]}")
+    if len(set(raw)) != len(raw) or any(n not in {m.value for m in Need} for n in raw):
+        raise ContentError(f"{where}: needs are distinct, from {[n.value for n in Need]}")
+    return frozenset(Need(n) for n in raw)
+
+
+def _provisions(raw: object, where: str) -> Mapping[Need, Provision]:
+    """What a place sells: food for hunger, drink for thirst, each with a price."""
+    if not isinstance(raw, dict) or not set(raw) <= {"food", "drink"}:
+        raise ContentError(f"{where}: provisions has food and/or drink")
+    found = {}
+    for kind, entry in raw.items():
+        p = Reader(entry, f"{where} {kind}", {"what", "price"})
+        need = Need.HUNGER if kind == "food" else Need.THIRST
+        found[need] = Provision(p.text("what", 120), p.integer("price", 0, 1000))
+    return MappingProxyType(found)
+
+
 def parse_origin(raw: object) -> OriginDef:
-    r = Reader(raw, "origin", {"id", "name", "trait", "tags", "language", "language_choices"})
+    r = Reader(
+        raw, "origin", {"id", "name", "trait", "tags", "language", "language_choices"}, {"needs"}
+    )
     language = None if r.raw["language"] is None else r.slug("language")
     choices = tuple(sorted(r.slugs("language_choices")))
     if (language is None) == (not choices):
         raise ContentError(
             f"origin {r.raw['id']!r}: give either a language or language_choices, not both"
         )
+    needs = (
+        _needs(r.raw["needs"], f"origin {r.raw['id']!r}") if "needs" in r.raw else frozenset(Need)
+    )
     return OriginDef(
-        r.slug("id"), r.text("name", 80), r.text("trait", 300), r.slugs("tags"), language, choices
+        r.slug("id"),
+        r.text("name", 80),
+        r.text("trait", 300),
+        r.slugs("tags"),
+        language,
+        choices,
+        needs,
     )
 
 
@@ -708,7 +776,11 @@ def parse_region(raw: object) -> RegionDef:
 
 def parse_location(raw: object, region_id: str) -> LocationDef:
     fields = {"id", "name", "is_haven", "tags", "description", "art", "languages", "tide"}
-    r = Reader(raw, "location", fields)
+    r = Reader(raw, "location", fields, {"climate", "provisions"})
+    where = f"location {r.raw['id']!r}"
+    climate = r.raw.get("climate", Climate.EXPOSED.value)
+    if climate not in {c.value for c in Climate}:
+        raise ContentError(f"{where}: climate is one of {[c.value for c in Climate]}")
     return LocationDef(
         r.slug("id"),
         region_id,
@@ -719,6 +791,8 @@ def parse_location(raw: object, region_id: str) -> LocationDef:
         r.art("art"),
         _spread_map(r.raw["languages"], f"location {r.raw['id']!r} languages"),
         None if r.raw["tide"] is None else _parse_tide(r.raw["tide"], f"location {r.raw['id']!r}"),
+        Climate(climate),
+        _provisions(r.raw["provisions"], where) if "provisions" in r.raw else MappingProxyType({}),
     )
 
 

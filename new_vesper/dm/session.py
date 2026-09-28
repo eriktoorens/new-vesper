@@ -24,11 +24,13 @@ from new_vesper.city.sky import season, tide_at
 from new_vesper.city.tick import run_due_ticks
 from new_vesper.city.weather import current_weather
 from new_vesper.content.loader import Content
+from new_vesper.dm import needs as bodily
 from new_vesper.dm import prompt, speech
 from new_vesper.dm.agent import ModelClient, TurnResult, UsageHook, run_turn, summarize
 from new_vesper.dm.config import CallType, DMConfig
 from new_vesper.dm.handlers import (
     TurnContext,
+    apply_needs,
     describe_character,
     describe_location,
     dispatch,
@@ -37,12 +39,15 @@ from new_vesper.dm.handlers import (
 from new_vesper.dm.tools import TOOLS
 from new_vesper.rules import clock
 from new_vesper.rules.character import resolve_full_harm
+from new_vesper.rules.currency import format_glitter
 from new_vesper.rules.dice import Rng
 from new_vesper.rules.errors import RulesError
 from new_vesper.rules.leveling import LevelUpRequest, level_up
+from new_vesper.rules.needs import Need
 from new_vesper.rules.sky import moon
 from new_vesper.rules.tracks import must_fall_or_endure
 from new_vesper.state import attitudes, characters, scenes, world
+from new_vesper.state import needs as stored_needs
 from new_vesper.state.characters import Character
 from new_vesper.state.errors import StateError
 from new_vesper.state.events import Actor, Cause, Event, append_event, list_events
@@ -63,6 +68,7 @@ PRIVATE_EVENTS = frozenset(
         "neglect",
         "details_set",
         "speaking_changed",
+        "needs_relieved",
     }
 )
 # Memory lines each NPC keeps per character before older ones fold into a summary.
@@ -286,6 +292,8 @@ class PlaySession:
         if intent is not None:
             scenes.submit_intent(self.conn, beat.id, self.character_id, intent, self._cause())
         ctx = self._context()
+        # The time since the last turn counts against the character's needs (D85).
+        apply_needs(ctx)
         self.scene_npcs |= {
             w.npc.id for w in present_at(self.content, self.character.location_id or "", ctx.now)
         }
@@ -409,11 +417,14 @@ class PlaySession:
         if current is not None:
             parts.append(current.name)
         parts += [weather.name, moon(now).phase]
+        felt = bodily.summary(bodily.levels(self.conn, self.content, me))
         here = tide_at(place.tide, now)
         if here is not None:
             turning = ", turning" if here.tide.turning else ""
             spring = " spring" if here.tide.spring else ""
             parts.append(f"{here.tide.state.value}{spring} tide{turning}")
+        if felt:
+            parts.append(felt)
         return "; ".join(parts)
 
     def who(self) -> list[str]:
@@ -477,6 +488,8 @@ class PlaySession:
         run_due_ticks(self.conn, self.content, self.now())
         logoff = self._last_logoff()
         characters.set_online(self.conn, me.id, True, self._cause())
+        # Needs pick up where they were at logoff: offline time never counts (D88).
+        stored_needs.resume(self.conn, me.id, sorted(bodily.needs_of(self.content, me)), self.now())
         notes = self._recover(logoff) if logoff else []
         recap = self._recap(logoff) if logoff else None
         art = self._arrival_art()
@@ -545,6 +558,52 @@ class PlaySession:
             raise SessionError(f"{me.name} speaks {known}")
         return characters.set_speaking(self.conn, me.id, match, self._cause())
 
+    # --- needs ---------------------------------------------------------------
+
+    def _provide(self, need: Need, verb: str) -> str:
+        """Eat or drink what this place sells, paying its price (D87)."""
+        me = self.character
+        if me.sheet.fallen or must_fall_or_endure(me.sheet.harm):
+            raise SessionError("not now")
+        if need not in bodily.needs_of(self.content, me):
+            raise SessionError(f"{me.name} doesn't need to {verb}")
+        place = self.content.locations.get(me.location_id or "")
+        offer = place.provisions.get(need) if place is not None else None
+        if offer is None:
+            raise SessionError(f"nobody here sells anything to {verb}")
+        if offer.price > me.currency:
+            raise SessionError(
+                f"{offer.what} costs {format_glitter(offer.price)}; "
+                f"{me.name} has {format_glitter(me.currency)}"
+            )
+        if offer.price:
+            characters.adjust_currency(
+                self.conn, me.id, -offer.price, self._cause(), f"{verb}: {offer.what}"
+            )
+        stored_needs.relieve(self.conn, me.id, [need], self.now(), self._cause(), offer.what)
+        paid = f" for {format_glitter(offer.price)}" if offer.price else ""
+        return f"{me.name} has {offer.what}{paid}."
+
+    def eat(self) -> str:
+        return self._provide(Need.HUNGER, "eat")
+
+    def drink(self) -> str:
+        return self._provide(Need.THIRST, "drink")
+
+    def rest(self) -> str:
+        """Sleep at a haven: tiredness clears (D87)."""
+        me = self.character
+        if me.sheet.fallen or must_fall_or_endure(me.sheet.harm):
+            raise SessionError("not now")
+        if Need.TIRED not in bodily.needs_of(self.content, me):
+            raise SessionError(f"{me.name} doesn't need sleep")
+        if me.location_id is None or not world.get_location(self.conn, me.location_id).is_haven:
+            raise SessionError("you can only rest safely at a haven")
+        stored_needs.relieve(
+            self.conn, me.id, [Need.TIRED], self.now(), self._cause(), "slept at a haven"
+        )
+        return f"{me.name} sleeps, and wakes rested."
+
     def fall_or_endure(self, choice: str, scar: str | None = None) -> Character:
         """The player's choice at full Harm. Death is only ever this choice."""
         me = self.character
@@ -592,6 +651,17 @@ class PlaySession:
         return self._with_art(self._run(None, ARRIVAL), art)
 
     def end(self) -> None:
-        """Log off: close the scene and go offline (safe at a haven, lying low elsewhere)."""
+        """Log off: close the scene and go offline (safe at a haven, lying low elsewhere).
+
+        Logging off at a haven clears every need (D88).
+        """
+        me = self.character
+        if me.location_id is not None and world.get_location(self.conn, me.location_id).is_haven:
+            needs = sorted(bodily.needs_of(self.content, me))
+            felt = bodily.levels(self.conn, self.content, me)
+            if any(felt.values()):
+                stored_needs.relieve(
+                    self.conn, me.id, needs, self.now(), self._cause(), "rested at a haven"
+                )
         self._close_scene()
         characters.set_online(self.conn, self.character_id, False, self._cause())

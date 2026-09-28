@@ -115,6 +115,12 @@ understands_you false does not understand what the character says in it; play th
 is a Heart roll with that language named in call_for_roll; its tier decides what they \
 understand for the rest of the scene (see "understanding" in the roll result, and \
 speech.understood_this_scene). A language knack helps only on those rolls.
+- Bodily needs (hunger, thirst, tiredness, cold, heat) come from code, in the \
+character's needs. Let them show: a growling stomach, numb fingers, a yawn at the wrong \
+moment. Their penalties are already in roll_stats. You never change them, and nobody \
+eats, drinks or sleeps in your narration by itself: when the player character eats, \
+drinks or sleeps, narrate them starting to and stop; after the story, add one separate \
+last line: (To eat: /eat) or (To drink: /drink) or (To sleep at a haven: /rest).
 - End with the situation open. Do not offer a menu of options, and do not mention game \
 commands in the story.
 

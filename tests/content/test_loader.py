@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 
 from new_vesper.content.loader import load_content, load_documents
-from new_vesper.content.model import ContentError, parse_language
+from new_vesper.content.model import ContentError, parse_language, parse_origin
 
 KNACK = {
     "id": "k",
@@ -274,3 +274,63 @@ def test_language_sounds_are_optional() -> None:
     raw = {"id": "hush", "name": "Hush", "common": False, "description": "x"}
     assert parse_language(raw).sounds == ()
     assert parse_language(raw | {"sounds": ["a", "b", "c", "d"]}).sounds == ("a", "b", "c", "d")
+
+
+@pytest.mark.parametrize(
+    "edit",
+    [
+        {"climate": "cozy"},
+        {"provisions": {"snacks": {"what": "x", "price": 1}}},
+        {"provisions": {"food": {"what": "x", "price": -1}}},
+        {"provisions": {"food": {"what": "x", "price": True}}},
+        {"provisions": {"food": {"what": "", "price": 1}}},
+        {"provisions": {"food": {"what": "x"}}},
+        {"provisions": []},
+    ],
+)
+def test_bad_climate_and_provisions_rejected(edit: dict[str, Any]) -> None:
+    doc = _region()
+    doc["locations"][0] |= edit
+    with pytest.raises(ContentError):
+        load_documents([doc])
+
+
+def test_climate_and_provisions_load() -> None:
+    doc = _region()
+    doc["locations"][0] |= {
+        "climate": "sheltered",
+        "provisions": {"drink": {"what": "rainwater", "price": 0}},
+    }
+    place = load_documents([doc]).locations["shrine"]
+    assert place.climate.value == "sheltered"
+    assert [(n.value, p.price) for n, p in place.provisions.items()] == [("thirst", 0)]
+    assert load_documents([_region()]).locations["shrine"].climate.value == "exposed"
+
+
+@pytest.mark.parametrize("exposure", ["warm", "none", 1])
+def test_bad_weather_exposure_rejected(exposure: Any) -> None:
+    doc = _region()
+    doc["region"]["weather"]["states"][0]["exposure"] = exposure
+    with pytest.raises(ContentError):
+        load_documents([doc])
+
+
+ORIGIN = {
+    "id": "o",
+    "name": "O",
+    "trait": "t",
+    "tags": [],
+    "language": "registry-standard",
+    "language_choices": [],
+}
+
+
+@pytest.mark.parametrize("needs", [["boredom"], ["hunger", "hunger"], "hunger", [1]])
+def test_bad_origin_needs_rejected(needs: Any) -> None:
+    with pytest.raises(ContentError):
+        parse_origin(ORIGIN | {"needs": needs})
+
+
+def test_origin_needs_default_to_all() -> None:
+    assert len(parse_origin(ORIGIN).needs) == 5
+    assert parse_origin(ORIGIN | {"needs": []}).needs == frozenset()

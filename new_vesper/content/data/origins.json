@@ -24,6 +24,10 @@
       "tags": [
         "synthetic"
       ],
+      "needs": [
+        "tired",
+        "heat"
+      ],
       "language": null,
       "language_choices": [
         "wolof",

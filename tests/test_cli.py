@@ -276,3 +276,38 @@ def test_speak_chooses_the_language_spoken_aloud(tmp_path: Path) -> None:
     assert "[Biscuit speaks Animal-speech aloud.]" in text
     assert "(Biscuit speaks " in text  # Protocol refused, with what they do speak
     assert "(speaking aloud: Animal-speech)" in text
+
+
+def test_eat_drink_and_rest(tmp_path: Path) -> None:
+    client = StubClient(say("Nana Priya looks up from her ledger."))
+    out = run(
+        tmp_path,
+        [
+            "1",  # street-born
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "Ada",
+            "she/her",
+            "thirty",
+            "Tall, in a green coat",
+            "Her brother",
+            "/eat",
+            "/drink",
+            "/rest",
+            "/look",
+            "/quit",
+        ],
+        client,
+    )
+    text = "\n".join(out)
+    assert "[Ada has dal and rice from the landlady's pot for 4 glitter.]" in text
+    assert "[Ada has tea from the landlady's kettle for 1 glitter.]" in text
+    assert "[Ada sleeps, and wakes rested.]" in text
+    assert "Food here: dal and rice from the landlady's pot, 4 glitter" in text

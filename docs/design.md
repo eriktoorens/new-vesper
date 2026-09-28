@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D82** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D89** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -382,6 +382,28 @@ Built in layer 6 (2026-09-28), from D41. The DM writes what people say; code dec
 - **The speech log (D81):** every tagged line is logged with its speaker, language, words and what the character understood. The beat keeps, and is summarized from, what the player saw; the DM sees the last six lines with their words and what the character made of them.
 - **Limits:** code can check tags, not prose. The prompt forbids translating or hinting at a line outside its tag, but a DM that paraphrases in plain narration is not caught mechanically; playtest will show whether this needs more.
 
+## Bodily Needs (D83–D89)
+
+Built in layer 7 (2026-09-28), from D82. Code owns every need; the DM shows them in the story and never changes them.
+
+- **Five needs (D83):** hunger, thirst, tiredness, cold and heat, each tracked by code from 0 to 3, with words for each step (hunger: fed, peckish, hungry, starving; thirst: slaked, thirsty, parched, dehydrated; tiredness: rested, tired, exhausted, dead on their feet; cold: warm enough, chilled, cold, freezing; heat: cool enough, hot, overheated, heatstruck).
+- **Effects (D84):** a need at 2 takes −1, and at 3 (its worst) −2, from two stats:
+
+  | Need | Stats |
+  | --- | --- |
+  | Hunger | Steel, Heart |
+  | Thirst | Steel, Wire |
+  | Tiredness | Slick, Wire |
+  | Cold | Steel, Slick |
+  | Heat | Steel, Heart |
+
+  Penalties stack with each other and with Harm's, but a roll's stat never goes below −3, the lowest the Harm rules allow (D11). Weird is never worn down. Harm and Fade come only at the worst level: reaching it costs 1 box, and so does each further step spent there. Tiredness costs Fade (the city loses track of the sleepless); the others cost Harm. A full Harm track still ends in the player's choice, Fall or Endure.
+- **Time (D85):** needs are counted on the city clock, only while the character is online. Thirst climbs a step every 3 hours, hunger every 4, tiredness every 6. Cold and heat climb a step per hour of exposure and ease a step per half hour out of it. These are tuning values, compressed from real life, for playtest.
+- **Exposure (D86):** a place is sheltered (the weather doesn't reach you: the Hundred Hooks, the Weighhouse), exposed (the default) or cold whatever the weather (the Drowned Station). Outside, some weather is cold (freezing fog, cold rain, sleet, gales) or hot (muggy heat), and otherwise the season decides: the Long Wet is cold, the Steam hot. Clothing and gear don't count yet.
+- **Relief (D87):** `/eat` and `/drink` buy what the place sells, at a price in content, paid in glitter (noodles on Tarp Row, tea at the Hooks, free rainwater at the Umbrella Shrine), and clear hunger or thirst. `/rest` at a haven clears tiredness. Cold and heat ease out of the weather. None needs a roll. When the player character eats, drinks or sleeps in the story, the DM narrates them starting and points to the command, as with `/go` (D27). A meal an NPC gives away, and food carried as an item, come later.
+- **Offline (D88):** time offline never counts; needs pick up where they were. Logging off at a haven clears them all.
+- **Different people, different needs (D89):** each origin lists its needs. Made people neither eat nor drink, and feel no cold, but tire and overheat; everyone else has all five. New kinds of people (D42) declare their own.
+
 ## Planned: A Living World (D37–D43)
 
 Direction agreed after the first playtest (2026-09-28). Each layer's details are decided when it is built, and every mechanic stays code-owned: the DM proposes, code decides.
@@ -411,7 +433,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 - [x] The city's time zone (D38): US Eastern (D50).
 - [x] The languages of the Market District, and which count as common (D44, D45).
 - [ ] Multiplayer step (D32): shared scenes, opposed-roll PvP with its guards, healing others, being named by another player.
-- [ ] Bodily conditions: hunger, thirst, heat and cold, sleep and the like. Layer 7 (D82); not yet designed. Open: whether they are tracked by code or only narrated; how they tie into Harm, Fade, weather, seasons (D51, D56) and the city clock (D50); how food, drink, shelter and rest are gotten and paid for; and how they work while a character is offline.
+- [x] Bodily conditions: hunger, thirst, heat and cold, sleep and the like. Built in layer 7 (D83–D89). Still open: clothing and gear against the weather, food as items and meals given by NPCs, whether resting should take time, and tuning the rates after a playtest.
 
 **Prototype plan:**
 
@@ -423,7 +445,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, and D82 from the designer after layer 6.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, and D83–D89 from bodily needs (the effects in D84 chosen by the designer).
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -508,4 +530,11 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D79 | Language knack | Ear for Tongues: Heart, +1 on gist rolls only, once per scene |
 | D80 | Speaking aloud | `/speak` picks one of the character's languages (default Registry Standard); the DM is told which NPCs understand it; NPCs never roll |
 | D81 | Speech log | Every line logged with what the character understood; beats keep what the player saw; the DM sees the last six lines |
-| D82 | Build order | Bodily conditions (hunger, thirst, heat and cold, sleep) are layer 7, before setting-native kinds (now layer 8); details decided when built |
+| D82 | Build order | Bodily conditions (hunger, thirst, heat and cold, sleep) are layer 7, before setting-native kinds (now layer 8) (built: D83–D89) |
+| D83 | Bodily needs | Hunger, thirst, tiredness, cold, heat; each 0–3, tracked by code, with words per step |
+| D84 | Need effects | −1 at 2 and −2 at 3 to two stats each; stacks, but a roll stat stays ≥ −3; at the worst, 1 Harm (Fade for tiredness) on reaching it and per further step |
+| D85 | Need time | Counted only online on the city clock: thirst 3 h, hunger 4 h, tiredness 6 h per step; cold and heat 1 h exposed, easing 1 per 30 min |
+| D86 | Exposure | Places are sheltered, exposed or always cold; weather (else season) is cold or hot |
+| D87 | Relief | `/eat` and `/drink` buy what a place sells, in glitter; `/rest` at a haven; no roll; the DM points to the command |
+| D88 | Needs offline | Frozen offline; logging off at a haven clears them |
+| D89 | Needs by origin | Each origin lists its needs; made people only tiredness and heat |

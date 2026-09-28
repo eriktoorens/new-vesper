@@ -202,3 +202,20 @@ def test_there_is_a_language_knack(content: Content) -> None:
     knack = content.knacks["ear-for-tongues"]
     assert knack.stat.value == "heart" and "language" in knack.tags
     assert knack.roll_bonus == 1 and knack.limit is not None
+
+
+def test_the_market_feeds_and_shelters(content: Content) -> None:
+    sold = {
+        (place.id, need.value) for place in content.locations.values() for need in place.provisions
+    }
+    assert ("tarp-row", "hunger") in sold and ("umbrella-shrine", "thirst") in sold
+    assert content.locations["hundred-hooks"].climate.value == "sheltered"
+    assert content.locations["drowned-station"].climate.value == "cold"
+    seasons = content.calendar.seasons
+    assert seasons["long-wet"].exposure.value == "cold"  # type: ignore[union-attr]
+    assert seasons["steam"].exposure.value == "hot"  # type: ignore[union-attr]
+
+
+def test_made_people_have_fewer_needs(content: Content) -> None:
+    assert {n.value for n in content.origins["made-person"].needs} == {"tired", "heat"}
+    assert len(content.origins["awakened-animal"].needs) == 5

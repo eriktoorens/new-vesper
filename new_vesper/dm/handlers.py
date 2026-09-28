@@ -18,6 +18,7 @@ from new_vesper.city.npcs import present_at, regulars_elsewhere, whereabouts
 from new_vesper.city.sky import describe_sky, harder, minimum_rung
 from new_vesper.content.loader import Content
 from new_vesper.content.loot import roll_loot
+from new_vesper.dm import needs as bodily
 from new_vesper.dm.speech import SpeechError, check_gist_roll
 from new_vesper.rules.attitudes import Attitude, parse_axis
 from new_vesper.rules.character import Sheet, apply_track
@@ -35,6 +36,8 @@ from new_vesper.rules.languages import check_gist_stat
 from new_vesper.rules.leveling import can_level_up, xp_to_advance
 from new_vesper.rules.light import apply_deed, encroach, parse_deed_size, parse_direction
 from new_vesper.rules.magic import casting_difficulty, casting_stat
+from new_vesper.rules.needs import roll_stat as needy_roll_stat
+from new_vesper.rules.needs import words as need_words
 from new_vesper.rules.resolver import Tier, parse_difficulty, resolve
 from new_vesper.rules.stats import Stat, parse_stat
 from new_vesper.rules.tracks import (
@@ -188,15 +191,21 @@ def _require_able(character: Character) -> None:
         )
 
 
-def _write_sheet(ctx: TurnContext, before: Character, after: Sheet, reason: str) -> Character:
-    return characters.update_sheet(ctx.conn, before.id, before.sheet, after, ctx.cause, reason)
+def _write_sheet(
+    ctx: TurnContext, before: Character, after: Sheet, reason: str, cause: Cause | None = None
+) -> Character:
+    return characters.update_sheet(
+        ctx.conn, before.id, before.sheet, after, cause or ctx.cause, reason
+    )
 
 
-def _change_track(ctx: TurnContext, track: Track, boxes: int, reason: str) -> dict[str, Any]:
+def _change_track(
+    ctx: TurnContext, track: Track, boxes: int, reason: str, cause: Cause | None = None
+) -> dict[str, Any]:
     """Apply Harm or Fade to the acting character, handling full tracks."""
     me = _me(ctx)
     sheet, change = apply_track(me.sheet, track, boxes)
-    me = _write_sheet(ctx, me, sheet, reason)
+    me = _write_sheet(ctx, me, sheet, reason, cause)
     result: dict[str, Any] = {track.value: change.after}
     if track is Track.HARM:
         result["status"] = harm_status(change.after).value
@@ -206,19 +215,19 @@ def _change_track(ctx: TurnContext, track: Track, boxes: int, reason: str) -> di
     else:
         result["status"] = fade_status(change.after).value
         if change.filled:
-            result["slipped_into_old_vesper"] = _slip(ctx, me)
+            result["slipped_into_old_vesper"] = _slip(ctx, me, cause)
     ctx.changes.append(f"{track.value} {change.before} -> {change.after}")
     return result
 
 
-def _slip(ctx: TurnContext, me: Character) -> str | None:
+def _slip(ctx: TurnContext, me: Character, cause: Cause | None = None) -> str | None:
     """Full Fade in the prototype (D15): move to the Underside entrance, gain half-faded."""
     ctx.slipped = True
-    characters.add_character_tag(ctx.conn, me.id, HALF_FADED, ctx.cause)
+    characters.add_character_tag(ctx.conn, me.id, HALF_FADED, cause or ctx.cause)
     entrance = ctx.content.underside_entrance(_region_id(ctx))
     if entrance is None:
         return None
-    characters.move_character(ctx.conn, me.id, entrance.id, ctx.cause)
+    characters.move_character(ctx.conn, me.id, entrance.id, cause or ctx.cause)
     return entrance.id
 
 
@@ -227,6 +236,12 @@ def _events_this_scene(ctx: TurnContext, kind: str) -> list[Any]:
 
 
 # --- look ------------------------------------------------------------------
+
+
+def roll_stat(ctx: TurnContext, character: Character, stat: Stat) -> int:
+    """The stat a roll uses: after Harm, then the character's needs (D84)."""
+    levels = bodily.levels(ctx.conn, ctx.content, character)
+    return needy_roll_stat(character.sheet.roll_stat(stat), stat, levels)
 
 
 def describe_character(ctx: TurnContext, character: Character) -> dict[str, Any]:
@@ -258,7 +273,8 @@ def describe_character(ctx: TurnContext, character: Character) -> dict[str, Any]
         "harm": {"boxes": sheet.harm, "of": TRACK_MAX, "status": harm_status(sheet.harm).value},
         "fade": {"boxes": sheet.fade, "of": TRACK_MAX, "status": fade_status(sheet.fade).value},
         "stats": {s.value: sheet.stats[s] for s in Stat},
-        "roll_stats": {s.value: sheet.roll_stat(s) for s in Stat},
+        "roll_stats": {s.value: roll_stat(ctx, character, s) for s in Stat},
+        "needs": bodily.describe(bodily.levels(ctx.conn, ctx.content, character)),
         "knacks": knacks,
         "scars": list(sheet.scars),
         "currency": format_glitter(character.currency),
@@ -583,7 +599,7 @@ def call_for_roll(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
             notes.append(f"the tide makes this {imposed[0].value}: {imposed[1]}")
             difficulty = imposed[0]
     bonus = knack.roll_bonus if knack else 0
-    result = resolve(me.sheet.roll_stat(stat), difficulty, ctx.rng, bonus)
+    result = resolve(roll_stat(ctx, me, stat), difficulty, ctx.rng, bonus)
     with atomic(ctx.conn):
         roll = rolls.record_roll(
             ctx.conn,
@@ -937,6 +953,33 @@ def create_encounter(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
     if stranger is not None:
         result["stranger"] = stranger.for_dm(ctx.content)
     return result
+
+
+# --- bodily needs ------------------------------------------------------------------
+
+
+def apply_needs(ctx: TurnContext) -> None:
+    """Count the time since the last turn against the character's needs (D85).
+
+    A need at its worst costs a box of Harm (Fade for tiredness) per step there
+    (D84). Nothing is applied to a character who has fallen or must choose Fall
+    or Endure; their needs still count.
+    """
+    me = _me(ctx)
+    if me.sheet.fallen:
+        return
+    cause = Cause(Actor.SYSTEM, ctx.player_id, ctx.scene_id)
+    with atomic(ctx.conn):
+        result = bodily.tick(ctx.conn, ctx.content, me, ctx.now)
+        for need, level in result.worse.items():
+            ctx.changes.append(f"{need.value}: {need_words(need, level)}")
+        for need, level in result.better.items():
+            ctx.changes.append(f"{need.value}: {need_words(need, level)}")
+        for track, boxes in result.owed.items():
+            me = _me(ctx)
+            full = me.sheet.harm if track is Track.HARM else me.sheet.fade
+            if boxes and full < TRACK_MAX:
+                _change_track(ctx, track, boxes, "bodily needs at their worst", cause)
 
 
 HANDLERS: dict[str, Handler] = {

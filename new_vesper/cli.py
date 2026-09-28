@@ -50,6 +50,8 @@ HELP = """Type what your character does, or a command:
   /who           who's here and what they're doing
   /ask <question>  ask the DM what your character sees or knows (no time passes)
   /speak <language>  choose the language your character speaks aloud
+  /eat, /drink   buy food or drink where it's sold
+  /rest          sleep at a haven
   /go <place>    move somewhere in this district (e.g. /go tarp-row)
   /places        list places you can go
   /level         spend XP on a level
@@ -203,6 +205,10 @@ def show_sheet(character: Character, content: Content, say: Say) -> None:
         say(f"  Speaks: {', '.join(spoken)}  (speaking aloud: {aloud})")
     if place is not None:
         say(f"  At: {place.name}{' (haven)' if place.is_haven else ''}")
+        for need, offer in sorted(place.provisions.items()):
+            kind = "Food" if need.value == "hunger" else "Drink"
+            price = format_glitter(offer.price) if offer.price else "free"
+            say(f"  {kind} here: {offer.what}, {price}")
 
 
 def level_menu(session: PlaySession, content: Content, ask: Ask, say: Say) -> None:
@@ -443,6 +449,9 @@ def play(
                     say(f"  [{me.name} speaks {content.languages[me.speaking].name} aloud.]")
                     if not choice:
                         say(f"  [They know: {known}. /speak <language> to change.]")
+                elif line in ("/eat", "/drink", "/rest"):
+                    action = {"/eat": session.eat, "/drink": session.drink, "/rest": session.rest}
+                    say(f"  [{action[line]()}]")
                 elif line == "/budget":
                     say(session.budget_status().allowance_message())
                 elif line.startswith("/"):

@@ -72,6 +72,8 @@ In-game commands:
 | `/who` | Who's here and what they're doing |
 | `/ask <question>` | Ask what your character sees or knows (no time passes) |
 | `/speak <language>` | Choose which of your languages your character speaks aloud |
+| `/eat`, `/drink` | Buy food or drink where it's sold |
+| `/rest` | Sleep at a haven |
 | `/go <place>` | Move somewhere in the district, e.g. `/go tarp-row` |
 | `/places` | Places you can go |
 | `/level` | Spend XP on a level |
@@ -91,7 +93,7 @@ Check spending from outside the game with `new-vesper budget`.
 
 ## Where we are, what's next
 
-**Done** (all on this branch, 813 tests passing):
+**Done** (all on this branch, 867 tests passing):
 - Build steps 1–5: the rules engine, the SQLite state, the Market District content, the DM agent with its validated tool contract, and the budget with a usage ledger, caps and allowances.
 - Playtest layers 1–5:
   - fixes from the first playtest
@@ -101,14 +103,14 @@ Check spending from outside the game with `new-vesper budget`.
   - NPC memory and attitudes
   - encounters, which the DM writes fresh from a daily pool for each district
   - languages: speech in a language your character doesn't know shows as gibberish or a note, a Heart roll gets the gist, and `/speak` picks what you speak aloud
-- Decisions D1–D82 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
+  - bodily needs: hunger, thirst, tiredness, cold and heat wear down stats and, at their worst, cost Harm or Fade; `/eat`, `/drink` and `/rest` ease them
+- Decisions D1–D89 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
 
 **Next:**
-1. **Playtest layer 6, languages (D76–D81).** Watch whether the DM tags every line and keeps translations out of plain narration.
-2. **Layer 7, bodily conditions (D82):** hunger, thirst, heat and cold, sleep. Not yet designed; see the open questions in `docs/design.md`.
-3. **Layer 8, setting-native kinds as origins (D42).**
-4. A playtest after each layer.
-5. Then multiplayer (D32): a shared city, and a second look at the city-day rule (D29/D50).
+1. **Playtest layers 6 and 7, languages and bodily needs (D76–D89).** Watch whether the DM tags every line and keeps translations out of plain narration, and whether the needs' rates feel right.
+2. **Layer 8, setting-native kinds as origins (D42).**
+3. A playtest after each layer.
+4. Then multiplayer (D32): a shared city, and a second look at the city-day rule (D29/D50).
 
 **Open question, high priority:** D10, who a favor is owed to. The player should understand where a debt accrues and have some choice in it. See the open questions in `docs/design.md`.
 
@@ -122,6 +124,6 @@ ruff check . && ruff format --check .
 
 Start a new Claude Code session with:
 
-> Read CLAUDE.md and docs/design.md, then start layer 7, bodily conditions.
+> Read CLAUDE.md and docs/design.md, then start layer 8, setting-native kinds.
 
 Tests use a stubbed model client and never call the API.

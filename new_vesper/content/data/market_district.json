@@ -85,7 +85,8 @@
         {
           "id": "freezing-fog",
           "name": "Freezing fog",
-          "description": "A fog so cold it rimes the tarps white; breath hangs in the air and footsteps sound too close."
+          "description": "A fog so cold it rimes the tarps white; breath hangs in the air and footsteps sound too close.",
+          "exposure": "cold"
         },
         {
           "id": "drizzle",
@@ -100,12 +101,14 @@
         {
           "id": "cold-rain",
           "name": "Cold rain",
-          "description": "A cold, grey, unending rain that finds every gap in a coat."
+          "description": "A cold, grey, unending rain that finds every gap in a coat.",
+          "exposure": "cold"
         },
         {
           "id": "sleet",
           "name": "Sleet",
-          "description": "Sleet off the harbor, needling sideways; the cobbles go treacherous and the carts huddle close."
+          "description": "Sleet off the harbor, needling sideways; the cobbles go treacherous and the carts huddle close.",
+          "exposure": "cold"
         },
         {
           "id": "warm-rain",
@@ -115,7 +118,8 @@
         {
           "id": "muggy-heat",
           "name": "Muggy heat",
-          "description": "Heavy, wet heat; the rain comes in fat warm drops and everything sticks to everything."
+          "description": "Heavy, wet heat; the rain comes in fat warm drops and everything sticks to everything.",
+          "exposure": "hot"
         },
         {
           "id": "downpour",
@@ -130,7 +134,8 @@
         {
           "id": "gale",
           "name": "Gale",
-          "description": "A gale off the harbor: tarps straining, signs banging, rain flying flat."
+          "description": "A gale off the harbor: tarps straining, signs banging, rain flying flat.",
+          "exposure": "cold"
         },
         {
           "id": "storm",
@@ -314,7 +319,17 @@
           "spread": "many"
         }
       ],
-      "tide": null
+      "tide": null,
+      "provisions": {
+        "food": {
+          "what": "a paper cone of fried dumplings",
+          "price": 4
+        },
+        "drink": {
+          "what": "a cup of pressed sugarcane juice",
+          "price": 3
+        }
+      }
     },
     {
       "id": "tarp-row",
@@ -340,7 +355,17 @@
           "spread": "many"
         }
       ],
-      "tide": null
+      "tide": null,
+      "provisions": {
+        "food": {
+          "what": "a bowl of hand-pulled noodles or a scoop of jollof",
+          "price": 5
+        },
+        "drink": {
+          "what": "a glass of cardamom tea",
+          "price": 2
+        }
+      }
     },
     {
       "id": "umbrella-shrine",
@@ -360,7 +385,13 @@
         "         '---'      '--'"
       ],
       "languages": [],
-      "tide": null
+      "tide": null,
+      "provisions": {
+        "drink": {
+          "what": "rainwater from the spout the shrine keeps clean",
+          "price": 0
+        }
+      }
     },
     {
       "id": "hundred-hooks",
@@ -389,7 +420,18 @@
           "spread": "some"
         }
       ],
-      "tide": null
+      "tide": null,
+      "climate": "sheltered",
+      "provisions": {
+        "food": {
+          "what": "dal and rice from the landlady's pot",
+          "price": 4
+        },
+        "drink": {
+          "what": "tea from the landlady's kettle",
+          "price": 1
+        }
+      }
     },
     {
       "id": "weighhouse",
@@ -412,7 +454,8 @@
           "spread": "many"
         }
       ],
-      "tide": null
+      "tide": null,
+      "climate": "sheltered"
     },
     {
       "id": "drowned-station",
@@ -451,7 +494,8 @@
           "spring-high": "A spring tide: the black water covers the platform and the ferry can't dock."
         },
         "min_rung": []
-      }
+      },
+      "climate": "cold"
     },
     {
       "id": "tidewater-stairs",
@@ -499,6 +543,12 @@
             "why": "the turning tide pulls hard at the stairs, and the weed is slick"
           }
         ]
+      },
+      "provisions": {
+        "food": {
+          "what": "fish grilled on an oil drum by the boats",
+          "price": 4
+        }
       }
     },
     {
