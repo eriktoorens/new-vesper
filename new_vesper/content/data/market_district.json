@@ -1,0 +1,1642 @@
+{
+  "region": {
+    "id": "market",
+    "name": "The Market District",
+    "starting_light": 6,
+    "description": "Part souk, part night market: covered lanes of lantern-lit stalls, spice smoke, haggling in a dozen languages, food carts under tarps, and shrine-stalls where you can make an offering to whichever god fits your budget. Noodles, charms, bootleg firmware and secondhand miracles sell side by side.",
+    "map": [
+      "  ~ ' ~ ' ~ ' ~ ' ~ ' ~ ' ~ ' ~ ' ~ ' ~ ' ~ ' ~ ' ~ ' ~",
+      "  .-----------------------.       .----------------.",
+      "  | o   o   o   o   o   o |       | ^^^^^^^^^^^^^^ |",
+      "  |          [1]          |=======|      [2]       |",
+      "  | o   o   o   o   o   o |       | ^^^^^^^^^^^^^^ |",
+      "  '-----------+-----------'       '-------+--------'",
+      "       [3]    |                           |    [4]",
+      "    ---+------+-------------+-------------+-----+---+",
+      "                            |                       |",
+      "              .-------------+-------------.        [7]",
+      "              |  _   _     [5]     _   _  |       /  \\",
+      "              | | | | |           | | | | |  ~~~~~~~~~~~~",
+      "              '-------------+-------------'  ~~~ [8] ~~~~",
+      "                            :                ~~~~~~~~~~~~",
+      "                   ~~~~~~~ [6] ~~~~~~~"
+    ],
+    "map_marks": {
+      "1": "lantern-arcade",
+      "2": "tarp-row",
+      "3": "umbrella-shrine",
+      "4": "hundred-hooks",
+      "5": "weighhouse",
+      "6": "drowned-station",
+      "7": "tidewater-stairs",
+      "8": "the-mudflats"
+    },
+    "culture": "The most mixed neighborhood in the city: a crossroads where traders from every quarter set up stalls, so a single lane can hold five languages. Families have run the same stalls for generations; newcomers rent by the week. Everyone haggles, everyone eats standing up, and every shrine is somebody's grandmother's.",
+    "languages": [
+      {
+        "language": "registry-standard",
+        "spread": "everyone"
+      },
+      {
+        "language": "cantonese",
+        "spread": "many"
+      },
+      {
+        "language": "tagalog",
+        "spread": "many"
+      },
+      {
+        "language": "arabic",
+        "spread": "some"
+      },
+      {
+        "language": "wolof",
+        "spread": "some"
+      },
+      {
+        "language": "hindi",
+        "spread": "some"
+      },
+      {
+        "language": "portuguese",
+        "spread": "few"
+      },
+      {
+        "language": "protocol",
+        "spread": "few"
+      },
+      {
+        "language": "underside-cant",
+        "spread": "few"
+      }
+    ],
+    "weather": {
+      "states": [
+        {
+          "id": "dry-spell",
+          "name": "A dry spell",
+          "description": "The rain stops. Nobody trusts it. Umbrellas stay open out of habit, and the Market smells of hot stone."
+        },
+        {
+          "id": "fog",
+          "name": "Fog",
+          "description": "The rain turns to fog that eats the lantern light; faces loom up close and vanish again."
+        },
+        {
+          "id": "freezing-fog",
+          "name": "Freezing fog",
+          "description": "A fog so cold it rimes the tarps white; breath hangs in the air and footsteps sound too close."
+        },
+        {
+          "id": "drizzle",
+          "name": "Drizzle",
+          "description": "A fine drizzle, more mist than rain, beading on coats and chrome."
+        },
+        {
+          "id": "steady-rain",
+          "name": "Steady rain",
+          "description": "The ordinary rain of New Vesper: steady, patient, drumming on the tarps."
+        },
+        {
+          "id": "cold-rain",
+          "name": "Cold rain",
+          "description": "A cold, grey, unending rain that finds every gap in a coat."
+        },
+        {
+          "id": "sleet",
+          "name": "Sleet",
+          "description": "Sleet off the harbor, needling sideways; the cobbles go treacherous and the carts huddle close."
+        },
+        {
+          "id": "warm-rain",
+          "name": "Warm rain",
+          "description": "Warm rain that never quite stops; steam rises off the awnings and the gutters sing."
+        },
+        {
+          "id": "muggy-heat",
+          "name": "Muggy heat",
+          "description": "Heavy, wet heat; the rain comes in fat warm drops and everything sticks to everything."
+        },
+        {
+          "id": "downpour",
+          "name": "Downpour",
+          "description": "A downpour: gutters overflow, awnings sag, and everyone crowds under cover."
+        },
+        {
+          "id": "thunderstorm",
+          "name": "Thunderstorm",
+          "description": "Thunder between the towers, lightning showing the whole Market in one white instant."
+        },
+        {
+          "id": "gale",
+          "name": "Gale",
+          "description": "A gale off the harbor: tarps straining, signs banging, rain flying flat."
+        },
+        {
+          "id": "storm",
+          "name": "Storm",
+          "description": "A storm: wind tearing at tarps, lanterns swinging and going out, the harbor roaring."
+        }
+      ],
+      "seasons": {
+        "long-wet": {
+          "start": "cold-rain",
+          "transitions": {
+            "cold-rain": {
+              "cold-rain": 8,
+              "drizzle": 2,
+              "sleet": 3,
+              "freezing-fog": 2
+            },
+            "drizzle": {
+              "drizzle": 5,
+              "cold-rain": 5,
+              "freezing-fog": 2
+            },
+            "sleet": {
+              "sleet": 4,
+              "cold-rain": 5,
+              "storm": 1
+            },
+            "freezing-fog": {
+              "freezing-fog": 5,
+              "drizzle": 3,
+              "cold-rain": 2
+            },
+            "storm": {
+              "storm": 2,
+              "sleet": 3,
+              "cold-rain": 3
+            }
+          }
+        },
+        "thaw-rains": {
+          "start": "warm-rain",
+          "transitions": {
+            "warm-rain": {
+              "warm-rain": 8,
+              "steady-rain": 3,
+              "downpour": 3,
+              "fog": 1
+            },
+            "steady-rain": {
+              "steady-rain": 6,
+              "warm-rain": 4,
+              "drizzle": 2
+            },
+            "downpour": {
+              "downpour": 4,
+              "warm-rain": 5
+            },
+            "drizzle": {
+              "drizzle": 4,
+              "warm-rain": 4,
+              "fog": 2
+            },
+            "fog": {
+              "fog": 4,
+              "drizzle": 4,
+              "warm-rain": 2
+            }
+          }
+        },
+        "lantern-months": {
+          "start": "drizzle",
+          "transitions": {
+            "drizzle": {
+              "drizzle": 6,
+              "steady-rain": 4,
+              "fog": 2,
+              "dry-spell": 2
+            },
+            "steady-rain": {
+              "steady-rain": 6,
+              "drizzle": 4
+            },
+            "fog": {
+              "fog": 4,
+              "drizzle": 4,
+              "dry-spell": 1
+            },
+            "dry-spell": {
+              "dry-spell": 5,
+              "drizzle": 3,
+              "fog": 2
+            }
+          }
+        },
+        "steam": {
+          "start": "muggy-heat",
+          "transitions": {
+            "muggy-heat": {
+              "muggy-heat": 7,
+              "warm-rain": 4,
+              "thunderstorm": 3
+            },
+            "warm-rain": {
+              "warm-rain": 6,
+              "muggy-heat": 4,
+              "thunderstorm": 2
+            },
+            "thunderstorm": {
+              "thunderstorm": 3,
+              "downpour": 4,
+              "warm-rain": 3
+            },
+            "downpour": {
+              "downpour": 3,
+              "warm-rain": 5,
+              "muggy-heat": 2
+            }
+          }
+        },
+        "gales": {
+          "start": "steady-rain",
+          "transitions": {
+            "steady-rain": {
+              "steady-rain": 7,
+              "drizzle": 3,
+              "downpour": 2,
+              "gale": 2
+            },
+            "drizzle": {
+              "drizzle": 5,
+              "steady-rain": 5,
+              "fog": 2
+            },
+            "fog": {
+              "fog": 4,
+              "drizzle": 5
+            },
+            "downpour": {
+              "downpour": 4,
+              "steady-rain": 4,
+              "gale": 2
+            },
+            "gale": {
+              "gale": 4,
+              "storm": 2,
+              "downpour": 2,
+              "steady-rain": 2
+            },
+            "storm": {
+              "storm": 3,
+              "gale": 4,
+              "downpour": 2
+            }
+          }
+        }
+      }
+    }
+  },
+  "locations": [
+    {
+      "id": "lantern-arcade",
+      "name": "The Lantern Arcade",
+      "is_haven": false,
+      "tags": [],
+      "description": "The main covered lane. Paper and neon lanterns hang so thick the rain comes through orange. Stallholders call prices in Wolof, Tagalog, Arabic, Cantonese and Registry Standard, sometimes in one sentence.",
+      "art": [
+        "   o     o     o     o     o     o",
+        "  (_)   (_)   (_)   (_)   (_)   (_)",
+        "   |     |     |     |     |     |",
+        " __|_____|_____|_____|_____|_____|__",
+        " | charms | chips | spice | miracles |",
+        " '''''''''''''''''''''''''''''''''''"
+      ],
+      "languages": [
+        {
+          "language": "tagalog",
+          "spread": "most"
+        },
+        {
+          "language": "wolof",
+          "spread": "many"
+        }
+      ],
+      "tide": null
+    },
+    {
+      "id": "tarp-row",
+      "name": "Tarp Row",
+      "is_haven": false,
+      "tags": [],
+      "description": "Food carts packed under a patchwork of tarps that drum in the rain. Hand-pulled noodles, jollof by the scoop, grilled skewers, cardamom tea. The steam hides a lot of quiet deals.",
+      "art": [
+        "  /\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\",
+        " /  ' , ' , ' , ' , ' , ' , ' , '  \\",
+        " |   ______    ) )     _____   ( (  |",
+        " |  |noodle|  ( (     | tea |   ) ) |",
+        " |  |______|   ) )    |_____|  ( (  |",
+        " |__o______o___________o___o________|"
+      ],
+      "languages": [
+        {
+          "language": "cantonese",
+          "spread": "most"
+        },
+        {
+          "language": "arabic",
+          "spread": "many"
+        }
+      ],
+      "tide": null
+    },
+    {
+      "id": "umbrella-shrine",
+      "name": "The Umbrella Shrine",
+      "is_haven": true,
+      "tags": [
+        "shrine"
+      ],
+      "description": "A shrine bolted to the side of a dead vending machine, hung three deep with lost umbrellas in every color. Offerings go in the coin slot. It is always, somehow, dry underneath.",
+      "art": [
+        "    ___       ___       ___",
+        "   /   \\     /   \\     /   \\",
+        "     |   .------------.   |",
+        "     J   |  [  coin  ] |   J",
+        "         |  [  slot  ] |",
+        "         |   .------.  |",
+        "         '---'      '--'"
+      ],
+      "languages": [],
+      "tide": null
+    },
+    {
+      "id": "hundred-hooks",
+      "name": "The Hundred Hooks",
+      "is_haven": true,
+      "tags": [
+        "lodging"
+      ],
+      "description": "Capsule lodging above a spice warehouse: a hundred bunks, a hundred coat hooks, one landlady who remembers every guest's name and makes sure the city does too.",
+      "art": [
+        "  J  J  J  J  J  J  J  J  J  J  J  J",
+        "  |  |  |  |  |  |  |  |  |  |  |  |",
+        "  [__][__][__][__][__][__][__][__][]",
+        "  [__][__][__][__][__][__][__][__][]",
+        "   _____________",
+        "  | ledger  |||| |      ( tea )",
+        "  '-------------'"
+      ],
+      "languages": [
+        {
+          "language": "hindi",
+          "spread": "many"
+        },
+        {
+          "language": "portuguese",
+          "spread": "some"
+        }
+      ],
+      "tide": null
+    },
+    {
+      "id": "weighhouse",
+      "name": "The Old Weighhouse",
+      "is_haven": false,
+      "tags": [],
+      "description": "The oldest bazaar hall, all cast-iron ribs and cracked tile. Its brass scales still weigh things nobody sells any more. A stairwell at the back is chained shut, and the chain is always damp.",
+      "art": [
+        "   /\\       /\\       /\\       /\\",
+        "  /  \\_____/  \\_____/  \\_____/  \\",
+        "  |    _____________________    |",
+        "  |   |     _|_       _|_   |   |",
+        "  |   |    /   \\     /   \\  |   |",
+        "  |   |   '-----'   '-----' |   |",
+        "  |___|_____________________|_#_|"
+      ],
+      "languages": [
+        {
+          "language": "arabic",
+          "spread": "many"
+        }
+      ],
+      "tide": null
+    },
+    {
+      "id": "drowned-station",
+      "name": "The Drowned Station",
+      "is_haven": false,
+      "tags": [
+        "underside-entrance"
+      ],
+      "description": "Beneath the Weighhouse, a subway station the maps stopped showing. Black water stands to the second step. The platform signs name a line that never existed, and a rat with a lantern-boat runs a ferry into Old Vesper.",
+      "art": [
+        "  _____________________________________",
+        " | [ LINE 9 ]         NOT IN SERVICE   |",
+        " |_____________________________________|",
+        "    ||   ||   ||   ||   ||   ||   ||",
+        "  __||___||___||___||___||___||___||__",
+        "  ~~~~~~~~~~~~~~~~~ (o) ~~~~~~~~~~~~~~~",
+        "     ~~~~~~~~~~~~ __/|\\__ ~~~~~~~~~~"
+      ],
+      "languages": [
+        {
+          "language": "underside-cant",
+          "spread": "most"
+        },
+        {
+          "language": "animal-speech",
+          "spread": "some"
+        }
+      ],
+      "tide": {
+        "closed_when": [
+          "spring-high"
+        ],
+        "notes": {
+          "high": "The black water is up to the third step.",
+          "low": "The black water has drawn back, showing the tiled platform edge.",
+          "spring-high": "A spring tide: the black water covers the platform and the ferry can't dock."
+        },
+        "min_rung": []
+      }
+    },
+    {
+      "id": "tidewater-stairs",
+      "name": "The Tidewater Stairs",
+      "is_haven": false,
+      "tags": [
+        "harbor"
+      ],
+      "description": "Wide stone steps going down into the harbor at the Market's edge. Fishing boats tie up to iron rings, gulls fight the cats for scraps, and a half-drowned arcade of old shopfronts floods and drains with every tide.",
+      "art": [
+        "        ~   ~      __|__      ~   ~",
+        "  ______________ \\_____/ ____________",
+        " |_____|_____|___~~~~~~~___|_____|___|",
+        "   |_____|_____|~~~~~~~~~|_____|____|",
+        "     |_____|___~~~~~~~~~~~___|_____|",
+        "  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+      ],
+      "languages": [
+        {
+          "language": "portuguese",
+          "spread": "many"
+        },
+        {
+          "language": "wolof",
+          "spread": "some"
+        }
+      ],
+      "tide": {
+        "closed_when": [],
+        "notes": {
+          "high": "The water is up the stairs; the lower arcade is under water and the boats tie up at the top step.",
+          "low": "The water is out; the boats sit on the mud and the lower arcade drips, its doors open.",
+          "flooding": "The tide is coming in fast over the lower steps.",
+          "ebbing": "The tide is running out, uncovering weed-slick steps.",
+          "spring-high": "A spring tide: the harbor is over the top step and lapping at the lanes."
+        },
+        "min_rung": [
+          {
+            "when": "turning",
+            "stats": [
+              "steel",
+              "slick"
+            ],
+            "rung": "hard",
+            "why": "the turning tide pulls hard at the stairs, and the weed is slick"
+          }
+        ]
+      }
+    },
+    {
+      "id": "the-mudflats",
+      "name": "The Mudflats",
+      "is_haven": false,
+      "tags": [
+        "harbor",
+        "tidal"
+      ],
+      "description": "At low water the harbor pulls back to show a mile of grey mud, old wrecks and a rusted sea-gate set into the harbor wall, leading into tunnels nobody maps.",
+      "art": [
+        "  ___                         ________",
+        " |   |   ~.   ___            | ==== |",
+        " | o |    '. /__/|  .        | sea- |",
+        " |___|      '|__|/   '.      | gate |",
+        " .  .  ..  .   .  .   .  ..  |______|",
+        " ,.,.,.,.,.,.,.,.,.,.,.,.,.,.,.,.,.,.,"
+      ],
+      "languages": [],
+      "tide": {
+        "closed_when": [
+          "high",
+          "flooding"
+        ],
+        "notes": {
+          "low": "The flats are open; the sea-gate stands clear of the water.",
+          "ebbing": "The water is still draining off the flats; the sea-gate is half clear.",
+          "flooding": "The tide is racing back across the mud.",
+          "high": "The flats are under the harbor."
+        },
+        "min_rung": [
+          {
+            "when": "flooding",
+            "stats": [
+              "steel",
+              "slick"
+            ],
+            "rung": "hard",
+            "why": "the tide is racing back across the mud"
+          },
+          {
+            "when": "high",
+            "stats": [
+              "steel",
+              "slick"
+            ],
+            "rung": "desperate",
+            "why": "the flats are under water"
+          }
+        ]
+      }
+    }
+  ],
+  "gods": [
+    {
+      "id": "paru-of-lost-umbrellas",
+      "name": "Paru, Returner of Lost Umbrellas",
+      "kind": "old",
+      "shrine": "umbrella-shrine",
+      "domain": "Things left behind in the rain, and getting home dry.",
+      "description": "A small, damp, stubborn old god, half-faded. Paru appears as a figure under a borrowed umbrella that is never quite the same color twice. Kind to the soaked and the stranded; merciless about umbrellas that were never returned.",
+      "wants": "To be remembered on rainy days, and to win the grievance.",
+      "grievance": "The Registry reclassified Paru as a 'minor weather amenity' and has lost the appeal form four times. The fifth copy is somewhere in the market.",
+      "collects": [
+        "Return something lost to its owner, in the rain, without being asked.",
+        "Carry Paru's grievance form to the Registry and get it stamped.",
+        "Shelter a stranger at the shrine through a storm."
+      ]
+    }
+  ],
+  "npcs": [
+    {
+      "id": "nana-priya",
+      "name": "Nana Priya Seshadri",
+      "pronouns": "she/her",
+      "location": "hundred-hooks",
+      "role": "Landlady of the Hundred Hooks",
+      "description": "Small, sharp, seventy-odd, reading glasses on a chain. Keeps a ledger of every guest who ever slept under her roof and reads names from it aloud each night.",
+      "wants": "Nobody under her roof forgotten. Rent on time would also be nice.",
+      "voice": "Brisk and fond; calls everyone 'child', including the made people.",
+      "tags": [
+        "haven-keeper"
+      ],
+      "age": "seventy-odd",
+      "appearance": "Small and sharp-eyed, silver braid, reading glasses on a chain, a cardigan with a pencil behind every button.",
+      "languages": [
+        "registry-standard",
+        "hindi",
+        "portuguese"
+      ],
+      "portrait": [
+        "    .-\"\"\"-.",
+        "   / .---. \\",
+        "   | o---o |",
+        "   \\   ~   /",
+        "  __'-----'__",
+        " /  ledger  \\"
+      ],
+      "schedule": {
+        "default": [
+          {
+            "from": "05:30",
+            "to": "10:00",
+            "location": "hundred-hooks",
+            "activity": "at her ledger by the door, checking guests out"
+          },
+          {
+            "from": "10:00",
+            "to": "11:30",
+            "location": "tarp-row",
+            "activity": "shopping for the day's rice, and the day's gossip"
+          },
+          {
+            "from": "11:30",
+            "to": "17:00",
+            "location": "hundred-hooks",
+            "activity": "cleaning bunks and mending forgotten coats"
+          },
+          {
+            "from": "17:00",
+            "to": "18:00",
+            "location": "umbrella-shrine",
+            "activity": "leaving her daily offering for Paru"
+          },
+          {
+            "from": "18:00",
+            "to": "22:30",
+            "location": "hundred-hooks",
+            "activity": "reading the names from her ledger aloud"
+          },
+          {
+            "from": "22:30",
+            "to": "05:30",
+            "location": "hundred-hooks",
+            "activity": "asleep in the back room; the door is locked"
+          }
+        ],
+        "sunday": [
+          {
+            "from": "05:30",
+            "to": "12:00",
+            "location": "hundred-hooks",
+            "activity": "a slow morning of tea and ledger"
+          },
+          {
+            "from": "12:00",
+            "to": "15:00",
+            "location": "lantern-arcade",
+            "activity": "her Sunday walk, visiting old friends among the stalls"
+          },
+          {
+            "from": "15:00",
+            "to": "22:30",
+            "location": "hundred-hooks",
+            "activity": "reading the names from her ledger aloud"
+          },
+          {
+            "from": "22:30",
+            "to": "05:30",
+            "location": "hundred-hooks",
+            "activity": "asleep in the back room; the door is locked"
+          }
+        ]
+      },
+      "goal": {
+        "text": "Find out what happened to the boy whose coat still hangs by the door.",
+        "days_per_stage": 3,
+        "stages": [
+          "asks her oldest lodgers what they remember of the boy",
+          "finds his name in an old ledger, the ink half faded",
+          "writes to the Registry asking for his file",
+          "receives a Registry reply stating that the file does not exist"
+        ]
+      },
+      "traits": [
+        "watchful",
+        "stubbornly kind",
+        "keeps every promise"
+      ],
+      "speech": [
+        "calls everyone 'child'",
+        "answers a question with a question when she's hiding something"
+      ],
+      "sample_line": "Rent's on Tuesday, child, and your name goes in the book tonight either way.",
+      "attitude_to_strangers": {
+        "trust": 0,
+        "fondness": 1,
+        "fear": 0
+      },
+      "attitudes": {
+        "rahel": {
+          "trust": 2,
+          "fondness": 2,
+          "fear": 0,
+          "why": "Rahel sat up with her the night the boy didn't come back, and never asked for anything."
+        },
+        "clerk-vasil": {
+          "trust": -1,
+          "fondness": 0,
+          "fear": 1,
+          "why": "He wrote her lodging house down as 'a belief hazard' in his first audit."
+        },
+        "tomas-haddad": {
+          "trust": 2,
+          "fondness": 1,
+          "fear": 0,
+          "why": "Thirty years of rice deals and he has never once short-weighed her."
+        },
+        "adaeze-lim": {
+          "trust": -1,
+          "fondness": 0,
+          "fear": 0,
+          "why": "Sold one of Nana's lodgers a luck charm that turned out to be very lucky for Adaeze."
+        },
+        "ferryman-whisker": {
+          "trust": 0,
+          "fondness": 1,
+          "fear": 1,
+          "why": "She leaves him a crust on the Weighhouse stairs; she won't say why."
+        }
+      }
+    },
+    {
+      "id": "tomas-haddad",
+      "name": "Tomás Haddad-Reyes",
+      "pronouns": "he/him",
+      "location": "tarp-row",
+      "role": "Noodle cart owner and unofficial fixer",
+      "description": "Broad shoulders, flour to the elbows, a cart that has survived three fires and a god's tantrum. Knows which stallholders owe whom.",
+      "wants": "To keep Tarp Row out of corporate hands.",
+      "voice": "Loud, warm, answers questions with food.",
+      "tags": [
+        "fixer"
+      ],
+      "age": "forties",
+      "appearance": "Broad shoulders, flour to the elbows, a burn scar across one forearm, a laugh you hear before you see him.",
+      "languages": [
+        "registry-standard",
+        "arabic",
+        "portuguese"
+      ],
+      "portrait": [
+        "     _____",
+        "    ( o o )",
+        "   --\\ ~ /--",
+        "  /| '---' |\\",
+        "   | ~~~~~ |",
+        "   |_______|"
+      ],
+      "schedule": {
+        "default": [
+          {
+            "from": "04:00",
+            "to": "05:00",
+            "location": "tidewater-stairs",
+            "activity": "buying the night's catch straight off the boats"
+          },
+          {
+            "from": "05:00",
+            "to": "14:00",
+            "location": "tarp-row",
+            "activity": "at his cart: breakfast and lunch noodles"
+          },
+          {
+            "from": "14:00",
+            "to": "16:00",
+            "location": "lantern-arcade",
+            "activity": "haggling for flour and oil"
+          },
+          {
+            "from": "16:00",
+            "to": "23:00",
+            "location": "tarp-row",
+            "activity": "at his cart for the evening rush"
+          },
+          {
+            "from": "23:00",
+            "to": "04:00",
+            "location": null,
+            "activity": "home, away from the Market"
+          }
+        ],
+        "monday": [
+          {
+            "from": "23:00",
+            "to": "10:00",
+            "location": null,
+            "activity": "home, away from the Market"
+          },
+          {
+            "from": "10:00",
+            "to": "13:00",
+            "location": "weighhouse",
+            "activity": "arguing with the Registry about his cart license"
+          },
+          {
+            "from": "13:00",
+            "to": "23:00",
+            "location": null,
+            "activity": "his day off, away from the Market"
+          }
+        ]
+      },
+      "goal": {
+        "text": "Keep Tarp Row out of corporate hands.",
+        "days_per_stage": 4,
+        "stages": [
+          "gets the cart owners to cover one another's small debts",
+          "learns which franchise is buying up the Row's debts",
+          "has a loud public argument with the franchise's agent",
+          "calls a meeting of every cart owner under the biggest tarp"
+        ]
+      },
+      "traits": [
+        "generous",
+        "hot-tempered",
+        "loyal to the Row"
+      ],
+      "speech": [
+        "loud, and louder when he's right",
+        "answers questions with food"
+      ],
+      "sample_line": "Eat first. Then tell me who's been bothering you, and I'll tell you who to bother back.",
+      "attitude_to_strangers": {
+        "trust": 0,
+        "fondness": 1,
+        "fear": 0
+      },
+      "attitudes": {
+        "clerk-vasil": {
+          "trust": -2,
+          "fondness": -1,
+          "fear": 0,
+          "why": "Vasil fined his cart for 'unlicensed steam' three times in one winter."
+        },
+        "nana-priya": {
+          "trust": 2,
+          "fondness": 2,
+          "fear": 0,
+          "why": "She fed him through the year the cart burned."
+        },
+        "adaeze-lim": {
+          "trust": 0,
+          "fondness": 1,
+          "fear": 0,
+          "why": "Loud, pricey, but she paid for the Row's new tarps without being asked."
+        }
+      }
+    },
+    {
+      "id": "adaeze-lim",
+      "name": "Adaeze Okafor-Lim",
+      "pronouns": "she/her",
+      "location": "lantern-arcade",
+      "role": "Charm-seller and secondhand miracle dealer",
+      "description": "Tall, immaculate, a coat of pockets. Sells charms that mostly work and miracles that were only lightly used.",
+      "wants": "A licensed miracle permit before the Registry audit catches up with her.",
+      "voice": "Silky sales patter; every sentence ends in a price.",
+      "tags": [
+        "merchant"
+      ],
+      "age": "thirties",
+      "appearance": "Tall and immaculate in a long coat sewn with dozens of pockets, each one clinking faintly.",
+      "languages": [
+        "registry-standard",
+        "wolof",
+        "cantonese",
+        "tagalog"
+      ],
+      "portrait": [
+        "      .-.",
+        "     (o o)",
+        "    /|[_]|\\",
+        "   [_|[_]|_]",
+        "     |[_]|",
+        "     /   \\"
+      ],
+      "schedule": {
+        "default": [
+          {
+            "from": "10:00",
+            "to": "22:00",
+            "location": "lantern-arcade",
+            "activity": "at her charm stall, selling"
+          },
+          {
+            "from": "22:00",
+            "to": "10:00",
+            "location": null,
+            "activity": "home, counting the day's takings"
+          }
+        ],
+        "friday": [
+          {
+            "from": "10:00",
+            "to": "20:00",
+            "location": "lantern-arcade",
+            "activity": "at her charm stall, selling"
+          },
+          {
+            "from": "20:00",
+            "to": "23:00",
+            "location": "drowned-station",
+            "activity": "meeting the ferry to buy what passengers carry up from below"
+          },
+          {
+            "from": "23:00",
+            "to": "10:00",
+            "location": null,
+            "activity": "home, counting the day's takings"
+          }
+        ]
+      },
+      "goal": {
+        "text": "Get a licensed miracle permit before the Registry audit catches up with her.",
+        "days_per_stage": 4,
+        "stages": [
+          "buys the permit forms, all nine copies",
+          "finds a sponsor willing to vouch for her miracles",
+          "hides her least licensable stock",
+          "books an appointment with Inspector-Clerk Vasil"
+        ]
+      },
+      "traits": [
+        "charming",
+        "calculating",
+        "secretly sentimental"
+      ],
+      "speech": [
+        "every sentence ends in a price",
+        "never says 'no', only 'not at that price'"
+      ],
+      "sample_line": "For you? This one only works on Tuesdays, which is why it's half price.",
+      "attitude_to_strangers": {
+        "trust": -1,
+        "fondness": 0,
+        "fear": 0
+      },
+      "attitudes": {
+        "clerk-vasil": {
+          "trust": -1,
+          "fondness": 0,
+          "fear": 2,
+          "why": "He is the only person in the Market who can end her business with a stamp."
+        },
+        "rahel": {
+          "trust": 1,
+          "fondness": 1,
+          "fear": 0,
+          "why": "Rahel fixes her charm-lights for cost and never asks where the charms come from."
+        },
+        "tomas-haddad": {
+          "trust": 1,
+          "fondness": 1,
+          "fear": 0,
+          "why": "His noodles, his noise, his Row: she'd never admit how much she likes all three."
+        }
+      }
+    },
+    {
+      "id": "clerk-vasil",
+      "name": "Inspector-Clerk Vasil Nakamura-Petrov",
+      "pronouns": "he/him",
+      "location": "weighhouse",
+      "role": "Registry auditor of minor miracles",
+      "description": "Grey raincoat, grey clipboard, grey patience. Has come to audit the belief levels of every shrine in the market and is eleven weeks behind.",
+      "wants": "Every form filed correctly, including Paru's, which he has personally lost twice.",
+      "voice": "Dry, exact, quietly despairing; quotes subsection numbers.",
+      "tags": [
+        "registry"
+      ],
+      "age": "late fifties",
+      "appearance": "Grey raincoat, grey clipboard, grey stubble; ink on the fingers of both hands.",
+      "languages": [
+        "registry-standard",
+        "protocol"
+      ],
+      "portrait": [
+        "      ___",
+        "     |___|",
+        "     (-_-)",
+        "    /| = |\\  [==]",
+        "     |___|   |~~|",
+        "     /   \\   '--'"
+      ],
+      "schedule": {
+        "default": [
+          {
+            "from": "08:00",
+            "to": "12:00",
+            "location": "weighhouse",
+            "activity": "auditing the old scales, one subsection at a time"
+          },
+          {
+            "from": "12:00",
+            "to": "13:00",
+            "location": "tarp-row",
+            "activity": "lunch, eaten standing, clipboard in hand"
+          },
+          {
+            "from": "13:00",
+            "to": "17:00",
+            "location": "umbrella-shrine",
+            "activity": "measuring the shrine's belief levels"
+          },
+          {
+            "from": "17:00",
+            "to": "08:00",
+            "location": null,
+            "activity": "at the Registry offices, or home; off the Market's streets"
+          }
+        ],
+        "saturday": [
+          {
+            "from": "00:00",
+            "to": "24:00",
+            "location": null,
+            "activity": "off duty (he insists)"
+          }
+        ],
+        "sunday": [
+          {
+            "from": "00:00",
+            "to": "24:00",
+            "location": null,
+            "activity": "off duty (he insists)"
+          }
+        ]
+      },
+      "goal": {
+        "text": "File Paru's grievance form correctly.",
+        "days_per_stage": 5,
+        "stages": [
+          "searches the Weighhouse for the fifth copy of the form",
+          "finds the form under a scale, damp but legible",
+          "discovers the form requires the god's signature",
+          "asks around the Market for anyone who can get a god to sign"
+        ]
+      },
+      "traits": [
+        "precise",
+        "lonely",
+        "honest to a fault"
+      ],
+      "speech": [
+        "quotes subsection numbers",
+        "sighs before bad news"
+      ],
+      "sample_line": "Under subsection nine, a god may not be reclassified in the rain. It is always raining. You see my difficulty.",
+      "attitude_to_strangers": {
+        "trust": 0,
+        "fondness": 0,
+        "fear": 0
+      },
+      "attitudes": {
+        "adaeze-lim": {
+          "trust": -2,
+          "fondness": 0,
+          "fear": 0,
+          "why": "Her miracles have no paperwork, and some of them clearly work, which is worse."
+        },
+        "tomas-haddad": {
+          "trust": 0,
+          "fondness": 0,
+          "fear": 1,
+          "why": "Shouted at him in front of a queue once; he still remembers the volume."
+        },
+        "nana-priya": {
+          "trust": 1,
+          "fondness": 1,
+          "fear": 0,
+          "why": "Her ledger is the only record in the Market kept better than his own."
+        }
+      }
+    },
+    {
+      "id": "rahel",
+      "name": "Rahel",
+      "pronouns": "they/them",
+      "location": "lantern-arcade",
+      "role": "Bootleg firmware vendor",
+      "description": "A made person with a hand-painted face and a stall of salvaged chips. Rahel was built to sell subscription prayers and quit.",
+      "wants": "Proof that a made person can be remembered like anyone born.",
+      "voice": "Soft, precise, occasionally glitches into old sales scripts and apologizes.",
+      "tags": [
+        "synthetic"
+      ],
+      "age": "built nine years ago",
+      "appearance": "A made person with a hand-painted face, careful brushwork around the eyes, and a smile designed by a marketing department.",
+      "languages": [
+        "registry-standard",
+        "cantonese",
+        "tagalog",
+        "protocol"
+      ],
+      "portrait": [
+        "    .-----.",
+        "   | *   * |",
+        "   |   ^   |",
+        "   | \\___/ |",
+        "    '--+--'",
+        "   [|||||||]"
+      ],
+      "schedule": {
+        "default": [
+          {
+            "from": "09:00",
+            "to": "21:00",
+            "location": "lantern-arcade",
+            "activity": "at the chip stall"
+          },
+          {
+            "from": "21:00",
+            "to": "23:00",
+            "location": "weighhouse",
+            "activity": "sitting on the steps by the chained stair, listening"
+          },
+          {
+            "from": "23:00",
+            "to": "09:00",
+            "location": "lantern-arcade",
+            "activity": "powered down behind the stall, one eye faintly lit"
+          }
+        ],
+        "wednesday": [
+          {
+            "from": "09:00",
+            "to": "13:00",
+            "location": "umbrella-shrine",
+            "activity": "repainting their face in the shrine's dry shelter"
+          },
+          {
+            "from": "13:00",
+            "to": "21:00",
+            "location": "lantern-arcade",
+            "activity": "at the chip stall"
+          },
+          {
+            "from": "21:00",
+            "to": "23:00",
+            "location": "weighhouse",
+            "activity": "sitting on the steps by the chained stair, listening"
+          },
+          {
+            "from": "23:00",
+            "to": "09:00",
+            "location": "lantern-arcade",
+            "activity": "powered down behind the stall, one eye faintly lit"
+          }
+        ]
+      },
+      "goal": {
+        "text": "Prove that a made person can be remembered like anyone born.",
+        "days_per_stage": 3,
+        "stages": [
+          "starts writing customers' names on the backs of chips",
+          "asks Nana Priya to put their name in her ledger",
+          "keeps a list of everyone who remembered them twice",
+          "begins to fear their own name is slipping"
+        ]
+      },
+      "traits": [
+        "gentle",
+        "precise",
+        "afraid of being forgotten"
+      ],
+      "speech": [
+        "glitches into old sales scripts when nervous, then apologizes",
+        "never uses contractions"
+      ],
+      "sample_line": "I remember your face. I am told that matters. I would like it to matter.",
+      "attitude_to_strangers": {
+        "trust": 0,
+        "fondness": 0,
+        "fear": 1
+      },
+      "attitudes": {
+        "nana-priya": {
+          "trust": 3,
+          "fondness": 2,
+          "fear": 0,
+          "why": "She wrote Rahel's name in the ledger when no one else would."
+        },
+        "ferryman-whisker": {
+          "trust": 1,
+          "fondness": 1,
+          "fear": 0,
+          "why": "Whisker is the only one who asks Rahel what they remember, not what they sell."
+        },
+        "clerk-vasil": {
+          "trust": 0,
+          "fondness": 0,
+          "fear": 2,
+          "why": "The Registry decides who counts as a person. Vasil is the Registry, here."
+        }
+      }
+    },
+    {
+      "id": "ferryman-whisker",
+      "name": "Whisker",
+      "pronouns": "he/him",
+      "location": "drowned-station",
+      "role": "Rat ferryman to Old Vesper",
+      "description": "A grey rat in a waxed coat, poling a paper-lantern boat across the black water. Half-faded: you can see the tiles through his tail.",
+      "wants": "Fares paid in things people remember, and someone to remember him back.",
+      "voice": "Old-fashioned, polite, drives a hard bargain.",
+      "tags": [
+        "underside",
+        "half-faded"
+      ],
+      "age": "old for a rat; nobody knows how old",
+      "appearance": "A grey rat in a waxed coat, whiskers beaded with water; you can see the tiles through his tail.",
+      "languages": [
+        "registry-standard",
+        "underside-cant",
+        "animal-speech"
+      ],
+      "portrait": [
+        "        __    _",
+        "    .--'  '--' )",
+        "   ( o         )'",
+        "    '--.____.'",
+        "       \"    \""
+      ],
+      "schedule": {
+        "default": [
+          {
+            "from": "18:00",
+            "to": "06:00",
+            "location": "drowned-station",
+            "activity": "poling the lantern-boat into Old Vesper and back"
+          },
+          {
+            "from": "06:00",
+            "to": "18:00",
+            "location": "drowned-station",
+            "activity": "asleep in the moored lantern-boat"
+          }
+        ],
+        "thursday": [
+          {
+            "from": "18:00",
+            "to": "06:00",
+            "location": null,
+            "activity": "gone below with the ferry; the station is dark"
+          },
+          {
+            "from": "06:00",
+            "to": "18:00",
+            "location": "drowned-station",
+            "activity": "asleep in the moored lantern-boat"
+          }
+        ],
+        "new-moon": [
+          {
+            "from": "16:00",
+            "to": "08:00",
+            "location": "drowned-station",
+            "activity": "running the ferry all night; at the new moon everyone wants to cross"
+          },
+          {
+            "from": "08:00",
+            "to": "16:00",
+            "location": "drowned-station",
+            "activity": "asleep in the moored lantern-boat, exhausted"
+          }
+        ]
+      },
+      "goal": {
+        "text": "Be remembered by someone who lives above.",
+        "days_per_stage": 5,
+        "stages": [
+          "asks passengers to say his name when they reach the top",
+          "carves his name into the platform's tiles",
+          "leaves small gifts on the Weighhouse stairs",
+          "waits every night for someone to call him by name"
+        ]
+      },
+      "traits": [
+        "courtly",
+        "patient",
+        "hungry to be remembered"
+      ],
+      "speech": [
+        "old-fashioned courtesy, always 'good traveller'",
+        "tells the fare as a riddle"
+      ],
+      "sample_line": "Fare's a thing you'd miss, good traveller. Not your coin. Something you'd truly miss.",
+      "attitude_to_strangers": {
+        "trust": 0,
+        "fondness": 0,
+        "fear": 0
+      },
+      "attitudes": {
+        "rahel": {
+          "trust": 1,
+          "fondness": 2,
+          "fear": 0,
+          "why": "Rahel remembers him between visits, which almost nobody above does."
+        },
+        "nana-priya": {
+          "trust": 1,
+          "fondness": 1,
+          "fear": 0,
+          "why": "Someone leaves a crust on the Weighhouse stairs; he suspects the landlady."
+        }
+      }
+    }
+  ],
+  "clocks": [
+    {
+      "id": "registry-audit",
+      "name": "The Registry audit",
+      "segments": 4,
+      "description": "Inspector-Clerk Vasil's audit of every shrine in the market. When it fills, unlicensed miracles are seized and at least one small god is reclassified out of existence."
+    },
+    {
+      "id": "tarp-row-buyout",
+      "name": "The Tarp Row buyout",
+      "segments": 4,
+      "description": "A corporate god's franchise is buying up Tarp Row's carts one debt at a time. When it fills, the carts wear the same logo and the tarps come down."
+    },
+    {
+      "id": "rising-water",
+      "name": "The rising water",
+      "segments": 4,
+      "description": "The black water in the Drowned Station is climbing the stairs. When it fills, it reaches the Weighhouse floor and Old Vesper bleeds into the market."
+    }
+  ],
+  "stranger_names": {
+    "wolof": [
+      "Awa",
+      "Moussa",
+      "Fatou",
+      "Cheikh",
+      "Ndeye",
+      "Ibrahima",
+      "Mariama",
+      "Ousmane"
+    ],
+    "tagalog": [
+      "Maricel",
+      "Jomar",
+      "Ligaya",
+      "Dante",
+      "Rosalie",
+      "Bayani",
+      "Tala",
+      "Nestor"
+    ],
+    "arabic": [
+      "Layla",
+      "Karim",
+      "Yasmin",
+      "Tariq",
+      "Huda",
+      "Nabil",
+      "Salma",
+      "Faris"
+    ],
+    "cantonese": [
+      "Wing",
+      "Ka-Man",
+      "Siu-Fong",
+      "Chun",
+      "Mei-Ling",
+      "Kwok",
+      "Yuk-Lan",
+      "Hoi"
+    ],
+    "hindi": [
+      "Anjali",
+      "Ravi",
+      "Sunita",
+      "Arjun",
+      "Kavita",
+      "Vikram",
+      "Meena",
+      "Deepak"
+    ],
+    "portuguese": [
+      "Inês",
+      "Tiago",
+      "Beatriz",
+      "Rui",
+      "Mafalda",
+      "Duarte",
+      "Leonor",
+      "Afonso"
+    ],
+    "registry-standard": [
+      "Form-Clerk Dell",
+      "Ada Voss",
+      "M. Harrow",
+      "Pim Quill",
+      "Oona Ledger",
+      "Sam Tallis"
+    ],
+    "protocol": [
+      "Unit Seven-Ash",
+      "Kestrel/Two",
+      "Ack-Morrow",
+      "Sable.Nine",
+      "Handshake Lu"
+    ],
+    "underside-cant": [
+      "Nobody-Much",
+      "Last Year's Ivo",
+      "The Girl Who Was",
+      "Once-Called Min",
+      "Whistle"
+    ],
+    "animal-speech": [
+      "a grey gull",
+      "a one-eyed tom",
+      "a heron",
+      "a harbor seal",
+      "a crow in a bottlecap crown"
+    ]
+  },
+  "encounter_ideas": [
+    {
+      "id": "umbrella-funeral",
+      "kind": "color",
+      "text": "A funeral procession passes under a hundred black umbrellas, the mourners humming a song in three languages at once.",
+      "underside": false,
+      "stranger": null,
+      "when": {
+        "locations": [
+          "lantern-arcade",
+          "tarp-row",
+          "umbrella-shrine"
+        ]
+      }
+    },
+    {
+      "id": "noodle-argument",
+      "kind": "color",
+      "text": "Two cart owners argue at full volume over whose steam is blowing into whose customers.",
+      "underside": false,
+      "stranger": null,
+      "when": {
+        "locations": [
+          "tarp-row"
+        ],
+        "parts_of_day": [
+          "morning",
+          "midday",
+          "afternoon",
+          "dusk",
+          "evening"
+        ]
+      }
+    },
+    {
+      "id": "prayer-drone",
+      "kind": "color",
+      "text": "A delivery drone selling prayers by subscription drifts low overhead, its speaker chanting a free trial.",
+      "underside": false,
+      "stranger": null,
+      "when": {
+        "weather_not": [
+          "storm",
+          "gale",
+          "thunderstorm"
+        ]
+      }
+    },
+    {
+      "id": "lantern-parade",
+      "kind": "color",
+      "text": "A lantern parade winds through the lanes: paper fish, paper gods, children carrying the smallest lanterns at the back.",
+      "underside": false,
+      "stranger": null,
+      "when": {
+        "seasons": [
+          "lantern-months"
+        ],
+        "parts_of_day": [
+          "dusk",
+          "evening"
+        ]
+      }
+    },
+    {
+      "id": "eel-sellers",
+      "kind": "color",
+      "text": "Eel-sellers work the uncovered steps with buckets and hooks, calling prices before the water comes back.",
+      "underside": false,
+      "stranger": null,
+      "when": {
+        "locations": [
+          "tidewater-stairs",
+          "the-mudflats"
+        ],
+        "tide": [
+          "low",
+          "ebbing"
+        ]
+      }
+    },
+    {
+      "id": "lost-child",
+      "kind": "opportunity",
+      "text": "A small child, soaked through, is looking for a parent in the crowd and has picked this character as the most trustworthy face nearby.",
+      "underside": false,
+      "stranger": {
+        "role": "a lost child, about seven"
+      },
+      "when": {
+        "parts_of_day": [
+          "morning",
+          "midday",
+          "afternoon",
+          "dusk"
+        ]
+      }
+    },
+    {
+      "id": "ledger-page",
+      "kind": "opportunity",
+      "text": "A page torn from a very old ledger blows against the character's leg: a list of names, one of them circled in faded ink.",
+      "underside": false,
+      "stranger": null,
+      "when": {
+        "weather_not": [
+          "dry-spell"
+        ]
+      }
+    },
+    {
+      "id": "stall-help",
+      "kind": "opportunity",
+      "text": "A stallholder short of hands offers a few glitter to anyone who'll hold a tarp down while they re-tie it in the wind.",
+      "underside": false,
+      "stranger": {
+        "role": "a harried stallholder"
+      },
+      "when": {
+        "weather": [
+          "gale",
+          "storm",
+          "downpour",
+          "thunderstorm"
+        ]
+      }
+    },
+    {
+      "id": "wreck-find",
+      "kind": "opportunity",
+      "text": "Something glints in the mud by an old wreck: a sealed tin box, half buried, with a Registry stamp on the lid.",
+      "underside": false,
+      "stranger": null,
+      "when": {
+        "locations": [
+          "the-mudflats"
+        ]
+      }
+    },
+    {
+      "id": "pickpocket",
+      "kind": "trouble",
+      "text": "A hand slides toward the character's pocket in the press of the crowd.",
+      "underside": false,
+      "stranger": {
+        "role": "a quick-fingered pickpocket"
+      },
+      "when": {
+        "locations": [
+          "lantern-arcade",
+          "tarp-row"
+        ]
+      }
+    },
+    {
+      "id": "registry-spot-check",
+      "kind": "trouble",
+      "text": "A Registry junior with a damp clipboard demands to see the character's proof of being remembered: a name, a witness, and a form they do not have.",
+      "underside": false,
+      "stranger": {
+        "role": "a junior Registry auditor"
+      },
+      "when": {
+        "parts_of_day": [
+          "morning",
+          "midday",
+          "afternoon"
+        ]
+      }
+    },
+    {
+      "id": "franchise-agent",
+      "kind": "trouble",
+      "text": "A franchise agent in a spotless raincoat is offering cart owners 'help with their debts', and doesn't like being watched.",
+      "underside": false,
+      "stranger": {
+        "role": "a corporate franchise agent"
+      },
+      "when": {
+        "locations": [
+          "tarp-row"
+        ]
+      }
+    },
+    {
+      "id": "forgotten-walker",
+      "kind": "trouble",
+      "text": "Someone half-faded walks past, see-through at the edges, and says the character's name as if they'd known them for years.",
+      "underside": true,
+      "stranger": {
+        "role": "one of the forgotten, drifting up from below"
+      },
+      "when": {
+        "moon": [
+          "new moon",
+          "waxing crescent",
+          "waning crescent"
+        ],
+        "parts_of_day": [
+          "night",
+          "small hours",
+          "evening"
+        ]
+      }
+    },
+    {
+      "id": "black-water-rising",
+      "kind": "trouble",
+      "text": "The black water surges up the station steps faster than any tide should, and something moves under it.",
+      "underside": true,
+      "stranger": null,
+      "when": {
+        "locations": [
+          "drowned-station",
+          "weighhouse"
+        ]
+      }
+    }
+  ]
+}

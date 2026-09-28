@@ -1,0 +1,20 @@
+{
+  "calendar": {
+    "seasons": [
+      {"id": "long-wet", "name": "the Long Wet", "months": [11, 12, 1, 2],
+       "description": "Cold rain for months on end, sleet off the harbor, freezing fog in the lanes. Everyone smells of wet wool; the shrines do good business."},
+      {"id": "thaw-rains", "name": "the Thaw-Rains", "months": [3, 4],
+       "description": "Warm rain that doesn't stop. Gutters overflow, the drowned places spread, and the markets move up a step to keep dry."},
+      {"id": "lantern-months", "name": "the Lantern Months", "months": [5, 6],
+       "description": "The mild season of festivals: lanterns strung across every lane, stalls open late, and the rare dry spells that nobody trusts."},
+      {"id": "steam", "name": "the Steam", "months": [7, 8],
+       "description": "Muggy heat that makes the rain feel like soup; thunderstorms most evenings, tempers short, ice sellers rich."},
+      {"id": "gales", "name": "the Gales", "months": [9, 10],
+       "description": "Wind off the harbor rattling every tarp and sign; storms roll in fast, and the tides run high."}
+    ],
+    "moon": {
+      "new moon": "Old Vesper bleeds through: shadows fall the wrong way, the forgotten walk closer to the surface, and Whisker's ferry runs all night.",
+      "full moon": "The forgotten are easier to see: faint figures at the edges of lamplight, names half-remembered on the tip of the tongue."
+    }
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "knacks": [
+    {
+      "id": "read-the-crowd",
+      "name": "Read the Crowd",
+      "stat": "heart",
+      "trigger": "When you work a busy market for gossip, rumor or who-owes-whom.",
+      "clean_effect": "Ask the DM two questions about the people around you; the answers are true.",
+      "cost_effect": "Ask one question; someone in the crowd notices you asking.",
+      "roll_bonus": 0,
+      "limit": null,
+      "tags": []
+    },
+    {
+      "id": "shrine-question",
+      "name": "Ask the Shrine",
+      "stat": "weird",
+      "trigger": "When you make an offering at a shrine and ask its god one question.",
+      "clean_effect": "The god answers truly and plainly.",
+      "cost_effect": "The god answers truly, but you owe it a favor.",
+      "roll_bonus": 0,
+      "limit": {"uses": 1, "per": "day"},
+      "tags": ["magic"]
+    },
+    {
+      "id": "rooftop-runner",
+      "name": "Rooftop Runner",
+      "stat": "slick",
+      "trigger": "When you move fast across tarps, awnings, cables and rooftops.",
+      "clean_effect": "You get where you meant to go, unseen, with a moment to spare.",
+      "cost_effect": "You get there, but drop something, tear something, or are spotted.",
+      "roll_bonus": 1,
+      "limit": {"uses": 1, "per": "scene"},
+      "tags": []
+    },
+    {
+      "id": "quick-fingers",
+      "name": "Quick Fingers",
+      "stat": "slick",
+      "trigger": "When you lift, plant or palm something, or pick a lock.",
+      "clean_effect": "It's done, and nobody knows it was you.",
+      "cost_effect": "It's done, but someone will notice it missing soon.",
+      "roll_bonus": 0,
+      "limit": null,
+      "tags": ["needs-hands"]
+    },
+    {
+      "id": "back-alley-patch",
+      "name": "Back-Alley Patch",
+      "stat": "wire",
+      "trigger": "When you patch flesh or chrome with whatever the stalls have.",
+      "clean_effect": "Clear 1 Harm from the patient.",
+      "cost_effect": "Clear 1 Harm, but it used up something you'll miss.",
+      "roll_bonus": 0,
+      "limit": {"uses": 1, "per": "scene"},
+      "tags": ["treatment"]
+    },
+    {
+      "id": "prayer-net-tap",
+      "name": "Prayer-Net Tap",
+      "stat": "wire",
+      "trigger": "When you splice into a god's prayer network to listen or reroute.",
+      "clean_effect": "Learn who has been praying for what, or redirect one prayer.",
+      "cost_effect": "It works, but take a tick of Fade or owe the god a favor.",
+      "roll_bonus": 0,
+      "limit": {"uses": 1, "per": "scene"},
+      "tags": ["magic", "tech-magic"]
+    },
+    {
+      "id": "stand-your-ground",
+      "name": "Stand Your Ground",
+      "stat": "steel",
+      "trigger": "When you hold a place or a person against someone trying to take it.",
+      "clean_effect": "They can't get past you without paying for it.",
+      "cost_effect": "They don't get past, but you take the hit meant for someone else.",
+      "roll_bonus": 1,
+      "limit": {"uses": 1, "per": "scene"},
+      "tags": []
+    },
+    {
+      "id": "say-their-name",
+      "name": "Say Their Name",
+      "stat": "heart",
+      "trigger": "When you speak the name of someone or something the city has forgotten.",
+      "clean_effect": "The listener remembers, and the memory sticks.",
+      "cost_effect": "The listener remembers for now, but it will slip unless someone else says it too.",
+      "roll_bonus": 0,
+      "limit": null,
+      "tags": ["remembrance"]
+    }
+  ]
+}
