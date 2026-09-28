@@ -14,6 +14,7 @@ from typing import Any
 
 from new_vesper.budget.policy import stamp
 from new_vesper.city.npcs import present_at, regulars_elsewhere, whereabouts
+from new_vesper.city.sky import describe_sky, harder, minimum_rung
 from new_vesper.content.loader import Content
 from new_vesper.content.loot import roll_loot
 from new_vesper.rules.character import Sheet, apply_track
@@ -305,6 +306,7 @@ def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
             for w in regulars_elsewhere(ctx.content, place.id, ctx.now)
         ],
         "shrine_of": god.id if god else None,
+        "sky": describe_sky(ctx.content, place.id, ctx.now),
         "items_here": [{"id": row[0], "name": row[1]} for row in lying],
     }
 
@@ -465,6 +467,12 @@ def call_for_roll(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
         if forced is not difficulty:
             notes.append("raw magic without a knack is always Desperate")
         difficulty = forced
+    if me.location_id is not None:
+        # The tide can make a place harder than the DM's rung, never easier (D59).
+        imposed = minimum_rung(ctx.content.locations[me.location_id].tide, stat, ctx.now)
+        if imposed is not None and harder(imposed[0], difficulty) is not difficulty:
+            notes.append(f"the tide makes this {imposed[0].value}: {imposed[1]}")
+            difficulty = imposed[0]
     bonus = knack.roll_bonus if knack else 0
     result = resolve(me.sheet.roll_stat(stat), difficulty, ctx.rng, bonus)
     with atomic(ctx.conn):

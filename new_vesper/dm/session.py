@@ -19,6 +19,7 @@ from new_vesper.budget.ledger import record_call
 from new_vesper.budget.policy import BudgetConfig, BudgetExhausted, BudgetStatus, budget_status
 from new_vesper.budget.pricing import PRICES, ModelPrice, price_of
 from new_vesper.city.npcs import present_at
+from new_vesper.city.sky import season, tide_at
 from new_vesper.city.tick import run_due_ticks
 from new_vesper.city.weather import current_weather
 from new_vesper.content.loader import Content
@@ -38,6 +39,7 @@ from new_vesper.rules.character import resolve_full_harm
 from new_vesper.rules.dice import Rng
 from new_vesper.rules.errors import RulesError
 from new_vesper.rules.leveling import LevelUpRequest, level_up
+from new_vesper.rules.sky import moon
 from new_vesper.rules.tracks import must_fall_or_endure
 from new_vesper.state import characters, scenes, world
 from new_vesper.state.characters import Character
@@ -336,9 +338,19 @@ class PlaySession:
         me = self.character
         if me.location_id is None:
             return clock.describe(now)
-        region = self.content.locations[me.location_id].region_id
-        sky = current_weather(self.conn, self.content, region, now)
-        return f"{clock.describe(now)}; {sky.name}"
+        place = self.content.locations[me.location_id]
+        weather = current_weather(self.conn, self.content, place.region_id, now)
+        parts = [clock.describe(now)]
+        current = season(self.content, now)
+        if current is not None:
+            parts.append(current.name)
+        parts += [weather.name, moon(now).phase]
+        here = tide_at(place.tide, now)
+        if here is not None:
+            turning = ", turning" if here.tide.turning else ""
+            spring = " spring" if here.tide.spring else ""
+            parts.append(f"{here.tide.state.value}{spring} tide{turning}")
+        return "; ".join(parts)
 
     def location_art(self) -> str | None:
         me = self.character
@@ -481,6 +493,10 @@ class PlaySession:
             raise SessionError("that's in another district")
         if here is not None and here.id == target.id:
             raise SessionError("you're already there")
+        flooded = tide_at(target.tide, self.now())
+        if flooded is not None and flooded.closed:
+            nxt = clock.describe(flooded.tide.next_low)
+            raise SessionError(f"{target.name} is under water right now; low water is {nxt}")
         self._require_budget()
         self._close_scene()
         characters.move_character(self.conn, me.id, target.id, self._cause())

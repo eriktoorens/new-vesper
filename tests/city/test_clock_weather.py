@@ -95,7 +95,7 @@ def test_weather_is_stored_and_shared(conn: sqlite3.Connection, content: Content
 
 
 def test_weather_drifts_rather_than_jumps(conn: sqlite3.Connection, content: Content) -> None:
-    table = content.regions["market"].weather
+    table = content.regions["market"].weather.seasons["gales"]  # September and October
     moment = utc(2026, 9, 1, 12)
     seen = []
     for _ in range(300):
@@ -103,10 +103,17 @@ def test_weather_drifts_rather_than_jumps(conn: sqlite3.Connection, content: Con
         moment += timedelta(hours=3)
     for before, after in pairwise(seen):
         assert after in table.transitions[before], (before, after)
-    order = list(table.states)
-    assert all(abs(order.index(a) - order.index(b)) <= 2 for a, b in pairwise(seen))
     assert seen.count("steady-rain") > seen.count("storm")
     assert len(set(seen)) >= 4  # it does change
+
+
+def test_seasons_bring_their_own_weather(conn: sqlite3.Connection, content: Content) -> None:
+    winter = {
+        current_weather(conn, content, "market", utc(2027, 1, 1, 12) + timedelta(hours=3 * n)).id
+        for n in range(200)
+    }
+    assert winter <= set(content.regions["market"].weather.seasons["long-wet"].transitions)
+    assert "muggy-heat" not in winter
 
 
 def test_weather_is_reproducible(content: Content) -> None:

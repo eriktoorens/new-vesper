@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D55** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D59** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -339,6 +339,15 @@ Built in layer 3 (2026-09-28), from D38.
 - **NPC goals (D54):** each NPC has a personal goal in stages. The daily tick moves it on a stage every few days. Progress is private: it is not reported in "while you were gone" recaps, but the DM sees what each NPC has been doing lately and lets it show in play.
 - **The daily tick (D55):** runs whenever anyone plays, once per city day, catching up on up to 14 missed days. It applies Light neglect (a district whose Light nobody raised for 7 days loses 1) and advances NPC goals.
 
+## Seasons, Moon and Tides (D56–D59)
+
+Added after layer 3 (2026-09-28).
+
+- **The city calendar (D56):** five seasons tied to the real date: the Long Wet (November–February: cold rain, sleet, freezing fog), the Thaw-Rains (March–April: warm rain), the Lantern Months (May–June: mild, festivals, the rare dry spells), the Steam (July–August: muggy heat, thunderstorms) and the Gales (September–October: wind off the harbor, storms). Each season has its own weather odds, so the weather drifts within the season's range.
+- **The moon (D57):** code computes the real phase. It colors narration, with two light hooks in content: at the new moon Old Vesper bleeds through and Whisker's ferry runs all night; at the full moon the forgotten are easier to see. NPC schedules can have new-moon and full-moon days, which win over weekdays. No roll modifiers.
+- **The harbor (D58):** a quay at the Market's edge, the Tidewater Stairs, and the Mudflats beyond it, with a sea-gate into unmapped tunnels. Tomás buys the night's catch there at dawn.
+- **Tides (D59):** code computes the tide (two highs and two lows a day, about 50 minutes later each day, bigger spring tides near new and full moon). Places can be closed by the tide (the Mudflats at high and rising water; the Drowned Station at a spring high tide), and `/go` refuses a flooded place and says when low water is. Places can impose a minimum difficulty rung at some tide states (the turning tide on the Stairs, the incoming tide on the flats), which code enforces the way it forces raw magic to Desperate. The model's constants are tuning values, not astronomy.
+
 ## Planned: A Living World (D37–D43)
 
 Direction agreed after the first playtest (2026-09-28). Each layer's details are decided when it is built, and every mechanic stays code-owned: the DM proposes, code decides.
@@ -379,7 +388,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, and D50–D55 from time and weather.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, and D56–D59 from seasons, moon and tides.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -438,3 +447,7 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D53 | Absent NPCs | Hints only when someone present would plausibly know |
 | D54 | NPC goals | Staged goals advanced by the tick; private, shown through play |
 | D55 | Daily tick | Runs when anyone plays; up to 14 days of catch-up; neglect after 7 days; NPC goals |
+| D56 | City calendar | Five seasons on the real date, each with its own weather odds |
+| D57 | Moon | Real phase; flavor plus new- and full-moon hooks and schedules; no roll modifiers |
+| D58 | Harbor | The Tidewater Stairs quay and the Mudflats with a sea-gate, in the Market |
+| D59 | Tides | Computed; can close places and impose a minimum rung, enforced by code |

@@ -41,9 +41,8 @@ REGION_DOC: dict[str, Any] = {
         "languages": [{"language": "registry-standard", "spread": "everyone"}],
         "culture": "c",
         "weather": {
-            "start": "rain",
             "states": [{"id": "rain", "name": "Rain", "description": "d"}],
-            "transitions": {"rain": {"rain": 1}},
+            "seasons": {"always": {"start": "rain", "transitions": {"rain": {"rain": 1}}}},
         },
     },
     "locations": [
@@ -55,6 +54,7 @@ REGION_DOC: dict[str, Any] = {
             "description": "d",
             "art": ["  /\\  "],
             "languages": [{"language": "hush", "spread": "some"}],
+            "tide": None,
         },
     ],
     "gods": [
@@ -156,6 +156,26 @@ def test_bad_knacks_rejected(knack: dict[str, Any]) -> None:
         _region(locations__0__languages=[{"language": "martian", "spread": "few"}]),
         _region(region__x__culture=""),
         _region(
+            region__x__weather={
+                "states": [{"id": "rain", "name": "R", "description": "d"}],
+                "seasons": {"s": {"start": "rain", "transitions": {"rain": {"hail": 1}}}},
+            }
+        ),
+        _region(
+            region__x__weather={
+                "states": [{"id": "rain", "name": "R", "description": "d"}],
+                "seasons": {"s": {"start": "sun", "transitions": {"rain": {"rain": 1}}}},
+            }
+        ),
+        _region(locations__0__tide={"closed_when": ["moonrise"], "notes": {}, "min_rung": []}),
+        _region(
+            locations__0__tide={
+                "closed_when": [],
+                "notes": {},
+                "min_rung": [{"when": "high", "stats": ["luck"], "rung": "hard", "why": "w"}],
+            }
+        ),
+        _region(
             npcs__0__schedule={
                 "default": [{"from": "00:00", "to": "12:00", "location": "shrine", "activity": "a"}]
             }
@@ -184,20 +204,6 @@ def test_bad_knacks_rejected(knack: dict[str, Any]) -> None:
             }
         ),
         _region(npcs__0__goal={"text": "g", "stages": [], "days_per_stage": 2}),
-        _region(
-            region__x__weather={
-                "start": "rain",
-                "states": [{"id": "rain", "name": "R", "description": "d"}],
-                "transitions": {"rain": {"hail": 1}},
-            }
-        ),
-        _region(
-            region__x__weather={
-                "start": "sun",
-                "states": [{"id": "rain", "name": "R", "description": "d"}],
-                "transitions": {"rain": {"rain": 1}},
-            }
-        ),
         {"clocks": []},  # clocks without a region
         {**_region(), "clocks": [{"id": "c", "name": "C", "segments": 6, "description": "d"}]},
     ],

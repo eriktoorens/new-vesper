@@ -78,3 +78,43 @@ def test_recap_keeps_npc_secrets(conn: sqlite3.Connection, content: Content) -> 
     sent = recap_calls[0]["messages"][0]["content"]
     assert "npc_goal_advanced" not in sent and "Registry reply" not in sent
     assert "light_changed" in sent
+
+
+def test_tide_forces_a_harder_rung(conn: sqlite3.Connection, ctx_factory: Any) -> None:
+    from datetime import UTC, datetime
+
+    from new_vesper.rules.sky import tide
+
+    char = make_character(conn, location="tidewater-stairs")
+    ctx = ctx_factory(char, 4, 4)
+    moment = datetime(2026, 10, 3, tzinfo=UTC)
+    while not tide(moment).turning:
+        moment += timedelta(minutes=10)
+    ctx.now = moment
+    result, error = dispatch(
+        ctx, "call_for_roll", {"stat": "slick", "difficulty": "routine", "stakes": "cross"}
+    )
+    assert not error
+    assert result["difficulty"] == "hard"
+    assert any("the tide makes this hard" in note for note in result["notes"])
+
+
+def test_cannot_walk_onto_flooded_flats(conn: sqlite3.Connection, content: Content) -> None:
+    from datetime import UTC, datetime
+
+    import pytest
+
+    from new_vesper.dm.session import SessionError
+    from new_vesper.rules.sky import TideState, tide
+
+    moment = datetime(2026, 10, 3, tzinfo=UTC)
+    while tide(moment).state is not TideState.HIGH:
+        moment += timedelta(minutes=10)
+    char = make_character(conn, online=False, location="tidewater-stairs")
+    play = PlaySession(
+        conn, content, StubClient(say("Gulls.")), DESIGN_TEXT, SeqRng(), char.id, now=lambda: moment
+    )
+    play.start()
+    with pytest.raises(SessionError, match="under water"):
+        play.go("the-mudflats")
+    assert " tide" in play.status_line()

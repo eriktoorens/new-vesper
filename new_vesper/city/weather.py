@@ -5,8 +5,9 @@ import sqlite3
 from datetime import datetime, timedelta
 
 from new_vesper.budget.policy import stamp
+from new_vesper.city.sky import season
 from new_vesper.content.loader import Content
-from new_vesper.content.model import WeatherState
+from new_vesper.content.model import SeasonWeather, WeatherState
 from new_vesper.rules.clock import weather_block_start
 from new_vesper.rules.weather import next_weather
 
@@ -36,15 +37,15 @@ def current_weather(
     Each new block follows from the last stored one through the district's
     transition table, so the weather drifts rather than jumps.
     """
-    table = content.regions[region_id].weather
+    weather = content.regions[region_id].weather
     target = weather_block_start(now)
     target_stamp = stamp(target)
     row = conn.execute(
         "SELECT weather_id FROM weather WHERE region_id = ? AND block_start = ?",
         (region_id, target_stamp),
     ).fetchone()
-    if row is not None and row[0] in table.states:
-        return table.states[row[0]]
+    if row is not None and row[0] in weather.states:
+        return weather.states[row[0]]
     last = conn.execute(
         "SELECT block_start, weather_id FROM weather WHERE region_id = ? AND block_start < ?"
         " ORDER BY block_start DESC LIMIT 1",
@@ -56,9 +57,12 @@ def current_weather(
         if last is not None and stamp(earlier) <= last[0]:
             break
         blocks.insert(0, earlier)
-    state = last[1] if last is not None and last[1] in table.states else table.start
+    state = last[1] if last is not None else None
     for block in blocks:
-        state = next_weather(state, table.transitions, _block_rng(region_id, block))
+        table = _season_table(content, region_id, block)
+        # A new season starts from its own weather if the old weather has no place in it.
+        current = state if state in table.transitions else table.start
+        state = next_weather(current, table.transitions, _block_rng(region_id, block))
         conn.execute(
             "INSERT OR IGNORE INTO weather (region_id, block_start, weather_id) VALUES (?, ?, ?)",
             (region_id, stamp(block), state),
@@ -67,4 +71,12 @@ def current_weather(
         "SELECT weather_id FROM weather WHERE region_id = ? AND block_start = ?",
         (region_id, target_stamp),
     ).fetchone()
-    return table.states[stored[0]]
+    return weather.states[stored[0]]
+
+
+def _season_table(content: Content, region_id: str, block: datetime) -> SeasonWeather:
+    weather = content.regions[region_id].weather
+    current = season(content, block)
+    if current is None:
+        return next(iter(weather.seasons.values()))
+    return weather.seasons[current.id]

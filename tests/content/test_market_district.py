@@ -20,7 +20,8 @@ def test_market_district_shape(content: Content) -> None:
     places = content.locations_in("market")
     entrances = [loc for loc in places if UNDERSIDE_ENTRANCE_TAG in loc.tags]
     assert [e.id for e in entrances] == ["drowned-station"]
-    assert 4 <= len(places) - len(entrances) <= 5
+    # Five places from step 3, plus the harbor quay and the tidal mudflats (D58).
+    assert len(places) - len(entrances) == 7
     assert 4 <= len(content.npcs) <= 8
     assert len(content.gods) == 1
     assert len(content.loot_tables) == 1

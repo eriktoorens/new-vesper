@@ -10,6 +10,7 @@ from typing import Any
 
 from new_vesper.content.model import (
     COMMON_TONGUE,
+    CalendarDef,
     ClockDef,
     ContentError,
     GodDef,
@@ -22,6 +23,7 @@ from new_vesper.content.model import (
     Reader,
     RegionDef,
     Spread,
+    parse_calendar,
     parse_clock,
     parse_god,
     parse_knack,
@@ -48,6 +50,7 @@ class Content:
     loot_tables: Mapping[str, LootTable]
     clocks: Mapping[str, ClockDef]
     languages: Mapping[str, LanguageDef]
+    calendar: CalendarDef | None
 
     def npcs_at(self, location_id: str) -> list[NpcDef]:
         return [npc for npc in self.npcs.values() if npc.location == location_id]
@@ -120,7 +123,16 @@ def _check_schedules(content: Content) -> None:
                     )
 
 
+def _check_seasons(content: Content) -> None:
+    if content.calendar is None:
+        return
+    for region in content.regions.values():
+        if set(region.weather.seasons) != set(content.calendar.seasons):
+            raise ContentError(f"region {region.id!r}: needs a weather table for every season")
+
+
 def _check_references(content: Content) -> None:
+    _check_seasons(content)
     _check_schedules(content)
     _check_languages(content)
     _check_map(content)
@@ -151,6 +163,7 @@ def load_documents(documents: Iterable[Mapping[str, Any]]) -> Content:
     locations: list[LocationDef] = []
     regions: list[RegionDef] = []
     clocks: list[ClockDef] = []
+    calendar: CalendarDef | None = None
     allowed = {
         "origins",
         "knacks",
@@ -161,6 +174,7 @@ def load_documents(documents: Iterable[Mapping[str, Any]]) -> Content:
         "loot_tables",
         "clocks",
         "languages",
+        "calendar",
     }
     for doc in documents:
         reader = Reader(doc, "content file", set(), allowed)
@@ -172,7 +186,11 @@ def load_documents(documents: Iterable[Mapping[str, Any]]) -> Content:
             locations += [parse_location(raw, region.id) for raw in reader.items("locations")]
             if "clocks" in doc:
                 clocks += [parse_clock(raw, region.id) for raw in reader.items("clocks")]
-        for key in allowed - {"region", "locations", "clocks"}:
+        if "calendar" in doc:
+            if calendar is not None:
+                raise ContentError("only one calendar")
+            calendar = parse_calendar(doc["calendar"])
+        for key in allowed - {"region", "locations", "clocks", "calendar"}:
             if key in doc:
                 sections.setdefault(key, []).extend(reader.items(key))
     content = Content(
@@ -185,6 +203,7 @@ def load_documents(documents: Iterable[Mapping[str, Any]]) -> Content:
         loot_tables=_index(map(parse_loot_table, sections.get("loot_tables", [])), "loot table"),
         clocks=_index(clocks, "clock"),
         languages=_index(map(parse_language, sections.get("languages", [])), "language"),
+        calendar=calendar,
     )
     _check_references(content)
     return content

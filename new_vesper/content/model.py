@@ -9,6 +9,7 @@ from new_vesper.rules.character import validate_id
 from new_vesper.rules.errors import RulesError, require_range
 from new_vesper.rules.light import LIGHT_MAX, LIGHT_MIN
 from new_vesper.rules.resolver import MAX_ROLL_BONUS
+from new_vesper.rules.sky import PHASES, TIDE_CONDITIONS
 from new_vesper.rules.stats import Stat, parse_stat
 
 
@@ -55,6 +56,8 @@ class Spread(StrEnum):
 
 
 MINUTES_PER_DAY = 1440
+# Schedule days that follow the moon rather than the week; they win over weekdays.
+MOON_DAYS = ("new-moon", "full-moon")
 WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
 
@@ -89,10 +92,48 @@ class WeatherState:
 
 
 @dataclass(frozen=True)
-class WeatherDef:
+class SeasonWeather:
     start: str
-    states: Mapping[str, WeatherState]
     transitions: Mapping[str, Mapping[str, int]]
+
+
+@dataclass(frozen=True)
+class WeatherDef:
+    states: Mapping[str, WeatherState]
+    # Season id -> that season's starting weather and weighted transitions.
+    seasons: Mapping[str, SeasonWeather]
+
+
+@dataclass(frozen=True)
+class SeasonDef:
+    id: str
+    name: str
+    months: tuple[int, ...]
+    description: str
+
+
+@dataclass(frozen=True)
+class CalendarDef:
+    seasons: Mapping[str, SeasonDef]
+    moon_notes: Mapping[str, str]  # moon phase name -> what it means for the city
+
+    def season_for_month(self, month: int) -> SeasonDef:
+        return next(s for s in self.seasons.values() if month in s.months)
+
+
+@dataclass(frozen=True)
+class TideRung:
+    when: str  # a tide condition
+    stats: frozenset[str]
+    rung: str  # the minimum difficulty rung
+    why: str
+
+
+@dataclass(frozen=True)
+class TideRules:
+    closed_when: frozenset[str]
+    notes: Mapping[str, str]
+    min_rung: tuple[TideRung, ...]
 
 
 @dataclass(frozen=True)
@@ -153,6 +194,7 @@ class LocationDef:
     art: tuple[str, ...]
     # Languages more common here than in the district as a whole.
     languages: Mapping[str, Spread]
+    tide: TideRules | None
 
 
 @dataclass(frozen=True)
@@ -330,8 +372,8 @@ def _parse_schedule(raw: object, where: str) -> Mapping[str, tuple[ScheduleBlock
         raise ContentError(f"{where}: needs a default day")
     days: dict[str, tuple[ScheduleBlock, ...]] = {}
     for day, blocks in raw.items():
-        if day != "default" and day not in WEEKDAYS:
-            raise ContentError(f"{where}: {day!r} is not a weekday")
+        if day not in ("default", *WEEKDAYS, *MOON_DAYS):
+            raise ContentError(f"{where}: {day!r} is not a weekday or moon day")
         if not isinstance(blocks, list) or not blocks:
             raise ContentError(f"{where}.{day}: expected a list of blocks")
         parsed = []
@@ -358,8 +400,97 @@ def _parse_goal(raw: object, where: str) -> NpcGoal:
     return NpcGoal(r.text("text", 300), stages, r.integer("days_per_stage", 1, 30))
 
 
+def _parse_tide(raw: object, where: str) -> TideRules:
+    r = Reader(raw, f"{where} tide", {"closed_when", "notes", "min_rung"})
+
+    def condition(value: object) -> str:
+        if value not in TIDE_CONDITIONS:
+            raise ContentError(f"{where} tide: {value!r} is not a tide condition")
+        return str(value)
+
+    notes = r.raw["notes"]
+    if not isinstance(notes, dict):
+        raise ContentError(f"{where} tide: notes must map conditions to text")
+    rungs = []
+    for entry in r.items("min_rung"):
+        e = Reader(entry, f"{where} tide rung", {"when", "stats", "rung", "why"})
+        stats = e.slugs("stats")
+        for stat in stats:
+            try:
+                parse_stat(stat)
+            except RulesError as exc:
+                raise ContentError(f"{where} tide: {exc}") from exc
+        if e.raw["rung"] not in ("routine", "risky", "hard", "desperate"):
+            raise ContentError(f"{where} tide: {e.raw['rung']!r} is not a difficulty rung")
+        rungs.append(TideRung(condition(e.raw["when"]), stats, e.raw["rung"], e.text("why", 200)))
+    return TideRules(
+        frozenset(condition(c) for c in r.items("closed_when")),
+        {condition(k): Reader({"t": v}, where, {"t"}).text("t", 300) for k, v in notes.items()},
+        tuple(rungs),
+    )
+
+
+def parse_calendar(raw: object) -> CalendarDef:
+    r = Reader(raw, "calendar", {"seasons", "moon"})
+    seasons: dict[str, SeasonDef] = {}
+    months: list[int] = []
+    for entry in r.items("seasons"):
+        e = Reader(entry, "calendar season", {"id", "name", "months", "description"})
+        these = e.raw["months"]
+        if (
+            not isinstance(these, list)
+            or not these
+            or not all(
+                isinstance(m, int) and not isinstance(m, bool) and 1 <= m <= 12 for m in these
+            )
+        ):
+            raise ContentError("calendar season: months are 1-12")
+        season = SeasonDef(
+            e.slug("id"), e.text("name", 40), tuple(these), e.text("description", 400)
+        )
+        seasons[season.id] = season
+        months += these
+    if sorted(months) != list(range(1, 13)):
+        raise ContentError("calendar: every month must belong to exactly one season")
+    moon = r.raw["moon"]
+    if not isinstance(moon, dict) or any(k not in PHASES for k in moon):
+        raise ContentError(f"calendar.moon: keys are moon phases: {PHASES}")
+    return CalendarDef(
+        seasons,
+        {k: Reader({"t": v}, "calendar.moon", {"t"}).text("t", 400) for k, v in moon.items()},
+    )
+
+
+def _parse_season_weather(
+    raw: object, season: str, states: Mapping[str, WeatherState]
+) -> SeasonWeather:
+    r = Reader(raw, f"weather season {season!r}", {"start", "transitions"})
+    transitions = r.raw["transitions"]
+    if not isinstance(transitions, dict) or not transitions:
+        raise ContentError(f"weather season {season!r}: needs transitions")
+    table: dict[str, dict[str, int]] = {}
+    for state, options in transitions.items():
+        if state not in states:
+            raise ContentError(f"weather season {season!r}: unknown state {state!r}")
+        if not isinstance(options, dict) or not options:
+            raise ContentError(f"weather {state!r}: needs weighted next states")
+        for target, weight in options.items():
+            if target not in transitions:
+                raise ContentError(
+                    f"weather season {season!r}: {state!r} moves to {target!r}, "
+                    "which has no transitions this season"
+                )
+            if isinstance(weight, bool) or not isinstance(weight, int) or not 1 <= weight <= 100:
+                raise ContentError(f"weather {state!r}: weights are integers 1-100")
+        table[state] = dict(options)
+    start = r.slug("start")
+    if start not in table:
+        raise ContentError(f"weather season {season!r}: start {start!r} has no transitions")
+    return SeasonWeather(start, table)
+
+
 def _parse_weather(raw: object) -> WeatherDef:
-    r = Reader(raw, "region.weather", {"start", "states", "transitions"})
+    r = Reader(raw, "region.weather", {"states", "seasons"})
     states: dict[str, WeatherState] = {}
     for entry in r.items("states"):
         s = Reader(entry, "region.weather.states", {"id", "name", "description"})
@@ -367,23 +498,16 @@ def _parse_weather(raw: object) -> WeatherDef:
         if state.id in states:
             raise ContentError(f"weather state {state.id!r} listed twice")
         states[state.id] = state
-    transitions = r.raw["transitions"]
-    if not isinstance(transitions, dict) or set(transitions) != set(states):
-        raise ContentError("region.weather.transitions: one entry per weather state")
-    table: dict[str, dict[str, int]] = {}
-    for state, options in transitions.items():
-        if not isinstance(options, dict) or not options:
-            raise ContentError(f"weather {state!r}: needs weighted next states")
-        for target, weight in options.items():
-            if target not in states:
-                raise ContentError(f"weather {state!r} moves to unknown {target!r}")
-            if isinstance(weight, bool) or not isinstance(weight, int) or not 1 <= weight <= 100:
-                raise ContentError(f"weather {state!r}: weights are integers 1-100")
-        table[state] = dict(options)
-    start = r.slug("start")
-    if start not in states:
-        raise ContentError(f"weather start {start!r} is not a state")
-    return WeatherDef(start, states, table)
+    seasons = r.raw["seasons"]
+    if not isinstance(seasons, dict) or not seasons:
+        raise ContentError("region.weather.seasons: one table per season")
+    return WeatherDef(
+        states,
+        {
+            Reader._slug(season, "weather season"): _parse_season_weather(table, season, states)
+            for season, table in seasons.items()
+        },
+    )
 
 
 def parse_language(raw: object) -> LanguageDef:
@@ -460,7 +584,7 @@ def parse_region(raw: object) -> RegionDef:
 
 
 def parse_location(raw: object, region_id: str) -> LocationDef:
-    fields = {"id", "name", "is_haven", "tags", "description", "art", "languages"}
+    fields = {"id", "name", "is_haven", "tags", "description", "art", "languages", "tide"}
     r = Reader(raw, "location", fields)
     return LocationDef(
         r.slug("id"),
@@ -471,6 +595,7 @@ def parse_location(raw: object, region_id: str) -> LocationDef:
         r.text("description", 1000),
         r.art("art"),
         _spread_map(r.raw["languages"], f"location {r.raw['id']!r} languages"),
+        None if r.raw["tide"] is None else _parse_tide(r.raw["tide"], f"location {r.raw['id']!r}"),
     )
 
 

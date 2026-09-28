@@ -12,13 +12,13 @@
       "  | o   o   o   o   o   o |       | ^^^^^^^^^^^^^^ |",
       "  '-----------+-----------'       '-------+--------'",
       "       [3]    |                           |    [4]",
-      "    ---+------+-------------+-------------+-----+---",
-      "                            |",
-      "              .-------------+-------------.",
-      "              |  _   _     [5]     _   _  |",
-      "              | | | | |           | | | | |",
-      "              '-------------+-------------'",
-      "                            :",
+      "    ---+------+-------------+-------------+-----+---+",
+      "                            |                       |",
+      "              .-------------+-------------.        [7]",
+      "              |  _   _     [5]     _   _  |       /  \\",
+      "              | | | | |           | | | | |  ~~~~~~~~~~~~",
+      "              '-------------+-------------'  ~~~ [8] ~~~~",
+      "                            :                ~~~~~~~~~~~~",
       "                   ~~~~~~~ [6] ~~~~~~~"
     ],
     "map_marks": {
@@ -27,7 +27,9 @@
       "3": "umbrella-shrine",
       "4": "hundred-hooks",
       "5": "weighhouse",
-      "6": "drowned-station"
+      "6": "drowned-station",
+      "7": "tidewater-stairs",
+      "8": "the-mudflats"
     },
     "culture": "The most mixed neighborhood in the city: a crossroads where traders from every quarter set up stalls, so a single lane can hold five languages. Families have run the same stalls for generations; newcomers rent by the week. Everyone haggles, everyone eats standing up, and every shrine is somebody's grandmother's.",
     "languages": [
@@ -69,7 +71,6 @@
       }
     ],
     "weather": {
-      "start": "steady-rain",
       "states": [
         {
           "id": "dry-spell",
@@ -82,6 +83,11 @@
           "description": "The rain turns to fog that eats the lantern light; faces loom up close and vanish again."
         },
         {
+          "id": "freezing-fog",
+          "name": "Freezing fog",
+          "description": "A fog so cold it rimes the tarps white; breath hangs in the air and footsteps sound too close."
+        },
+        {
           "id": "drizzle",
           "name": "Drizzle",
           "description": "A fine drizzle, more mist than rain, beading on coats and chrome."
@@ -92,46 +98,193 @@
           "description": "The ordinary rain of New Vesper: steady, patient, drumming on the tarps."
         },
         {
+          "id": "cold-rain",
+          "name": "Cold rain",
+          "description": "A cold, grey, unending rain that finds every gap in a coat."
+        },
+        {
+          "id": "sleet",
+          "name": "Sleet",
+          "description": "Sleet off the harbor, needling sideways; the cobbles go treacherous and the carts huddle close."
+        },
+        {
+          "id": "warm-rain",
+          "name": "Warm rain",
+          "description": "Warm rain that never quite stops; steam rises off the awnings and the gutters sing."
+        },
+        {
+          "id": "muggy-heat",
+          "name": "Muggy heat",
+          "description": "Heavy, wet heat; the rain comes in fat warm drops and everything sticks to everything."
+        },
+        {
           "id": "downpour",
           "name": "Downpour",
           "description": "A downpour: gutters overflow, awnings sag, and everyone crowds under cover."
         },
         {
+          "id": "thunderstorm",
+          "name": "Thunderstorm",
+          "description": "Thunder between the towers, lightning showing the whole Market in one white instant."
+        },
+        {
+          "id": "gale",
+          "name": "Gale",
+          "description": "A gale off the harbor: tarps straining, signs banging, rain flying flat."
+        },
+        {
           "id": "storm",
           "name": "Storm",
-          "description": "A storm: thunder between the towers, wind tearing at tarps, lanterns swinging and going out."
+          "description": "A storm: wind tearing at tarps, lanterns swinging and going out, the harbor roaring."
         }
       ],
-      "transitions": {
-        "dry-spell": {
-          "dry-spell": 5,
-          "fog": 2,
-          "drizzle": 3
+      "seasons": {
+        "long-wet": {
+          "start": "cold-rain",
+          "transitions": {
+            "cold-rain": {
+              "cold-rain": 8,
+              "drizzle": 2,
+              "sleet": 3,
+              "freezing-fog": 2
+            },
+            "drizzle": {
+              "drizzle": 5,
+              "cold-rain": 5,
+              "freezing-fog": 2
+            },
+            "sleet": {
+              "sleet": 4,
+              "cold-rain": 5,
+              "storm": 1
+            },
+            "freezing-fog": {
+              "freezing-fog": 5,
+              "drizzle": 3,
+              "cold-rain": 2
+            },
+            "storm": {
+              "storm": 2,
+              "sleet": 3,
+              "cold-rain": 3
+            }
+          }
         },
-        "fog": {
-          "fog": 5,
-          "drizzle": 4,
-          "dry-spell": 1
+        "thaw-rains": {
+          "start": "warm-rain",
+          "transitions": {
+            "warm-rain": {
+              "warm-rain": 8,
+              "steady-rain": 3,
+              "downpour": 3,
+              "fog": 1
+            },
+            "steady-rain": {
+              "steady-rain": 6,
+              "warm-rain": 4,
+              "drizzle": 2
+            },
+            "downpour": {
+              "downpour": 4,
+              "warm-rain": 5
+            },
+            "drizzle": {
+              "drizzle": 4,
+              "warm-rain": 4,
+              "fog": 2
+            },
+            "fog": {
+              "fog": 4,
+              "drizzle": 4,
+              "warm-rain": 2
+            }
+          }
         },
-        "drizzle": {
-          "drizzle": 6,
-          "steady-rain": 5,
-          "fog": 2,
-          "dry-spell": 1
+        "lantern-months": {
+          "start": "drizzle",
+          "transitions": {
+            "drizzle": {
+              "drizzle": 6,
+              "steady-rain": 4,
+              "fog": 2,
+              "dry-spell": 2
+            },
+            "steady-rain": {
+              "steady-rain": 6,
+              "drizzle": 4
+            },
+            "fog": {
+              "fog": 4,
+              "drizzle": 4,
+              "dry-spell": 1
+            },
+            "dry-spell": {
+              "dry-spell": 5,
+              "drizzle": 3,
+              "fog": 2
+            }
+          }
         },
-        "steady-rain": {
-          "steady-rain": 8,
-          "drizzle": 3,
-          "downpour": 3
+        "steam": {
+          "start": "muggy-heat",
+          "transitions": {
+            "muggy-heat": {
+              "muggy-heat": 7,
+              "warm-rain": 4,
+              "thunderstorm": 3
+            },
+            "warm-rain": {
+              "warm-rain": 6,
+              "muggy-heat": 4,
+              "thunderstorm": 2
+            },
+            "thunderstorm": {
+              "thunderstorm": 3,
+              "downpour": 4,
+              "warm-rain": 3
+            },
+            "downpour": {
+              "downpour": 3,
+              "warm-rain": 5,
+              "muggy-heat": 2
+            }
+          }
         },
-        "downpour": {
-          "downpour": 5,
-          "steady-rain": 4,
-          "storm": 1
-        },
-        "storm": {
-          "storm": 3,
-          "downpour": 5
+        "gales": {
+          "start": "steady-rain",
+          "transitions": {
+            "steady-rain": {
+              "steady-rain": 7,
+              "drizzle": 3,
+              "downpour": 2,
+              "gale": 2
+            },
+            "drizzle": {
+              "drizzle": 5,
+              "steady-rain": 5,
+              "fog": 2
+            },
+            "fog": {
+              "fog": 4,
+              "drizzle": 5
+            },
+            "downpour": {
+              "downpour": 4,
+              "steady-rain": 4,
+              "gale": 2
+            },
+            "gale": {
+              "gale": 4,
+              "storm": 2,
+              "downpour": 2,
+              "steady-rain": 2
+            },
+            "storm": {
+              "storm": 3,
+              "gale": 4,
+              "downpour": 2
+            }
+          }
         }
       }
     }
@@ -160,7 +313,8 @@
           "language": "wolof",
           "spread": "many"
         }
-      ]
+      ],
+      "tide": null
     },
     {
       "id": "tarp-row",
@@ -185,7 +339,8 @@
           "language": "arabic",
           "spread": "many"
         }
-      ]
+      ],
+      "tide": null
     },
     {
       "id": "umbrella-shrine",
@@ -204,7 +359,8 @@
         "         |   .------.  |",
         "         '---'      '--'"
       ],
-      "languages": []
+      "languages": [],
+      "tide": null
     },
     {
       "id": "hundred-hooks",
@@ -232,7 +388,8 @@
           "language": "portuguese",
           "spread": "some"
         }
-      ]
+      ],
+      "tide": null
     },
     {
       "id": "weighhouse",
@@ -254,7 +411,8 @@
           "language": "arabic",
           "spread": "many"
         }
-      ]
+      ],
+      "tide": null
     },
     {
       "id": "drowned-station",
@@ -282,7 +440,117 @@
           "language": "animal-speech",
           "spread": "some"
         }
-      ]
+      ],
+      "tide": {
+        "closed_when": [
+          "spring-high"
+        ],
+        "notes": {
+          "high": "The black water is up to the third step.",
+          "low": "The black water has drawn back, showing the tiled platform edge.",
+          "spring-high": "A spring tide: the black water covers the platform and the ferry can't dock."
+        },
+        "min_rung": []
+      }
+    },
+    {
+      "id": "tidewater-stairs",
+      "name": "The Tidewater Stairs",
+      "is_haven": false,
+      "tags": [
+        "harbor"
+      ],
+      "description": "Wide stone steps going down into the harbor at the Market's edge. Fishing boats tie up to iron rings, gulls fight the cats for scraps, and a half-drowned arcade of old shopfronts floods and drains with every tide.",
+      "art": [
+        "        ~   ~      __|__      ~   ~",
+        "  ______________ \\_____/ ____________",
+        " |_____|_____|___~~~~~~~___|_____|___|",
+        "   |_____|_____|~~~~~~~~~|_____|____|",
+        "     |_____|___~~~~~~~~~~~___|_____|",
+        "  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+      ],
+      "languages": [
+        {
+          "language": "portuguese",
+          "spread": "many"
+        },
+        {
+          "language": "wolof",
+          "spread": "some"
+        }
+      ],
+      "tide": {
+        "closed_when": [],
+        "notes": {
+          "high": "The water is up the stairs; the lower arcade is under water and the boats tie up at the top step.",
+          "low": "The water is out; the boats sit on the mud and the lower arcade drips, its doors open.",
+          "flooding": "The tide is coming in fast over the lower steps.",
+          "ebbing": "The tide is running out, uncovering weed-slick steps.",
+          "spring-high": "A spring tide: the harbor is over the top step and lapping at the lanes."
+        },
+        "min_rung": [
+          {
+            "when": "turning",
+            "stats": [
+              "steel",
+              "slick"
+            ],
+            "rung": "hard",
+            "why": "the turning tide pulls hard at the stairs, and the weed is slick"
+          }
+        ]
+      }
+    },
+    {
+      "id": "the-mudflats",
+      "name": "The Mudflats",
+      "is_haven": false,
+      "tags": [
+        "harbor",
+        "tidal"
+      ],
+      "description": "At low water the harbor pulls back to show a mile of grey mud, old wrecks and a rusted sea-gate set into the harbor wall, leading into tunnels nobody maps.",
+      "art": [
+        "  ___                         ________",
+        " |   |   ~.   ___            | ==== |",
+        " | o |    '. /__/|  .        | sea- |",
+        " |___|      '|__|/   '.      | gate |",
+        " .  .  ..  .   .  .   .  ..  |______|",
+        " ,.,.,.,.,.,.,.,.,.,.,.,.,.,.,.,.,.,.,"
+      ],
+      "languages": [],
+      "tide": {
+        "closed_when": [
+          "high",
+          "flooding"
+        ],
+        "notes": {
+          "low": "The flats are open; the sea-gate stands clear of the water.",
+          "ebbing": "The water is still draining off the flats; the sea-gate is half clear.",
+          "flooding": "The tide is racing back across the mud.",
+          "high": "The flats are under the harbor."
+        },
+        "min_rung": [
+          {
+            "when": "flooding",
+            "stats": [
+              "steel",
+              "slick"
+            ],
+            "rung": "hard",
+            "why": "the tide is racing back across the mud"
+          },
+          {
+            "when": "high",
+            "stats": [
+              "steel",
+              "slick"
+            ],
+            "rung": "desperate",
+            "why": "the flats are under water"
+          }
+        ]
+      }
     }
   ],
   "gods": [
@@ -437,6 +705,12 @@
       "schedule": {
         "default": [
           {
+            "from": "04:00",
+            "to": "05:00",
+            "location": "tidewater-stairs",
+            "activity": "buying the night's catch straight off the boats"
+          },
+          {
             "from": "05:00",
             "to": "14:00",
             "location": "tarp-row",
@@ -456,7 +730,7 @@
           },
           {
             "from": "23:00",
-            "to": "05:00",
+            "to": "04:00",
             "location": null,
             "activity": "home, away from the Market"
           }
@@ -790,6 +1064,20 @@
             "to": "18:00",
             "location": "drowned-station",
             "activity": "asleep in the moored lantern-boat"
+          }
+        ],
+        "new-moon": [
+          {
+            "from": "16:00",
+            "to": "08:00",
+            "location": "drowned-station",
+            "activity": "running the ferry all night; at the new moon everyone wants to cross"
+          },
+          {
+            "from": "08:00",
+            "to": "16:00",
+            "location": "drowned-station",
+            "activity": "asleep in the moored lantern-boat, exhausted"
           }
         ]
       },

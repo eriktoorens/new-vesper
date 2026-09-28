@@ -6,6 +6,7 @@ from datetime import datetime
 from new_vesper.content.loader import Content
 from new_vesper.content.model import NpcDef
 from new_vesper.rules.clock import minutes_into_day, weekday
+from new_vesper.rules.sky import moon
 
 
 @dataclass(frozen=True)
@@ -16,8 +17,12 @@ class Whereabouts:
 
 
 def whereabouts(npc: NpcDef, now: datetime) -> Whereabouts:
-    """Where this NPC is at this instant: today's schedule if it differs, else the default."""
-    blocks = npc.schedule.get(weekday(now), npc.schedule["default"])
+    """Where this NPC is at this instant.
+
+    A moon-day schedule (new or full moon) wins over a weekday, which wins over the default.
+    """
+    phase = moon(now).phase.replace(" ", "-")  # "new moon" -> "new-moon"
+    blocks = npc.schedule.get(phase) or npc.schedule.get(weekday(now)) or npc.schedule["default"]
     minute = minutes_into_day(now)
     block = next(b for b in blocks if b.covers(minute))
     return Whereabouts(npc, block.location, block.activity)
