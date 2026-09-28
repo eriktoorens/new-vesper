@@ -101,13 +101,14 @@ Check spending from outside the game with `new-vesper budget`.
   - NPC memory and attitudes
   - encounters, which the DM writes fresh from a daily pool for each district
   - languages: speech in a language your character doesn't know shows as gibberish or a note, a Heart roll gets the gist, and `/speak` picks what you speak aloud
-- Decisions D1–D81 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
+- Decisions D1–D82 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
 
 **Next:**
 1. **Playtest layer 6, languages (D76–D81).** Watch whether the DM tags every line and keeps translations out of plain narration.
-2. **Layer 7, setting-native kinds as origins (D42).**
-3. A playtest after each layer.
-4. Then multiplayer (D32): a shared city, and a second look at the city-day rule (D29/D50).
+2. **Layer 7, bodily conditions (D82):** hunger, thirst, heat and cold, sleep. Not yet designed; see the open questions in `docs/design.md`.
+3. **Layer 8, setting-native kinds as origins (D42).**
+4. A playtest after each layer.
+5. Then multiplayer (D32): a shared city, and a second look at the city-day rule (D29/D50).
 
 **Open question, high priority:** D10, who a favor is owed to. The player should understand where a debt accrues and have some choice in it. See the open questions in `docs/design.md`.
 
@@ -121,6 +122,6 @@ ruff check . && ruff format --check .
 
 Start a new Claude Code session with:
 
-> Read CLAUDE.md and docs/design.md, then start layer 7, setting-native kinds.
+> Read CLAUDE.md and docs/design.md, then start layer 7, bodily conditions.
 
 Tests use a stubbed model client and never call the API.

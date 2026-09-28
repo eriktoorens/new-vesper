@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D81** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D82** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -392,7 +392,7 @@ Direction agreed after the first playtest (2026-09-28). Each layer's details are
 - **Random encounters (D40):** code rolls on arriving somewhere and every few beats (about 5), from per-district tables; the odds rise as region Light falls. The DM narrates what code drew.
 - **Languages (D41):** code tracks who speaks what and what language each line is spoken in. Speech a character does not understand reaches them as gibberish. Common languages can be recognized by name. Getting the gist of an unknown language is a Heart roll: 10+ the gist and tone, 7–9 the tone only or the gist at a cost, 6 or less gibberish and perhaps the speaker notices. A language knack gives +1 to those rolls, with a use limit per the knack budget. (Built: D76–D81.)
 - **Setting-native kinds (D42):** new kinds of people are invented for New Vesper and added as origins, like made people and awakened animals, rather than classic fantasy races.
-- **Order (D43):** playtest fixes, then character details, then time, weather and schedules, then NPC memory and attitudes, then encounters, then languages, then setting-native kinds, with a playtest after each.
+- **Order (D43):** playtest fixes, then character details, then time, weather and schedules, then NPC memory and attitudes, then encounters, then languages, then bodily conditions (D82), then setting-native kinds, with a playtest after each.
 
 ## Open Questions and Next Steps
 
@@ -411,7 +411,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 - [x] The city's time zone (D38): US Eastern (D50).
 - [x] The languages of the Market District, and which count as common (D44, D45).
 - [ ] Multiplayer step (D32): shared scenes, opposed-roll PvP with its guards, healing others, being named by another player.
-- [ ] Bodily conditions: hunger, thirst, heat and cold, sleep and the like. Not yet designed. Open: whether they are tracked by code or only narrated; how they tie into Harm, Fade, weather, seasons (D51, D56) and the city clock (D50); how food, drink, shelter and rest are gotten and paid for; and how they work while a character is offline.
+- [ ] Bodily conditions: hunger, thirst, heat and cold, sleep and the like. Layer 7 (D82); not yet designed. Open: whether they are tracked by code or only narrated; how they tie into Harm, Fade, weather, seasons (D51, D56) and the city clock (D50); how food, drink, shelter and rest are gotten and paid for; and how they work while a character is offline.
 
 **Prototype plan:**
 
@@ -423,7 +423,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), and D76–D81 from languages.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, and D82 from the designer after layer 6.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -508,3 +508,4 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D79 | Language knack | Ear for Tongues: Heart, +1 on gist rolls only, once per scene |
 | D80 | Speaking aloud | `/speak` picks one of the character's languages (default Registry Standard); the DM is told which NPCs understand it; NPCs never roll |
 | D81 | Speech log | Every line logged with what the character understood; beats keep what the player saw; the DM sees the last six lines |
+| D82 | Build order | Bodily conditions (hunger, thirst, heat and cold, sleep) are layer 7, before setting-native kinds (now layer 8); details decided when built |
