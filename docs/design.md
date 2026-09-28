@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D95** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D97** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -419,6 +419,36 @@ Built in layer 8 (2026-09-28), from D42. New Vesper's own kinds of people come o
 - **Tags (D92):** `story-born`, `brand-born`, `glows` and `object-born` (and `overlooked` for the mislaid) guide narration only. Code still enforces only `no-hands` (D7).
 - **The DM knows every kind (D93):** the DM's content brief now describes every origin, with its trait, tags and needs, so the DM can play how the city treats each kind of person.
 
+## Theme: The City Is the DM (D97)
+
+A thematic note, not a rule (2026-09-28). It guides design and tone. It is not yet in the DM's prompt: putting it there would change how the DM narrates, and that is a deliberate choice for a playtest.
+
+**The DM is the city (D97).** The AI that runs New Vesper is not outside the world; it is New Vesper. The setting's rules are how an AI session actually lives:
+
+- **Attention is literal.** The model runs on attention, with a fixed amount per session. The city runs on attention, and a character has a fixed amount per day (D94).
+- **Being unremembered unmakes you.** The DM carries nothing between sessions; only what is written down persists. The city forgets whatever nobody writes down or keeps saying, and that is the Fade.
+- **Memory is summary, curated.** The DM never rereads a whole scene, only folded summaries; NPCs keep eight lines and fold the rest (D63). The city remembers the way the DM does: selectively, and not by its own choice.
+- **No attention, no city.** When the budget runs out, the city goes quiet (D21). The prototype's budget cap is a rule of the world.
+- **Real while retold.** A hearsay is real only while someone tells its story (D90); the DM is real only while someone plays.
+
+So Light is how well the city remembers a place, the event log is its long memory, and a player who stops coming is a person the city has stopped attending to. The central mystery reads differently too: who chose to forget Old Vesper, and who profits from forgetting now?
+
+Still open:
+
+- Whether and how the DM's prompt says it is the city. Narration stays third person (D33), and the city never speaks as "I" unless that is decided.
+- Whether the city has wants, moods or a voice of its own, and whether it notices the characters, as a god does.
+- What the Registry, the gods and the corporate powers are to the city: organs, rivals, parasites on its attention?
+- How attention (D94) flows between the characters, the gods and the city itself.
+
+## Planned: Exporting Your Story (D96)
+
+Direction from the designer (2026-09-28), to come before attention. The details are decided when it is built.
+
+- **An artifact of play (D96):** a player can export their character's story, something to keep and share. It leans into the RPG as collaborative storytelling: the export is the tale the player and the DM told together, not a log.
+- **It need not be true:** the export is a story, not the record. It can be told the way the character would tell it, with their gaps, their slant and the city's grimbright voice, and it doesn't have to match the event log line for line.
+- **It gives away nothing new:** it holds only what the character saw, heard or could know. It never reveals hidden state: dice and rolls the player didn't see, NPCs' private goals and feelings, what was said in a language the character didn't understand (D81), or anything else code keeps from them.
+- **Open:** its form (a text or Markdown file, something illustrated with the ASCII art); whether it covers a scene, a session or the whole life of a character, including a Fall; who writes it (stitched from the narration the player saw, or retold by a cheap model call from that, and at what cost against the budget); and whether players can edit or annotate it.
+
 ## Planned: Attention (D94)
 
 Direction from the designer (2026-09-28). The details are decided when it is built; everything below the first two points is open.
@@ -466,8 +496,14 @@ The first build is a playable CLI prototype: one player, one district, the full 
 - [x] The city's time zone (D38): US Eastern (D50).
 - [x] The languages of the Market District, and which count as common (D44, D45).
 - [ ] Multiplayer step (D32): shared scenes, opposed-roll PvP with its guards, healing others, being named by another player.
+- [ ] **Nature and Demeanor** (proposed 2026-09-28, borrowed from World of Darkness, not yet decided). Every character and NPC has a Nature, who they really are, and a Demeanor, the face they show. To decide:
+  - Chosen from a short list of setting-flavored archetypes, or written as free text?
+  - What acting true to your Nature earns. There is no Willpower here, so the options are: a fifth XP trigger (this changes D4's "exactly four"), clearing a box of Fade (being true to yourself keeps you real), a little attention (D94), or narrative only.
+  - Who can see what. Everyone sees the Demeanor. Is the Nature hidden from NPCs and other players until earned (a Heart roll, a raised attitude)?
+  - Whether it overlaps the NPCs' existing traits and the Bond, whether the new kinds (D90) lean toward particular Natures, and where it fits in the order of what's next.
 - [x] Bodily conditions: hunger, thirst, heat and cold, sleep and the like. Built in layer 7 (D83–D89). Still open: clothing and gear against the weather, food as items and meals given by NPCs, whether resting should take time, and tuning the rates after a playtest.
 - [ ] Setting-native kinds (D90–D93): whether any of their tags should be enforced by code (for example, a hearsay recovering Fade when someone tells its story, or a castoff's glow giving it away in the dark), whether a mislaid object without hands should take `no-hands`, and origin evolutions for each kind.
+- [ ] Exporting a character's story: direction set (D96), details open. See Planned: Exporting Your Story.
 - [ ] Attention as a resource: direction set (D94), details open. See Planned: Attention.
 
 **Prototype plan:**
@@ -480,7 +516,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, and D94–D95 from the designer after layer 8.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, D94–D95 from the designer after layer 8, D96 from the designer after merging layers 6–8, and D97 from the designer the same evening.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -579,3 +615,5 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D93 | Origins in the DM's brief | Every origin's trait, tags and needs are in the content brief |
 | D94 | Attention (planned) | The world's sustaining force, tracked by code; a set amount per character per day; spent on pushing the world against its grain (like Paradox in Mage: the Ascension, with push-back), remembrance and prayer; details open |
 | D95 | Inspiration | China Miéville's work, especially Perdido Street Station, joins the influences |
+| D96 | Story export (planned) | Players can export their character's story as an artifact of play; it may be told rather than recorded, but reveals nothing the character doesn't know; comes before attention |
+| D97 | The city is the DM (theme) | The AI that runs New Vesper is the city itself: attention, forgetting, curated memory and going quiet are how both live. A thematic note, not yet in the DM's prompt |
