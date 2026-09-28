@@ -34,8 +34,9 @@ class ModelClient(Protocol):
 UsageHook = Callable[[CallType, str, Any], None]
 # Called before every model call; raises to stop spending (e.g. BudgetExhausted).
 Guard = Callable[[], None]
-# Called when the model wants to end its turn; returns a reminder if it may not yet.
-Completion = Callable[[], str | None]
+# Called with the draft narration when the model wants to end its turn; returns a
+# reminder if it may not end yet.
+Completion = Callable[[str], str | None]
 # How many times a turn is sent back for unfinished business before it may end anyway.
 MAX_REMINDERS = 2
 # (tool name, raw input) -> (result, is_error)
@@ -110,7 +111,7 @@ def run_turn(
             return turn
         calls = [b for b in response.content if getattr(b, "type", None) == "tool_use"]
         if response.stop_reason != "tool_use" or not calls:
-            reminder = completion() if completion is not None else None
+            reminder = completion(_text_of(response)) if completion is not None else None
             if reminder and reminders < MAX_REMINDERS and not last_round:
                 reminders += 1
                 messages.append({"role": "assistant", "content": response.content})

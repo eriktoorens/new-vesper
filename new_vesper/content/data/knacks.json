@@ -87,6 +87,17 @@
       "roll_bonus": 0,
       "limit": null,
       "tags": ["remembrance"]
+    },
+    {
+      "id": "ear-for-tongues",
+      "name": "Ear for Tongues",
+      "stat": "heart",
+      "trigger": "When you try to follow speech in a language you don't speak.",
+      "clean_effect": "You catch the gist and the tone.",
+      "cost_effect": "You catch the tone, or the gist at a cost.",
+      "roll_bonus": 1,
+      "limit": {"uses": 1, "per": "scene"},
+      "tags": ["language"]
     }
   ]
 }

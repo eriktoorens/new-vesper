@@ -5,6 +5,7 @@ Everything else goes to the DM through PlaySession.
 """
 
 import argparse
+import importlib
 import random
 import shutil
 import sys
@@ -12,6 +13,7 @@ import textwrap
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from new_vesper.budget.policy import BudgetConfig
 from new_vesper.budget.pricing import PRICES, price_of
@@ -23,7 +25,6 @@ from new_vesper.content.languages import (
 )
 from new_vesper.content.loader import Content, load_content
 from new_vesper.content.maps import render_map
-from new_vesper.content.model import COMMON_TONGUE
 from new_vesper.content.seed import seed
 from new_vesper.dm.agent import ModelClient
 from new_vesper.dm.config import CallType, DMConfig
@@ -32,6 +33,7 @@ from new_vesper.dm.session import PlaySession, SessionError, TurnOutcome
 from new_vesper.rules.character import create_character as new_sheet
 from new_vesper.rules.currency import format_glitter
 from new_vesper.rules.errors import RulesError
+from new_vesper.rules.languages import COMMON_TONGUE
 from new_vesper.rules.leveling import LevelUpRequest, can_level_up, is_milestone
 from new_vesper.rules.stats import STARTING_ARRAY, Stat
 from new_vesper.rules.tracks import fade_status, harm_status
@@ -49,6 +51,9 @@ HELP = """Type what your character does, or a command:
   /time          the city clock and the weather
   /who           who's here and what they're doing
   /ask <question>  ask the DM what your character sees or knows (no time passes)
+  /speak <language>  choose the language your character speaks aloud
+  /eat, /drink   buy food or drink where it's sold
+  /rest          sleep at a haven
   /go <place>    move somewhere in this district (e.g. /go tarp-row)
   /places        list places you can go
   /level         spend XP on a level
@@ -198,9 +203,14 @@ def show_sheet(character: Character, content: Content, say: Say) -> None:
         say(wrap(f"  Looks: {character.appearance}"))
     if character.languages:
         spoken = [content.languages[lang].name for lang in character.languages]
-        say(f"  Speaks: {', '.join(spoken)}")
+        aloud = content.languages[character.speaking].name
+        say(f"  Speaks: {', '.join(spoken)}  (speaking aloud: {aloud})")
     if place is not None:
         say(f"  At: {place.name}{' (haven)' if place.is_haven else ''}")
+        for need, offer in sorted(place.provisions.items()):
+            kind = "Food" if need.value == "hunger" else "Drink"
+            price = format_glitter(offer.price) if offer.price else "free"
+            say(f"  {kind} here: {offer.what}, {price}")
 
 
 def level_menu(session: PlaySession, content: Content, ask: Ask, say: Say) -> None:
@@ -432,6 +442,18 @@ def play(
                     say("")
                     say(wrap(session.ask(line[4:].strip())))
                     say("")
+                elif line.startswith("/speak"):
+                    choice = line[len("/speak") :].strip()
+                    me = session.character
+                    if choice:
+                        me = session.speak(choice)
+                    known = ", ".join(content.languages[lang].name for lang in sorted(me.speaks))
+                    say(f"  [{me.name} speaks {content.languages[me.speaking].name} aloud.]")
+                    if not choice:
+                        say(f"  [They know: {known}. /speak <language> to change.]")
+                elif line in ("/eat", "/drink", "/rest"):
+                    action = {"/eat": session.eat, "/drink": session.drink, "/rest": session.rest}
+                    say(f"  [{action[line]()}]")
                 elif line == "/budget":
                     say(session.budget_status().allowance_message())
                 elif line.startswith("/"):
@@ -456,6 +478,25 @@ def play(
             say("You rest somewhere safe.")
         else:
             say("You lie low until you return.")
+
+
+# Lines kept for the up arrow within a session.
+HISTORY_LENGTH = 500
+
+
+def enable_line_editing(load: Callable[[], Any] | None = None) -> bool:
+    """Arrow keys, history and the usual shortcuts when typing at the prompt.
+
+    ``input()`` only edits lines if the readline module is loaded; without it,
+    a Mac terminal allows nothing but backspace. Windows has no readline, but its
+    console already edits lines. Returns whether line editing is on.
+    """
+    try:
+        module = load() if load is not None else importlib.import_module("readline")
+    except ImportError:
+        return False
+    module.set_history_length(HISTORY_LENGTH)
+    return True
 
 
 def main(
@@ -494,6 +535,8 @@ def main(
         import anthropic  # only the real CLI needs the SDK
 
         client_factory = anthropic.Anthropic
+    if ask is input and sys.stdin.isatty():
+        enable_line_editing()
     conn = open_database(args.db)
     try:
         play(

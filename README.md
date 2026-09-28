@@ -71,6 +71,9 @@ In-game commands:
 | `/time` | City clock, weather, moon and tide |
 | `/who` | Who's here and what they're doing |
 | `/ask <question>` | Ask what your character sees or knows (no time passes) |
+| `/speak <language>` | Choose which of your languages your character speaks aloud |
+| `/eat`, `/drink` | Buy food or drink where it's sold |
+| `/rest` | Sleep at a haven |
 | `/go <place>` | Move somewhere in the district, e.g. `/go tarp-row` |
 | `/places` | Places you can go |
 | `/level` | Spend XP on a level |
@@ -82,6 +85,7 @@ Check spending from outside the game with `new-vesper budget`.
 
 ### Good to know
 
+- **Editing what you type:** use ←/→ to move within a line, ↑/↓ to bring back earlier lines, and Ctrl-A/Ctrl-E to jump to the start or end.
 - **The world lives in `vesper.db`** in the folder you run from. Delete it to start over, or use `--db other.db` to keep a separate world.
 - **Each install is its own city for now.** Until multiplayer is built, you and a friend won't meet.
 - **Spending limits:** by default, the city goes quiet at $50 a month in total, and each player gets $10 a month. You can change these with `NEW_VESPER_MONTHLY_CAP_USD` and `NEW_VESPER_PLAYER_ALLOWANCE_USD`.
@@ -90,7 +94,7 @@ Check spending from outside the game with `new-vesper budget`.
 
 ## Where we are, what's next
 
-**Done** (all on this branch, 722 tests passing):
+**Done** (all on this branch, 871 tests passing):
 - Build steps 1–5: the rules engine, the SQLite state, the Market District content, the DM agent with its validated tool contract, and the budget with a usage ledger, caps and allowances.
 - Playtest layers 1–5:
   - fixes from the first playtest
@@ -99,13 +103,15 @@ Check spending from outside the game with `new-vesper budget`.
   - seasons, the moon, tides and the harbor
   - NPC memory and attitudes
   - encounters, which the DM writes fresh from a daily pool for each district
-- Decisions D1–D75 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
+  - languages: speech in a language your character doesn't know shows as gibberish or a note, a Heart roll gets the gist, and `/speak` picks what you speak aloud
+  - bodily needs: hunger, thirst, tiredness, cold and heat wear down stats and, at their worst, cost Harm or Fade; `/eat`, `/drink` and `/rest` ease them
+  - setting-native kinds: play a Hearsay (a story walking), a Castoff (a dead brand's mascot) or a Mislaid (a lost thing become someone)
+- Decisions D1–D93 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
 
 **Next:**
-1. **Layer 6, languages (D41).** Speech in a language you don't know shows as gibberish. A Heart roll gets the gist, and a language knack adds +1.
-2. **Layer 7, setting-native kinds as origins (D42).**
-3. A playtest after each layer.
-4. Then multiplayer (D32): a shared city, and a second look at the city-day rule (D29/D50).
+1. **Playtest layers 6–8: languages, bodily needs and the new kinds (D76–D93).** Watch whether the DM tags every line and keeps translations out of plain narration, whether the needs' rates feel right, and how the DM plays a hearsay, a castoff or a mislaid.
+2. **Attention (D94):** the world's sustaining force, a daily amount per character spent on pushing the world against its grain, remembrance and prayer. Direction set; details open (see "Planned: Attention" in `docs/design.md`).
+3. Then multiplayer (D32): a shared city, and a second look at the city-day rule (D29/D50).
 
 **Open question, high priority:** D10, who a favor is owed to. The player should understand where a debt accrues and have some choice in it. See the open questions in `docs/design.md`.
 
@@ -119,6 +125,6 @@ ruff check . && ruff format --check .
 
 Start a new Claude Code session with:
 
-> Read CLAUDE.md and docs/design.md, then start layer 6, languages.
+> Read CLAUDE.md and docs/design.md, then pick up the next item in "Where we are, what's next".
 
 Tests use a stubbed model client and never call the API.

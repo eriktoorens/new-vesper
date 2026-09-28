@@ -2,6 +2,7 @@
 
 import re
 from itertools import pairwise
+from pathlib import Path
 
 import pytest
 
@@ -72,8 +73,26 @@ def test_origins_match_the_design_doc(content: Content) -> None:
         "enclave-raised",
         "underside-born",
         "awakened-animal",
+        "hearsay",
+        "castoff",
+        "mislaid",
     }
     assert {"no-hands", "overlooked", "animal-speech"} <= content.origins["awakened-animal"].tags
+    design = (Path(__file__).resolve().parents[2] / "docs" / "design.md").read_text()
+    table = design.split("| Origin | Example trait | Example tags |")[1].split("\n\n")[0]
+    for origin in content.origins.values():
+        assert f"| {origin.name.split()[0]}" in table, origin.name
+
+
+def test_setting_native_kinds(content: Content) -> None:
+    """New kinds are invented for the city, and each has its own needs (D90, D91)."""
+    kinds = {"hearsay", "castoff", "mislaid"}
+    for kind in kinds:
+        origin = content.origins[kind]
+        assert origin.tags and origin.language_choices and origin.needs
+        assert origin.needs != content.origins["street-born"].needs
+    assert "underside-cant" in content.origins["mislaid"].language_choices
+    assert "tired" not in {n.value for n in content.origins["hearsay"].needs}
 
 
 def test_starter_knacks_respect_the_balance_budget(content: Content) -> None:
@@ -190,3 +209,32 @@ def test_neighborhood_languages_vary(content: Content) -> None:
 def test_common_and_rare_languages(content: Content) -> None:
     rare = {lang.id for lang in content.languages.values() if not lang.common}
     assert rare == {"protocol", "underside-cant", "animal-speech"}
+
+
+def test_only_invented_languages_have_gibberish_sounds(content: Content) -> None:
+    """Real-world tongues are never mocked with made-up syllables (D77)."""
+    with_sounds = {lang.id for lang in content.languages.values() if lang.sounds}
+    assert with_sounds == {"protocol", "underside-cant", "animal-speech"}
+
+
+def test_there_is_a_language_knack(content: Content) -> None:
+    knack = content.knacks["ear-for-tongues"]
+    assert knack.stat.value == "heart" and "language" in knack.tags
+    assert knack.roll_bonus == 1 and knack.limit is not None
+
+
+def test_the_market_feeds_and_shelters(content: Content) -> None:
+    sold = {
+        (place.id, need.value) for place in content.locations.values() for need in place.provisions
+    }
+    assert ("tarp-row", "hunger") in sold and ("umbrella-shrine", "thirst") in sold
+    assert content.locations["hundred-hooks"].climate.value == "sheltered"
+    assert content.locations["drowned-station"].climate.value == "cold"
+    seasons = content.calendar.seasons
+    assert seasons["long-wet"].exposure.value == "cold"  # type: ignore[union-attr]
+    assert seasons["steam"].exposure.value == "hot"  # type: ignore[union-attr]
+
+
+def test_made_people_have_fewer_needs(content: Content) -> None:
+    assert {n.value for n in content.origins["made-person"].needs} == {"tired", "heat"}
+    assert len(content.origins["awakened-animal"].needs) == 5

@@ -38,7 +38,7 @@ def test_completion_sends_the_model_back_a_limited_number_of_times() -> None:
         [],
         "hi",
         lambda n, r: ({}, False),
-        completion=lambda: "<rules_check>not yet</rules_check>",
+        completion=lambda _: "<rules_check>not yet</rules_check>",
     )
     assert len(client.messages.calls) == MAX_REMINDERS + 1
     assert result.narration == f"try {MAX_REMINDERS}"

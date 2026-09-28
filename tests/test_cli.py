@@ -241,3 +241,127 @@ def test_map_art_and_languages(tmp_path: Path) -> None:
     assert "[4] The Hundred Hooks (hundred-hooks)" in last_map
     assert "[@] Tarp Row (tarp-row) <- you are here" in last_map
     assert text.count("-- Nana Priya Seshadri --") == 1
+
+
+def test_speak_chooses_the_language_spoken_aloud(tmp_path: Path) -> None:
+    client = StubClient(say("Nana Priya looks up from her ledger."))
+    out = run(
+        tmp_path,
+        [
+            "5",  # origin: awakened animal, which speaks animal-speech
+            "2",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "Biscuit",
+            "they/them",
+            "three",
+            "A ginger tom",
+            "The noodle man",
+            "/speak",
+            "/speak Animal-speech",
+            "/speak Protocol",
+            "/look",
+            "/quit",
+        ],
+        client,
+    )
+    text = "\n".join(out)
+    assert "[Biscuit speaks Registry Standard aloud.]" in text
+    assert "They know: " in text and "Animal-speech" in text
+    assert "[Biscuit speaks Animal-speech aloud.]" in text
+    assert "(Biscuit speaks " in text  # Protocol refused, with what they do speak
+    assert "(speaking aloud: Animal-speech)" in text
+
+
+def test_eat_drink_and_rest(tmp_path: Path) -> None:
+    client = StubClient(say("Nana Priya looks up from her ledger."))
+    out = run(
+        tmp_path,
+        [
+            "1",  # street-born
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "Ada",
+            "she/her",
+            "thirty",
+            "Tall, in a green coat",
+            "Her brother",
+            "/eat",
+            "/drink",
+            "/rest",
+            "/look",
+            "/quit",
+        ],
+        client,
+    )
+    text = "\n".join(out)
+    assert "[Ada has dal and rice from the landlady's pot for 4 glitter.]" in text
+    assert "[Ada has tea from the landlady's kettle for 1 glitter.]" in text
+    assert "[Ada sleeps, and wakes rested.]" in text
+    assert "Food here: dal and rice from the landlady's pot, 4 glitter" in text
+
+
+def test_line_editing_loads_readline_when_there_is_one() -> None:
+    from new_vesper.cli import HISTORY_LENGTH, enable_line_editing
+
+    class FakeReadline:
+        length = 0
+
+        def set_history_length(self, n: int) -> None:
+            self.length = n
+
+    fake = FakeReadline()
+    assert enable_line_editing(lambda: fake)
+    assert fake.length == HISTORY_LENGTH
+
+    def missing() -> None:
+        raise ImportError("no readline on this platform")
+
+    assert not enable_line_editing(missing)
+
+
+def test_playing_a_mislaid(tmp_path: Path) -> None:
+    """A setting-native kind (D90): a lost thing become someone, with no need to eat."""
+    client = StubClient(say("The Hooks creak."))
+    out = run(
+        tmp_path,
+        [
+            "8",  # Mislaid
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "1",
+            "6",  # origin language: Underside Cant, sixth of the sorted choices
+            "1",
+            "Brolly",
+            "it/its",
+            "forty years lost",
+            "A green umbrella with a bent rib",
+            "The god of lost umbrellas",
+            "/eat",
+            "/quit",
+        ],
+        client,
+    )
+    text = "\n".join(out)
+    assert "Mislaid: A lost thing" in text
+    assert "(Brolly doesn't need to eat)" in text
+    conn = open_database(tmp_path / "v.db")
+    [brolly] = characters.characters_of(conn, players.find_player(conn, "ash").id)
+    assert brolly.origin_id == "mislaid"
+    assert "underside-cant" in brolly.languages

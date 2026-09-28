@@ -1,7 +1,8 @@
 """Starting languages (D37, D41): Registry Standard, the origin's language, one more."""
 
 from new_vesper.content.loader import Content
-from new_vesper.content.model import COMMON_TONGUE, ContentError
+from new_vesper.content.model import ContentError
+from new_vesper.rules.languages import COMMON_TONGUE
 
 
 def origin_language_options(content: Content, origin_id: str) -> tuple[str, ...]:

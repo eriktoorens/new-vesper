@@ -54,3 +54,14 @@ def test_stage_direction_is_separate() -> None:
     message = turn_message({}, None, "Arrival.")
     assert "<stage_direction>Arrival.</stage_direction>" in message
     assert "<player_intent>" not in message
+
+
+def test_the_brief_says_what_every_origin_is() -> None:
+    from new_vesper.content.loader import load_content
+    from new_vesper.dm.prompt import content_brief
+
+    content = load_content()
+    brief = content_brief(content)
+    for origin in content.origins.values():
+        assert f"`{origin.id}` {origin.name}: {origin.trait}" in brief
+    assert "`castoff` Castoff" in brief and "Bodily needs: cold, tired." in brief
