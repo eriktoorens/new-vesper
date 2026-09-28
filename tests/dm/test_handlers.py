@@ -71,7 +71,9 @@ def test_look_me_shows_the_sheet(mira: Character, ctx_factory: Ctx) -> None:
 
 def test_look_here_lists_npcs(mira: Character, ctx_factory: Ctx) -> None:
     here = ok(ctx_factory(mira), "look", {"entity": "here"})["location"]
-    assert [n["id"] for n in here["npcs"]] == ["tomas-haddad"]
+    # Tuesday noon: Tomás at his cart, and Vasil eating lunch standing up.
+    assert [n["id"] for n in here["npcs"]] == ["tomas-haddad", "clerk-vasil"]
+    assert here["npcs"][1]["doing"].startswith("lunch")
 
 
 @pytest.mark.parametrize(

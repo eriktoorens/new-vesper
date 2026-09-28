@@ -54,6 +54,47 @@ class Spread(StrEnum):
     FEW = "few"
 
 
+MINUTES_PER_DAY = 1440
+WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+
+
+@dataclass(frozen=True)
+class ScheduleBlock:
+    start: int  # minutes after city midnight
+    end: int  # may be less than start: the block runs past midnight
+    location: str | None  # None: away from the district
+    activity: str
+
+    def covers(self, minute: int) -> bool:
+        if self.start < self.end:
+            return self.start <= minute < self.end
+        return minute >= self.start or minute < self.end
+
+    def minutes(self) -> set[int]:
+        return {m for m in range(MINUTES_PER_DAY) if self.covers(m)}
+
+
+@dataclass(frozen=True)
+class NpcGoal:
+    text: str
+    stages: tuple[str, ...]
+    days_per_stage: int
+
+
+@dataclass(frozen=True)
+class WeatherState:
+    id: str
+    name: str
+    description: str
+
+
+@dataclass(frozen=True)
+class WeatherDef:
+    start: str
+    states: Mapping[str, WeatherState]
+    transitions: Mapping[str, Mapping[str, int]]
+
+
 @dataclass(frozen=True)
 class LanguageDef:
     id: str
@@ -98,6 +139,7 @@ class RegionDef:
     # Who speaks what here, and the neighborhood's cultural flavor.
     languages: Mapping[str, Spread]
     culture: str
+    weather: WeatherDef
 
 
 @dataclass(frozen=True)
@@ -150,6 +192,9 @@ class NpcDef:
     appearance: str
     languages: tuple[str, ...]
     portrait: tuple[str, ...]
+    # "default" plus any weekdays that differ.
+    schedule: Mapping[str, tuple[ScheduleBlock, ...]]
+    goal: NpcGoal
 
 
 @dataclass(frozen=True)
@@ -265,6 +310,82 @@ def _spread_map(raw: object, where: str) -> Mapping[str, Spread]:
     return spread
 
 
+def _minute(value: object, where: str, *, end: bool) -> int:
+    if not isinstance(value, str) or len(value) != 5 or value[2] != ":":
+        raise ContentError(f"{where}: times are HH:MM")
+    try:
+        hours, minutes = int(value[:2]), int(value[3:])
+    except ValueError:
+        raise ContentError(f"{where}: times are HH:MM") from None
+    total = hours * 60 + minutes
+    limit = MINUTES_PER_DAY if end else MINUTES_PER_DAY - 1
+    if minutes >= 60 or not 0 <= total <= limit:
+        raise ContentError(f"{where}: {value!r} is not a time of day")
+    return total
+
+
+def _parse_schedule(raw: object, where: str) -> Mapping[str, tuple[ScheduleBlock, ...]]:
+    """Each day's blocks must cover all 24 hours exactly once."""
+    if not isinstance(raw, dict) or "default" not in raw:
+        raise ContentError(f"{where}: needs a default day")
+    days: dict[str, tuple[ScheduleBlock, ...]] = {}
+    for day, blocks in raw.items():
+        if day != "default" and day not in WEEKDAYS:
+            raise ContentError(f"{where}: {day!r} is not a weekday")
+        if not isinstance(blocks, list) or not blocks:
+            raise ContentError(f"{where}.{day}: expected a list of blocks")
+        parsed = []
+        for block in blocks:
+            b = Reader(block, f"{where}.{day}", {"from", "to", "location", "activity"})
+            start = _minute(b.raw["from"], f"{where}.{day}", end=False)
+            stop = _minute(b.raw["to"], f"{where}.{day}", end=True) % MINUTES_PER_DAY
+            location = None if b.raw["location"] is None else b.slug("location")
+            parsed.append(ScheduleBlock(start, stop, location, b.text("activity", 200)))
+        covered: list[int] = []
+        for block in parsed:
+            covered += sorted(block.minutes())
+        if len(covered) != MINUTES_PER_DAY or len(set(covered)) != MINUTES_PER_DAY:
+            raise ContentError(f"{where}.{day}: blocks must cover the whole day exactly once")
+        days[day] = tuple(parsed)
+    return days
+
+
+def _parse_goal(raw: object, where: str) -> NpcGoal:
+    r = Reader(raw, where, {"text", "stages", "days_per_stage"})
+    stages = r.texts("stages")
+    if not stages:
+        raise ContentError(f"{where}: needs at least one stage")
+    return NpcGoal(r.text("text", 300), stages, r.integer("days_per_stage", 1, 30))
+
+
+def _parse_weather(raw: object) -> WeatherDef:
+    r = Reader(raw, "region.weather", {"start", "states", "transitions"})
+    states: dict[str, WeatherState] = {}
+    for entry in r.items("states"):
+        s = Reader(entry, "region.weather.states", {"id", "name", "description"})
+        state = WeatherState(s.slug("id"), s.text("name", 40), s.text("description", 300))
+        if state.id in states:
+            raise ContentError(f"weather state {state.id!r} listed twice")
+        states[state.id] = state
+    transitions = r.raw["transitions"]
+    if not isinstance(transitions, dict) or set(transitions) != set(states):
+        raise ContentError("region.weather.transitions: one entry per weather state")
+    table: dict[str, dict[str, int]] = {}
+    for state, options in transitions.items():
+        if not isinstance(options, dict) or not options:
+            raise ContentError(f"weather {state!r}: needs weighted next states")
+        for target, weight in options.items():
+            if target not in states:
+                raise ContentError(f"weather {state!r} moves to unknown {target!r}")
+            if isinstance(weight, bool) or not isinstance(weight, int) or not 1 <= weight <= 100:
+                raise ContentError(f"weather {state!r}: weights are integers 1-100")
+        table[state] = dict(options)
+    start = r.slug("start")
+    if start not in states:
+        raise ContentError(f"weather start {start!r} is not a state")
+    return WeatherDef(start, states, table)
+
+
 def parse_language(raw: object) -> LanguageDef:
     r = Reader(raw, "language", {"id", "name", "common", "description"})
     return LanguageDef(
@@ -318,7 +439,7 @@ def parse_knack(raw: object) -> KnackDef:
 
 def parse_region(raw: object) -> RegionDef:
     fields = {"id", "name", "starting_light", "description", "map", "map_marks", "languages"}
-    r = Reader(raw, "region", fields | {"culture"})
+    r = Reader(raw, "region", fields | {"culture", "weather"})
     marks = r.raw["map_marks"]
     if not isinstance(marks, dict) or not marks:
         raise ContentError("region.map_marks: expected an object of mark -> location id")
@@ -334,6 +455,7 @@ def parse_region(raw: object) -> RegionDef:
         {mark: Reader._slug(loc, f"region.map_marks.{mark}") for mark, loc in marks.items()},
         _spread_map(r.raw["languages"], "region.languages"),
         r.text("culture", 1000),
+        _parse_weather(r.raw["weather"]),
     )
 
 
@@ -387,7 +509,8 @@ def parse_god(raw: object) -> GodDef:
 
 def parse_npc(raw: object) -> NpcDef:
     fields = {"id", "name", "pronouns", "location", "role", "description", "wants", "voice"}
-    r = Reader(raw, "npc", fields | {"tags", "age", "appearance", "languages", "portrait"})
+    extra = {"tags", "age", "appearance", "languages", "portrait", "schedule", "goal"}
+    r = Reader(raw, "npc", fields | extra)
     languages = r.raw["languages"]
     if not isinstance(languages, list) or not languages:
         raise ContentError(f"npc {r.raw['id']!r}: needs at least one language")
@@ -405,6 +528,8 @@ def parse_npc(raw: object) -> NpcDef:
         appearance=r.text("appearance", 300),
         languages=tuple(Reader._slug(v, "npc.languages") for v in languages),
         portrait=r.art("portrait"),
+        schedule=_parse_schedule(r.raw["schedule"], f"npc {r.raw['id']!r} schedule"),
+        goal=_parse_goal(r.raw["goal"], f"npc {r.raw['id']!r} goal"),
     )
 
 

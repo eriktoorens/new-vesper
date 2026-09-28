@@ -46,6 +46,7 @@ START_LOCATION = "hundred-hooks"
 HELP = """Type what your character does, or a command:
   /look          your sheet and where you are
   /map           the district map: where you are and where you've been
+  /time          the city clock and the weather
   /ask <question>  ask the DM what your character sees or knows (no time passes)
   /go <place>    move somewhere in this district (e.g. /go tarp-row)
   /places        list places you can go
@@ -303,6 +304,8 @@ def report(outcome: TurnOutcome, say: Say) -> None:
     for block in outcome.art:
         say(block)
         say("")
+    if outcome.status:
+        say(f"[{outcome.status}]")
     say(wrap(outcome.narration))
     if outcome.changes:
         say(f"  [{'; '.join(outcome.changes)}]")
@@ -325,6 +328,7 @@ def play(
     config: DMConfig,
     rng: random.Random,
     budget: BudgetConfig | None = None,
+    now: Callable[[], datetime] = lambda: datetime.now(UTC),
 ) -> None:
     seed(conn, content)
     player = players.find_player(conn, handle) or players.create_player(
@@ -360,7 +364,7 @@ def play(
         except StateError as exc:
             say(f"That didn't work: {exc}")
     session = PlaySession(
-        conn, content, client, design_text, rng, me.id, config=config, budget=budget
+        conn, content, client, design_text, rng, me.id, config=config, budget=budget, now=now
     )
     try:
         recap, notes, opening = session.start()
@@ -387,10 +391,13 @@ def play(
                     break
                 if line == "/help":
                     say(HELP)
+                elif line == "/time":
+                    say(f"[{session.status_line()}]")
                 elif line == "/look":
                     art = session.location_art()
                     if art:
                         say(art)
+                    say(f"[{session.status_line()}]")
                     show_sheet(session.character, content, say)
                 elif line == "/map":
                     me = session.character
@@ -445,6 +452,7 @@ def main(
     ask: Ask = input,
     say: Say = print,
     client_factory: Callable[[], ModelClient] | None = None,
+    now: Callable[[], datetime] = lambda: datetime.now(UTC),
 ) -> int:
     parser = argparse.ArgumentParser(prog="new-vesper")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -487,6 +495,7 @@ def main(
             config=config,
             rng=random.Random(args.seed),
             budget=budget,
+            now=now,
         )
     finally:
         conn.close()

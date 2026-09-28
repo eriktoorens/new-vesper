@@ -15,7 +15,15 @@ from new_vesper.rules.character import create_character as new_sheet
 from new_vesper.state import characters
 from new_vesper.state.errors import StateError
 from new_vesper.state.events import SYSTEM
-from tests.dm.conftest import DESIGN_TEXT, STATS, SeqRng, StubClient, make_character, say
+from tests.dm.conftest import (
+    DESIGN_TEXT,
+    NOON_TUESDAY,
+    STATS,
+    SeqRng,
+    StubClient,
+    make_character,
+    say,
+)
 
 
 def test_starting_languages(content: Content) -> None:
@@ -112,7 +120,13 @@ def test_the_dm_sees_details_and_neighborhood_languages(
 def test_art_shows_once_per_place_and_face(conn: sqlite3.Connection, content: Content) -> None:
     char = make_character(conn, online=False, location="hundred-hooks")
     play = PlaySession(
-        conn, content, StubClient(say("a"), say("b"), say("c")), DESIGN_TEXT, SeqRng(), char.id
+        conn,
+        content,
+        StubClient(say("a"), say("b"), say("c")),
+        DESIGN_TEXT,
+        SeqRng(),
+        char.id,
+        now=lambda: NOON_TUESDAY,
     )
     first = play.start()[2]
     assert [block.splitlines()[-1] for block in first.art] == [

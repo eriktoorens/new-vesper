@@ -67,7 +67,74 @@
         "language": "underside-cant",
         "spread": "few"
       }
-    ]
+    ],
+    "weather": {
+      "start": "steady-rain",
+      "states": [
+        {
+          "id": "dry-spell",
+          "name": "A dry spell",
+          "description": "The rain stops. Nobody trusts it. Umbrellas stay open out of habit, and the Market smells of hot stone."
+        },
+        {
+          "id": "fog",
+          "name": "Fog",
+          "description": "The rain turns to fog that eats the lantern light; faces loom up close and vanish again."
+        },
+        {
+          "id": "drizzle",
+          "name": "Drizzle",
+          "description": "A fine drizzle, more mist than rain, beading on coats and chrome."
+        },
+        {
+          "id": "steady-rain",
+          "name": "Steady rain",
+          "description": "The ordinary rain of New Vesper: steady, patient, drumming on the tarps."
+        },
+        {
+          "id": "downpour",
+          "name": "Downpour",
+          "description": "A downpour: gutters overflow, awnings sag, and everyone crowds under cover."
+        },
+        {
+          "id": "storm",
+          "name": "Storm",
+          "description": "A storm: thunder between the towers, wind tearing at tarps, lanterns swinging and going out."
+        }
+      ],
+      "transitions": {
+        "dry-spell": {
+          "dry-spell": 5,
+          "fog": 2,
+          "drizzle": 3
+        },
+        "fog": {
+          "fog": 5,
+          "drizzle": 4,
+          "dry-spell": 1
+        },
+        "drizzle": {
+          "drizzle": 6,
+          "steady-rain": 5,
+          "fog": 2,
+          "dry-spell": 1
+        },
+        "steady-rain": {
+          "steady-rain": 8,
+          "drizzle": 3,
+          "downpour": 3
+        },
+        "downpour": {
+          "downpour": 5,
+          "steady-rain": 4,
+          "storm": 1
+        },
+        "storm": {
+          "storm": 3,
+          "downpour": 5
+        }
+      }
+    }
   },
   "locations": [
     {
@@ -262,7 +329,83 @@
         "   \\   ~   /",
         "  __'-----'__",
         " /  ledger  \\"
-      ]
+      ],
+      "schedule": {
+        "default": [
+          {
+            "from": "05:30",
+            "to": "10:00",
+            "location": "hundred-hooks",
+            "activity": "at her ledger by the door, checking guests out"
+          },
+          {
+            "from": "10:00",
+            "to": "11:30",
+            "location": "tarp-row",
+            "activity": "shopping for the day's rice, and the day's gossip"
+          },
+          {
+            "from": "11:30",
+            "to": "17:00",
+            "location": "hundred-hooks",
+            "activity": "cleaning bunks and mending forgotten coats"
+          },
+          {
+            "from": "17:00",
+            "to": "18:00",
+            "location": "umbrella-shrine",
+            "activity": "leaving her daily offering for Paru"
+          },
+          {
+            "from": "18:00",
+            "to": "22:30",
+            "location": "hundred-hooks",
+            "activity": "reading the names from her ledger aloud"
+          },
+          {
+            "from": "22:30",
+            "to": "05:30",
+            "location": "hundred-hooks",
+            "activity": "asleep in the back room; the door is locked"
+          }
+        ],
+        "sunday": [
+          {
+            "from": "05:30",
+            "to": "12:00",
+            "location": "hundred-hooks",
+            "activity": "a slow morning of tea and ledger"
+          },
+          {
+            "from": "12:00",
+            "to": "15:00",
+            "location": "lantern-arcade",
+            "activity": "her Sunday walk, visiting old friends among the stalls"
+          },
+          {
+            "from": "15:00",
+            "to": "22:30",
+            "location": "hundred-hooks",
+            "activity": "reading the names from her ledger aloud"
+          },
+          {
+            "from": "22:30",
+            "to": "05:30",
+            "location": "hundred-hooks",
+            "activity": "asleep in the back room; the door is locked"
+          }
+        ]
+      },
+      "goal": {
+        "text": "Find out what happened to the boy whose coat still hangs by the door.",
+        "days_per_stage": 3,
+        "stages": [
+          "asks her oldest lodgers what they remember of the boy",
+          "finds his name in an old ledger, the ink half faded",
+          "writes to the Registry asking for his file",
+          "receives a Registry reply stating that the file does not exist"
+        ]
+      }
     },
     {
       "id": "tomas-haddad",
@@ -290,7 +433,65 @@
         "  /| '---' |\\",
         "   | ~~~~~ |",
         "   |_______|"
-      ]
+      ],
+      "schedule": {
+        "default": [
+          {
+            "from": "05:00",
+            "to": "14:00",
+            "location": "tarp-row",
+            "activity": "at his cart: breakfast and lunch noodles"
+          },
+          {
+            "from": "14:00",
+            "to": "16:00",
+            "location": "lantern-arcade",
+            "activity": "haggling for flour and oil"
+          },
+          {
+            "from": "16:00",
+            "to": "23:00",
+            "location": "tarp-row",
+            "activity": "at his cart for the evening rush"
+          },
+          {
+            "from": "23:00",
+            "to": "05:00",
+            "location": null,
+            "activity": "home, away from the Market"
+          }
+        ],
+        "monday": [
+          {
+            "from": "23:00",
+            "to": "10:00",
+            "location": null,
+            "activity": "home, away from the Market"
+          },
+          {
+            "from": "10:00",
+            "to": "13:00",
+            "location": "weighhouse",
+            "activity": "arguing with the Registry about his cart license"
+          },
+          {
+            "from": "13:00",
+            "to": "23:00",
+            "location": null,
+            "activity": "his day off, away from the Market"
+          }
+        ]
+      },
+      "goal": {
+        "text": "Keep Tarp Row out of corporate hands.",
+        "days_per_stage": 4,
+        "stages": [
+          "gets the cart owners to cover one another's small debts",
+          "learns which franchise is buying up the Row's debts",
+          "has a loud public argument with the franchise's agent",
+          "calls a meeting of every cart owner under the biggest tarp"
+        ]
+      }
     },
     {
       "id": "adaeze-lim",
@@ -319,7 +520,53 @@
         "   [_|[_]|_]",
         "     |[_]|",
         "     /   \\"
-      ]
+      ],
+      "schedule": {
+        "default": [
+          {
+            "from": "10:00",
+            "to": "22:00",
+            "location": "lantern-arcade",
+            "activity": "at her charm stall, selling"
+          },
+          {
+            "from": "22:00",
+            "to": "10:00",
+            "location": null,
+            "activity": "home, counting the day's takings"
+          }
+        ],
+        "friday": [
+          {
+            "from": "10:00",
+            "to": "20:00",
+            "location": "lantern-arcade",
+            "activity": "at her charm stall, selling"
+          },
+          {
+            "from": "20:00",
+            "to": "23:00",
+            "location": "drowned-station",
+            "activity": "meeting the ferry to buy what passengers carry up from below"
+          },
+          {
+            "from": "23:00",
+            "to": "10:00",
+            "location": null,
+            "activity": "home, counting the day's takings"
+          }
+        ]
+      },
+      "goal": {
+        "text": "Get a licensed miracle permit before the Registry audit catches up with her.",
+        "days_per_stage": 4,
+        "stages": [
+          "buys the permit forms, all nine copies",
+          "finds a sponsor willing to vouch for her miracles",
+          "hides her least licensable stock",
+          "books an appointment with Inspector-Clerk Vasil"
+        ]
+      }
     },
     {
       "id": "clerk-vasil",
@@ -346,7 +593,61 @@
         "    /| = |\\  [==]",
         "     |___|   |~~|",
         "     /   \\   '--'"
-      ]
+      ],
+      "schedule": {
+        "default": [
+          {
+            "from": "08:00",
+            "to": "12:00",
+            "location": "weighhouse",
+            "activity": "auditing the old scales, one subsection at a time"
+          },
+          {
+            "from": "12:00",
+            "to": "13:00",
+            "location": "tarp-row",
+            "activity": "lunch, eaten standing, clipboard in hand"
+          },
+          {
+            "from": "13:00",
+            "to": "17:00",
+            "location": "umbrella-shrine",
+            "activity": "measuring the shrine's belief levels"
+          },
+          {
+            "from": "17:00",
+            "to": "08:00",
+            "location": null,
+            "activity": "at the Registry offices, or home; off the Market's streets"
+          }
+        ],
+        "saturday": [
+          {
+            "from": "00:00",
+            "to": "24:00",
+            "location": null,
+            "activity": "off duty (he insists)"
+          }
+        ],
+        "sunday": [
+          {
+            "from": "00:00",
+            "to": "24:00",
+            "location": null,
+            "activity": "off duty (he insists)"
+          }
+        ]
+      },
+      "goal": {
+        "text": "File Paru's grievance form correctly.",
+        "days_per_stage": 5,
+        "stages": [
+          "searches the Weighhouse for the fifth copy of the form",
+          "finds the form under a scale, damp but legible",
+          "discovers the form requires the god's signature",
+          "asks around the Market for anyone who can get a god to sign"
+        ]
+      }
     },
     {
       "id": "rahel",
@@ -375,7 +676,65 @@
         "   | \\___/ |",
         "    '--+--'",
         "   [|||||||]"
-      ]
+      ],
+      "schedule": {
+        "default": [
+          {
+            "from": "09:00",
+            "to": "21:00",
+            "location": "lantern-arcade",
+            "activity": "at the chip stall"
+          },
+          {
+            "from": "21:00",
+            "to": "23:00",
+            "location": "weighhouse",
+            "activity": "sitting on the steps by the chained stair, listening"
+          },
+          {
+            "from": "23:00",
+            "to": "09:00",
+            "location": "lantern-arcade",
+            "activity": "powered down behind the stall, one eye faintly lit"
+          }
+        ],
+        "wednesday": [
+          {
+            "from": "09:00",
+            "to": "13:00",
+            "location": "umbrella-shrine",
+            "activity": "repainting their face in the shrine's dry shelter"
+          },
+          {
+            "from": "13:00",
+            "to": "21:00",
+            "location": "lantern-arcade",
+            "activity": "at the chip stall"
+          },
+          {
+            "from": "21:00",
+            "to": "23:00",
+            "location": "weighhouse",
+            "activity": "sitting on the steps by the chained stair, listening"
+          },
+          {
+            "from": "23:00",
+            "to": "09:00",
+            "location": "lantern-arcade",
+            "activity": "powered down behind the stall, one eye faintly lit"
+          }
+        ]
+      },
+      "goal": {
+        "text": "Prove that a made person can be remembered like anyone born.",
+        "days_per_stage": 3,
+        "stages": [
+          "starts writing customers' names on the backs of chips",
+          "asks Nana Priya to put their name in her ledger",
+          "keeps a list of everyone who remembered them twice",
+          "begins to fear their own name is slipping"
+        ]
+      }
     },
     {
       "id": "ferryman-whisker",
@@ -403,7 +762,47 @@
         "   ( o         )'",
         "    '--.____.'",
         "       \"    \""
-      ]
+      ],
+      "schedule": {
+        "default": [
+          {
+            "from": "18:00",
+            "to": "06:00",
+            "location": "drowned-station",
+            "activity": "poling the lantern-boat into Old Vesper and back"
+          },
+          {
+            "from": "06:00",
+            "to": "18:00",
+            "location": "drowned-station",
+            "activity": "asleep in the moored lantern-boat"
+          }
+        ],
+        "thursday": [
+          {
+            "from": "18:00",
+            "to": "06:00",
+            "location": null,
+            "activity": "gone below with the ferry; the station is dark"
+          },
+          {
+            "from": "06:00",
+            "to": "18:00",
+            "location": "drowned-station",
+            "activity": "asleep in the moored lantern-boat"
+          }
+        ]
+      },
+      "goal": {
+        "text": "Be remembered by someone who lives above.",
+        "days_per_stage": 5,
+        "stages": [
+          "asks passengers to say his name when they reach the top",
+          "carves his name into the platform's tiles",
+          "leaves small gifts on the Weighhouse stairs",
+          "waits every night for someone to call him by name"
+        ]
+      }
     }
   ],
   "clocks": [

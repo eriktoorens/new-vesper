@@ -40,6 +40,11 @@ REGION_DOC: dict[str, Any] = {
         "map_marks": {"1": "shrine"},
         "languages": [{"language": "registry-standard", "spread": "everyone"}],
         "culture": "c",
+        "weather": {
+            "start": "rain",
+            "states": [{"id": "rain", "name": "Rain", "description": "d"}],
+            "transitions": {"rain": {"rain": 1}},
+        },
     },
     "locations": [
         {
@@ -80,6 +85,10 @@ REGION_DOC: dict[str, Any] = {
             "appearance": "a",
             "languages": ["registry-standard"],
             "portrait": [" :) "],
+            "schedule": {
+                "default": [{"from": "00:00", "to": "24:00", "location": "shrine", "activity": "a"}]
+            },
+            "goal": {"text": "g", "stages": ["s"], "days_per_stage": 2},
         }
     ],
 }
@@ -146,6 +155,49 @@ def test_bad_knacks_rejected(knack: dict[str, Any]) -> None:
         _region(region__x__languages=[{"language": "registry-standard", "spread": "all"}]),
         _region(locations__0__languages=[{"language": "martian", "spread": "few"}]),
         _region(region__x__culture=""),
+        _region(
+            npcs__0__schedule={
+                "default": [{"from": "00:00", "to": "12:00", "location": "shrine", "activity": "a"}]
+            }
+        ),
+        _region(
+            npcs__0__schedule={
+                "default": [
+                    {"from": "00:00", "to": "13:00", "location": "shrine", "activity": "a"},
+                    {"from": "12:00", "to": "24:00", "location": "shrine", "activity": "b"},
+                ]
+            }
+        ),
+        _region(
+            npcs__0__schedule={
+                "funday": [{"from": "00:00", "to": "24:00", "location": "shrine", "activity": "a"}]
+            }
+        ),
+        _region(
+            npcs__0__schedule={
+                "default": [{"from": "00:00", "to": "24:00", "location": "narnia", "activity": "a"}]
+            }
+        ),
+        _region(
+            npcs__0__schedule={
+                "default": [{"from": "0:00", "to": "24:00", "location": "shrine", "activity": "a"}]
+            }
+        ),
+        _region(npcs__0__goal={"text": "g", "stages": [], "days_per_stage": 2}),
+        _region(
+            region__x__weather={
+                "start": "rain",
+                "states": [{"id": "rain", "name": "R", "description": "d"}],
+                "transitions": {"rain": {"hail": 1}},
+            }
+        ),
+        _region(
+            region__x__weather={
+                "start": "sun",
+                "states": [{"id": "rain", "name": "R", "description": "d"}],
+                "transitions": {"rain": {"rain": 1}},
+            }
+        ),
         {"clocks": []},  # clocks without a region
         {**_region(), "clocks": [{"id": "c", "name": "C", "segments": 6, "description": "d"}]},
     ],

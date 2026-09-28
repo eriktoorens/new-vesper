@@ -12,9 +12,12 @@ from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from typing import Any
 
+from new_vesper.budget.policy import stamp
+from new_vesper.city.npcs import present_at, regulars_elsewhere, whereabouts
 from new_vesper.content.loader import Content
 from new_vesper.content.loot import roll_loot
 from new_vesper.rules.character import Sheet, apply_track
+from new_vesper.rules.clock import day_start_utc
 from new_vesper.rules.consequences import (
     ConsequenceType,
     allowed,
@@ -246,6 +249,14 @@ def describe_character(ctx: TurnContext, character: Character) -> dict[str, Any]
     }
 
 
+def npc_lately(conn: sqlite3.Connection, npc: Any) -> str | None:
+    """The latest step of an NPC's own goal, advanced by the daily tick."""
+    row = conn.execute("SELECT stage FROM npc_goals WHERE npc_id = ?", (npc.id,)).fetchone()
+    if row is None or row[0] == 0:
+        return None
+    return npc.goal.stages[min(row[0], len(npc.goal.stages)) - 1]
+
+
 def _languages_here(ctx: TurnContext, location_id: str) -> dict[str, str]:
     """How widely each language is spoken here: the district's, sharpened by the place's."""
     place = ctx.content.locations[location_id]
@@ -272,15 +283,26 @@ def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
         "languages_heard_here": _languages_here(ctx, place.id),
         "npcs": [
             {
-                "id": n.id,
-                "name": n.name,
-                "pronouns": n.pronouns,
-                "age": n.age,
-                "appearance": n.appearance,
-                "role": n.role,
-                "languages": [ctx.content.languages[lang].name for lang in n.languages],
+                "id": w.npc.id,
+                "name": w.npc.name,
+                "pronouns": w.npc.pronouns,
+                "age": w.npc.age,
+                "appearance": w.npc.appearance,
+                "role": w.npc.role,
+                "languages": [ctx.content.languages[lang].name for lang in w.npc.languages],
+                "doing": w.activity,
+                "lately": npc_lately(ctx.conn, w.npc),
             }
-            for n in ctx.content.npcs_at(place.id)
+            for w in present_at(ctx.content, place.id, ctx.now)
+        ],
+        # Only for hints, and only if someone present would plausibly know (D53).
+        "regulars_elsewhere": [
+            {
+                "name": w.npc.name,
+                "where": ctx.content.locations[w.location].name if w.location else "away",
+                "doing": w.activity,
+            }
+            for w in regulars_elsewhere(ctx.content, place.id, ctx.now)
         ],
         "shrine_of": god.id if god else None,
         "items_here": [{"id": row[0], "name": row[1]} for row in lying],
@@ -326,9 +348,15 @@ def look(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
                 "id": npc.id,
                 "name": npc.name,
                 "pronouns": npc.pronouns,
-                "location": npc.location,
+                "home": npc.location,
+                "right_now": {
+                    "where": whereabouts(npc, ctx.now).location or "away",
+                    "doing": whereabouts(npc, ctx.now).activity,
+                },
                 "role": npc.role,
                 "description": npc.description,
+                "goal": npc.goal.text,
+                "lately": npc_lately(ctx.conn, npc),
                 "wants": npc.wants,
                 "voice": npc.voice,
             }
@@ -403,7 +431,8 @@ def _check_knack(ctx: TurnContext, me: Character, knack_id: object, stat: Stat) 
         if knack.limit.per.value == "scene":
             used = rolls.knack_uses(ctx.conn, me.id, knack.id, scene_id=ctx.scene_id)
         else:
-            midnight = ctx.now.astimezone(UTC).strftime("%Y-%m-%dT00:00:00.000Z")
+            # The city's day turns over at city midnight (D50).
+            midnight = stamp(day_start_utc(ctx.now))
             used = rolls.knack_uses(ctx.conn, me.id, knack.id, since=midnight)
         if used >= knack.limit.uses:
             raise ToolError(f"{knack.name} is used up: {knack.limit.describe()}")

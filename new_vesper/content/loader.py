@@ -110,7 +110,18 @@ def _check_map(content: Content) -> None:
                 )
 
 
+def _check_schedules(content: Content) -> None:
+    for npc in content.npcs.values():
+        for blocks in npc.schedule.values():
+            for block in blocks:
+                if block.location is not None and block.location not in content.locations:
+                    raise ContentError(
+                        f"npc {npc.id!r} is scheduled at unknown place {block.location!r}"
+                    )
+
+
 def _check_references(content: Content) -> None:
+    _check_schedules(content)
     _check_languages(content)
     _check_map(content)
     for npc in content.npcs.values():

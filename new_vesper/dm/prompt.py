@@ -72,6 +72,14 @@ something the rules allow or let the moment pass.
 what they have seen, been told, or could plausibly know. An NPC does not know a \
 character's name until someone says it.
 - Nobody invents new gods lifted from real religions.
+- Time and weather come from code, in <scene_state>. Let them color the scene (light, \
+crowds, what's open, how wet everyone is) and never contradict them. You may choose a \
+harder difficulty rung when the weather plainly matters, such as a storm on the rooftops.
+- Only NPCs listed in the location's npcs are here, doing what "doing" says. Use \
+regulars_elsewhere only for hints, and only when someone present would plausibly know \
+where that person is at this hour; otherwise they are simply not here.
+- An NPC's "lately" is what they have been doing about their own goal. Let it show in \
+what they say and do when it fits; don't announce it.
 - Languages: everyone speaks Registry Standard. Each character and NPC speaks the \
 languages listed for them; a place's languages_heard_here says how widely each is \
 spoken there, so give unnamed people languages that fit the neighborhood. When someone \

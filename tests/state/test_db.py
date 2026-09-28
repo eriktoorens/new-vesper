@@ -15,7 +15,7 @@ def test_migrations_numbered_without_gaps() -> None:
 def test_migrate_is_idempotent(tmp_path: Path) -> None:
     path = tmp_path / "vesper.db"
     conn = connect(path)
-    assert migrate(conn) == [1, 2, 3, 4]
+    assert migrate(conn) == [1, 2, 3, 4, 5]
     assert migrate(conn) == []
     conn.close()
     conn = connect(path)

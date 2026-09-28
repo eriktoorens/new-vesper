@@ -5,7 +5,7 @@ from pathlib import Path
 from new_vesper.cli import main
 from new_vesper.state import characters, players
 from new_vesper.state.db import open_database
-from tests.dm.conftest import StubClient, say
+from tests.dm.conftest import NOON_TUESDAY, StubClient, say
 
 
 def run(tmp_path: Path, inputs: list[str], client: StubClient) -> list[str]:
@@ -23,6 +23,7 @@ def run(tmp_path: Path, inputs: list[str], client: StubClient) -> list[str]:
         ask=ask,
         say=out.append,
         client_factory=lambda: client,
+        now=lambda: NOON_TUESDAY,
     )
     return out
 

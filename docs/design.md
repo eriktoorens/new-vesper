@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D49** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D55** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -264,7 +264,7 @@ Players act freely until their actions touch each other; then they share a scene
 
 **Time (D9):** one real day is one in-game day, for everything: knack "per day" limits, the city tick and recovery. An in-game week is 7 real days.
 
-**Day boundary (D29, provisional):** a knack's "per day" limit resets at midnight UTC. Revisit when multiplayer or cloud deployment is addressed (a rolling 24 hours, or an operator time zone, are the alternatives).
+**Day boundary (D29, superseded by D50):** a knack's "per day" limit now resets at midnight on the city clock.
 
 **Solo by default.** Outside shared scenes, each player's action resolves immediately.
 
@@ -328,6 +328,17 @@ Built in layer 2 (2026-09-28), from D37.
 - **Maps (D48):** each district has a hand-drawn ASCII map. `/map` marks where the character is with [@]; places they have never played a scene in stay ??? until they go there.
 - **Art (D49):** hand-authored ASCII only (plain printable characters, at most 60 columns by 10 lines); the model never draws. A place's vignette shows on a character's first visit and with `/look`; an NPC's portrait shows the first time a character shares a place with them.
 
+## Time, Weather and Routines (D50–D55)
+
+Built in layer 3 (2026-09-28), from D38.
+
+- **The city clock (D50):** New Vesper runs on US Eastern time, in real time. The city's day turns over at city midnight: knack daily limits and the daily tick both use it (this replaces D29's UTC midnight). The budget month stays UTC, since that is accounting rather than fiction.
+- **Weather (D51):** each district's weather changes on 3-hour blocks. Each block follows from the one before through the district's transition table, so it drifts (drizzle to steady rain, rarely a storm) instead of swinging. Weather is stored as it happens, so every player shares the same sky. It has no automatic rules effects; the DM may pick a harder rung when weather plainly matters.
+- **NPC schedules (D52):** each NPC has a day of 4–6 blocks in content, plus days of the week that differ (Nana Priya's Sunday walk, Tomás's Monday off, Whisker gone below on Thursday nights). Code places every NPC by the clock; an NPC can also be away from the district.
+- **Looking for someone who isn't there (D53):** the DM may say where they are likely to be only if someone present would plausibly know; otherwise they are simply not here.
+- **NPC goals (D54):** each NPC has a personal goal in stages. The daily tick moves it on a stage every few days. Progress is private: it is not reported in "while you were gone" recaps, but the DM sees what each NPC has been doing lately and lets it show in play.
+- **The daily tick (D55):** runs whenever anyone plays, once per city day, catching up on up to 14 missed days. It applies Light neglect (a district whose Light nobody raised for 7 days loses 1) and advances NPC goals.
+
 ## Planned: A Living World (D37–D43)
 
 Direction agreed after the first playtest (2026-09-28). Each layer's details are decided when it is built, and every mechanic stays code-owned: the DM proposes, code decides.
@@ -353,8 +364,8 @@ The first build is a playable CLI prototype: one player, one district, the full 
 - [x] Market District layout: key stalls, NPCs, shrines, the drowned station.
 - [ ] Beat window length, and whether it adapts to how many players are present.
 - [ ] Alt accounts: how many characters a player may have.
-- [ ] Revisit the knack day boundary (D29) with multiplayer or cloud deployment.
-- [ ] The city's time zone (D38).
+- [x] Revisit the knack day boundary (D29): city midnight (D50).
+- [x] The city's time zone (D38): US Eastern (D50).
 - [x] The languages of the Market District, and which count as common (D44, D45).
 - [ ] Multiplayer step (D32): shared scenes, opposed-roll PvP with its guards, healing others, being named by another player.
 
@@ -368,7 +379,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, and D44–D49 from building character details.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, and D50–D55 from time and weather.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -400,7 +411,7 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D26 | Consequence targets | Harm and Fade land on the roller only; PvP waits for opposed rolls |
 | D27 | Movement | Player's `/go` command; the DM never moves characters |
 | D28 | Taken items | Leave play; the log records it |
-| D29 | Knack day boundary | **Provisional.** Midnight UTC; revisit with multiplayer or cloud deployment |
+| D29 | Knack day boundary | Superseded by D50: city midnight |
 | D30 | Treatment knacks | Heal the roller only, 1 Harm on 7+ |
 | D31 | Casting with Wire | Only through a tech-magic knack |
 | D32 | Prototype scope | Single-player through budget and playtest; multiplayer is its own later step |
@@ -409,7 +420,7 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D35 | `/ask` | Out-of-character question: look only, no roll, state change, time or beat |
 | D36 | Owed consequences | A 7–9 or 6− roll must get its consequence; code sends the DM back (up to twice) |
 | D37 | Character details | Age, pronouns, appearance, languages for players and NPCs (built: D44–D49) |
-| D38 | Time and weather (planned) | Real-time city clock in one time zone; weather tables; NPC schedules; daily tick |
+| D38 | Time and weather | Real-time city clock, weather, NPC schedules, daily tick (built: D50–D55) |
 | D39 | NPC memory (planned) | Attitudes per character and interaction notes in code; DM proposes, code caps |
 | D40 | Encounters (planned) | Code rolls on arrival and about every 5 beats; odds rise as Light falls |
 | D41 | Languages (planned) | Tracked; unknown speech as gibberish; Heart roll for the gist; language knack +1 |
@@ -421,3 +432,9 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D47 | Age and appearance | Short free text, narrative only |
 | D48 | Maps | Hand-drawn per district; [@] for here; unvisited places stay ??? |
 | D49 | Art | Hand-authored ASCII vignettes and NPC portraits; the model never draws |
+| D50 | City clock | US Eastern, real time; the city day turns at city midnight (replaces D29); budget month stays UTC |
+| D51 | Weather | 3-hour blocks that drift through a transition table; stored and shared; no automatic effects |
+| D52 | NPC schedules | 4–6 blocks a day plus weekday variations; code places NPCs by the clock |
+| D53 | Absent NPCs | Hints only when someone present would plausibly know |
+| D54 | NPC goals | Staged goals advanced by the tick; private, shown through play |
+| D55 | Daily tick | Runs when anyone plays; up to 14 days of catch-up; neglect after 7 days; NPC goals |

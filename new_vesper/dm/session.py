@@ -18,6 +18,9 @@ from typing import Any
 from new_vesper.budget.ledger import record_call
 from new_vesper.budget.policy import BudgetConfig, BudgetExhausted, BudgetStatus, budget_status
 from new_vesper.budget.pricing import PRICES, ModelPrice, price_of
+from new_vesper.city.npcs import present_at
+from new_vesper.city.tick import run_due_ticks
+from new_vesper.city.weather import current_weather
 from new_vesper.content.loader import Content
 from new_vesper.dm import prompt
 from new_vesper.dm.agent import ModelClient, TurnResult, UsageHook, run_turn, summarize
@@ -30,6 +33,7 @@ from new_vesper.dm.handlers import (
     owed_reminder,
 )
 from new_vesper.dm.tools import TOOLS
+from new_vesper.rules import clock
 from new_vesper.rules.character import resolve_full_harm
 from new_vesper.rules.dice import Rng
 from new_vesper.rules.errors import RulesError
@@ -45,6 +49,11 @@ ARRIVAL = (
     "place, who is around, one thing that invites action. No roll."
 )
 SECONDS_PER_DAY = 86_400
+# Events the recap leaves out: bookkeeping, or things the character couldn't know
+# (an NPC's private progress surfaces in play through what the DM sees instead).
+PRIVATE_EVENTS = frozenset(
+    {"roll", "presence_changed", "npc_goal_advanced", "npc_met", "neglect", "details_set"}
+)
 QUIET_NARRATION = "The rain goes quiet, and so does the city. {message}"
 
 
@@ -63,6 +72,8 @@ class TurnOutcome:
     quiet: bool = False
     # ASCII art to show before the narration: a new place, a new face.
     art: tuple[str, ...] = ()
+    # The city clock and weather where the character is: 'Tuesday 9:40 pm, evening; Fog'.
+    status: str = ""
 
 
 def art_block(caption: str, lines: tuple[str, ...]) -> str:
@@ -170,7 +181,10 @@ class PlaySession:
         scene = scenes.get_scene(self.conn, self.scene_id)
         me = self.character
         recent = scenes.recent_beats(self.conn, scene.id, limit=self.config.recent_beats)
+        sky = current_weather(self.conn, self.content, scene.region_id, ctx.now)
         return {
+            "time": clock.describe(ctx.now),
+            "weather": {"now": sky.name, "description": sky.description},
             "character": describe_character(ctx, me),
             "location": describe_location(ctx, me.location_id) if me.location_id else None,
             "scene": {
@@ -250,6 +264,7 @@ class PlaySession:
         self._fold(beat.number)
         me = self.character
         return TurnOutcome(
+            status=self.status_line(),
             narration=result.narration,
             fall_or_endure_pending=ctx.fall_or_endure_pending
             or (must_fall_or_endure(me.sheet.harm) and not me.sheet.fallen),
@@ -299,7 +314,7 @@ class PlaySession:
             e.payload.get("npc_id")
             for e in list_events(self.conn, character_id=me.id, kind="npc_met", limit=100_000)
         }
-        for npc in self.content.npcs_at(place.id):
+        for npc in (w.npc for w in present_at(self.content, place.id, self.now())):
             if npc.id not in met:
                 blocks.append(art_block(npc.name, npc.portrait))
                 append_event(
@@ -314,6 +329,16 @@ class PlaySession:
     @staticmethod
     def _with_art(outcome: TurnOutcome, art: tuple[str, ...]) -> TurnOutcome:
         return replace(outcome, art=art)
+
+    def status_line(self) -> str:
+        """The city clock and the weather where the character is."""
+        now = self.now()
+        me = self.character
+        if me.location_id is None:
+            return clock.describe(now)
+        region = self.content.locations[me.location_id].region_id
+        sky = current_weather(self.conn, self.content, region, now)
+        return f"{clock.describe(now)}; {sky.name}"
 
     def location_art(self) -> str | None:
         me = self.character
@@ -351,7 +376,7 @@ class PlaySession:
         events = [
             e
             for e in list_events(self.conn, after_id=logoff.id, limit=200)
-            if e.player_id != self.player_id and e.kind not in {"roll", "presence_changed"}
+            if e.player_id != self.player_id and e.kind not in PRIVATE_EVENTS
         ]
         if not events:
             return None
@@ -367,6 +392,7 @@ class PlaySession:
         if me.sheet.fallen:
             raise SessionError(f"{me.name} has fallen; their story is over")
         self._require_budget()
+        run_due_ticks(self.conn, self.content, self.now())
         logoff = self._last_logoff()
         characters.set_online(self.conn, me.id, True, self._cause())
         notes = self._recover(logoff) if logoff else []
@@ -386,6 +412,7 @@ class PlaySession:
         if len(intent) > scenes.MAX_INTENT_LENGTH:
             raise SessionError(f"keep it under {scenes.MAX_INTENT_LENGTH} characters")
         self._require_budget()
+        run_due_ticks(self.conn, self.content, self.now())  # a session can cross midnight
         return self._run(intent, None)
 
     def ask(self, question: str) -> str:

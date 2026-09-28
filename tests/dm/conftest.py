@@ -3,6 +3,7 @@
 import sqlite3
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +18,10 @@ from new_vesper.state import characters, players, scenes
 from new_vesper.state.characters import Character
 from new_vesper.state.db import open_database
 from new_vesper.state.events import SYSTEM
+
+# A Tuesday at noon on the city clock (US Eastern): Tomás is at his cart,
+# Nana Priya is cleaning bunks at the Hooks.
+NOON_TUESDAY = datetime(2026, 9, 29, 16, 0, tzinfo=UTC)
 
 DESIGN_TEXT = (Path(__file__).resolve().parents[2] / "docs" / "design.md").read_text()
 STATS = {Stat.STEEL: 1, Stat.SLICK: 2, Stat.WIRE: 1, Stat.WEIRD: 0, Stat.HEART: -1}
@@ -144,7 +149,9 @@ def context_for(
     location = char.location_id or "tarp-row"
     scene = scenes.open_scene(conn, "market", SYSTEM, location_id=location)
     scenes.join_scene(conn, scene.id, char.id, SYSTEM)
-    return TurnContext(conn, content, SeqRng(*dice), char.id, char.player_id, scene.id)
+    return TurnContext(
+        conn, content, SeqRng(*dice), char.id, char.player_id, scene.id, now=NOON_TUESDAY
+    )
 
 
 @pytest.fixture
