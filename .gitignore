@@ -4,3 +4,9 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
+
+# The world and players' exported stories, made by playing
+vesper.db
+*.db-wal
+*.db-shm
+stories/

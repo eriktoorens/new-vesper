@@ -53,6 +53,8 @@ HELP = """Type what your character does, or a command:
   /ask <question>  ask the DM what your character sees or knows (no time passes)
   /speak <language>  choose the language your character speaks aloud
   /eat, /drink   buy food or drink where it's sold
+  /export        save your story, as your character would tell it
+  /export record save your story exactly as you saw it
   /rest          sleep at a haven
   /go <place>    move somewhere in this district (e.g. /go tarp-row)
   /places        list places you can go
@@ -512,6 +514,11 @@ def play(
                     say(f"  [{me.name} speaks {content.languages[me.speaking].name} aloud.]")
                     if not choice:
                         say(f"  [They know: {known}. /speak <language> to change.]")
+                elif line.startswith("/export"):
+                    kind = line[len("/export") :].strip() or "telling"
+                    if kind == "telling":
+                        say("  [Writing it down...]")
+                    say(f"  [Saved: {session.export(kind)}]")
                 elif line in ("/eat", "/drink", "/rest"):
                     action = {"/eat": session.eat, "/drink": session.drink, "/rest": session.rest}
                     say(f"  [{action[line]()}]")
@@ -560,6 +567,50 @@ def enable_line_editing(load: Callable[[], Any] | None = None) -> bool:
     return True
 
 
+def export_story(
+    args: argparse.Namespace,
+    say: Say,
+    config: DMConfig,
+    budget: BudgetConfig,
+    client_factory: Callable[[], ModelClient],
+    now: Callable[[], datetime],
+) -> int:
+    """`new-vesper export`: the story of any character, living or fallen (D104)."""
+    conn = open_database(args.db)
+    try:
+        player = players.find_player(conn, args.handle)
+        everyone = characters.characters_of(conn, player.id) if player else []
+        if args.character:
+            everyone = [c for c in everyone if c.name.casefold() == args.character.casefold()]
+        if not everyone:
+            say("No such character.")
+            return 1
+        me = max(everyone, key=lambda c: c.id)
+        content = load_content()
+        seed(conn, content)
+        client = None if args.record else client_factory()
+        session = PlaySession(
+            conn,
+            content,
+            client,  # type: ignore[arg-type]
+            DESIGN_DOC.read_text(encoding="utf-8"),
+            random.Random(),
+            me.id,
+            config=config,
+            budget=budget,
+            now=now,
+        )
+        try:
+            path = session.export("record" if args.record else "telling", Path(args.out))
+        except SessionError as exc:
+            say(str(exc))
+            return 1
+        say(f"Saved: {path}")
+        return 0
+    finally:
+        conn.close()
+
+
 def main(
     argv: Sequence[str] | None = None,
     *,
@@ -576,6 +627,14 @@ def main(
     play_cmd.add_argument("--seed", type=int, default=None, help="RNG seed, for testing")
     budget_cmd = sub.add_parser("budget", help="operator report: this month's spend")
     budget_cmd.add_argument("--db", default="vesper.db", help="SQLite file (default vesper.db)")
+    export_cmd = sub.add_parser("export", help="save a character's story, even one who has fallen")
+    export_cmd.add_argument("--db", default="vesper.db", help="SQLite file (default vesper.db)")
+    export_cmd.add_argument("--handle", required=True, help="the player's handle")
+    export_cmd.add_argument("--character", help="which character, by name (default: newest)")
+    export_cmd.add_argument(
+        "--record", action="store_true", help="exactly as seen, instead of as told (free)"
+    )
+    export_cmd.add_argument("--out", default="stories", help="folder (default stories)")
     args = parser.parse_args(argv)
     budget = BudgetConfig.from_env()
 
@@ -596,6 +655,8 @@ def main(
         import anthropic  # only the real CLI needs the SDK
 
         client_factory = anthropic.Anthropic
+    if args.command == "export":
+        return export_story(args, say, config, budget, client_factory, now)
     if ask is input and sys.stdin.isatty():
         enable_line_editing()
     conn = open_database(args.db)

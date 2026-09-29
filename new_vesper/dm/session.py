@@ -13,6 +13,7 @@ import sqlite3
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from new_vesper.budget.ledger import record_call
@@ -25,7 +26,7 @@ from new_vesper.city.tick import run_due_ticks
 from new_vesper.city.weather import current_weather
 from new_vesper.content.loader import Content
 from new_vesper.dm import needs as bodily
-from new_vesper.dm import prompt, speech
+from new_vesper.dm import prompt, speech, story
 from new_vesper.dm.agent import ModelClient, TurnResult, UsageHook, run_turn, summarize
 from new_vesper.dm.config import CallType, DMConfig
 from new_vesper.dm.handlers import (
@@ -75,6 +76,8 @@ PRIVATE_EVENTS = frozenset(
 MEMORIES_KEPT = 8
 # One action per prompt (D99): refused whole, so nothing of it reaches the DM.
 ONE_LINE = "One action at a time, on one line. None of that was sent; try again."
+# Where exported stories go, next to the world's database by default (D104).
+STORIES = Path("stories")
 QUIET_NARRATION = "The rain goes quiet, and so does the city. {message}"
 
 
@@ -563,6 +566,42 @@ class PlaySession:
             known = ", ".join(self.content.languages[lang].name for lang in sorted(me.speaks))
             raise SessionError(f"{me.name} speaks {known}")
         return characters.set_speaking(self.conn, me.id, match, self._cause())
+
+    # --- stories ---------------------------------------------------------------
+
+    def export(self, kind: str = "telling", folder: Path = STORIES) -> Path:
+        """Save the character's story: the record as seen, or the telling in their voice.
+
+        Both are built only from what the player was shown (D101). The telling is one
+        cheap model call, priced and checked against the budget like any other (D102).
+        """
+        me = self.character
+        told = story.chapters(self.conn, self.content, me.id)
+        if kind == "record":
+            text = story.record(me, self.content, told)
+        elif kind == "telling":
+            if not told:
+                raise SessionError("there's no story to tell yet")
+            self._require_budget()
+            try:
+                words = summarize(
+                    self.client,
+                    self.config,
+                    CallType.STORY,
+                    story.telling_request(me, self.content, told),
+                    self.on_usage,
+                    self._guard,
+                    system=story.STORY_SYSTEM,
+                    max_tokens=self.config.story_max_tokens,
+                )
+            except BudgetExhausted as exc:
+                raise SessionError(str(exc)) from exc
+            if not words.strip():
+                raise SessionError("the story wouldn't come out right; /export record still works")
+            text = story.telling(me, self.content, words)
+        else:
+            raise SessionError("export a telling or a record")
+        return story.write(folder, me, kind, text, self.now())
 
     # --- needs ---------------------------------------------------------------
 

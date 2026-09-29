@@ -464,3 +464,50 @@ def test_play_drops_typing_ahead_and_refuses_pastes(tmp_path: Path) -> None:
         r[0] for r in conn.execute("SELECT intent FROM beat_intents WHERE intent IS NOT NULL")
     ]
     assert intents == ["I walk to the counter"]
+
+
+CREATE_ADA = [
+    "1", "1", "1", "1", "1", "1", "1", "1", "1", "1",
+    "Ada", "she/her", "30", "Tall", "Her brother",
+]  # fmt: skip
+
+
+def test_export_in_game(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    client = StubClient(say("Nana Priya looks up."), say("She nods at the ledger."))
+    client.messages.summary = lambda kwargs: (
+        "I paid my rent, and she wrote my name down gently."
+        if "Retell" in kwargs["messages"][0]["content"]
+        else "Ada paid."
+    )
+    out = run(
+        tmp_path,
+        [*CREATE_ADA, "I pay what I owe", "/export record", "/export", "/quit"],
+        client,
+    )
+    text = "\n".join(out)
+    saved = sorted((tmp_path / "stories").glob("ada-*.md"))
+    assert [p.name.split("-")[1] for p in saved] == ["record", "telling"]
+    assert "> I pay what I owe" in saved[0].read_text()
+    assert "wrote my name down gently" in saved[1].read_text()
+    assert "[Writing it down...]" in text and "[Saved: stories/ada-record-" in text
+
+
+def test_export_a_fallen_character_from_outside(tmp_path: Path, monkeypatch) -> None:
+    from dataclasses import replace
+
+    from new_vesper.state.events import SYSTEM
+
+    monkeypatch.chdir(tmp_path)
+    run(tmp_path, [*CREATE_ADA, "I pay what I owe", "/quit"], StubClient(say("Hi."), say("Ok.")))
+    conn = open_database(tmp_path / "v.db")
+    [ada] = characters.characters_of(conn, players.find_player(conn, "ash").id)
+    characters.update_sheet(conn, ada.id, ada.sheet, replace(ada.sheet, fallen=True), SYSTEM, "x")
+    conn.close()
+    out: list[str] = []
+    args = ["export", "--db", str(tmp_path / "v.db"), "--handle", "ash", "--record"]
+    assert main([*args, "--out", "keep"], say=out.append, now=lambda: NOON_TUESDAY) == 0
+    [path] = (tmp_path / "keep").glob("ada-record-*.md")
+    assert "Ada fell" in path.read_text()
+    assert main([*args, "--character", "Nobody"], say=out.append) == 1
+    assert out[-1] == "No such character."

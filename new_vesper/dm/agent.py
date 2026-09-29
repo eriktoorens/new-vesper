@@ -145,15 +145,18 @@ def summarize(
     request: str,
     on_usage: UsageHook | None = None,
     guard: Guard | None = None,
+    *,
+    system: str = SUMMARY_SYSTEM,
+    max_tokens: int | None = None,
 ) -> str:
-    """One short no-tools call on the cheap model: beat summaries, folds, recaps."""
+    """One no-tools call on the cheap model: beat summaries, folds, recaps, stories."""
     model = config.model_for(call)
     if guard is not None:
         guard()
     response = client.messages.create(
         model=model,
-        max_tokens=config.summary_max_tokens,
-        system=SUMMARY_SYSTEM,
+        max_tokens=max_tokens or config.summary_max_tokens,
+        system=system,
         messages=[{"role": "user", "content": request}],
     )
     if on_usage is not None:
