@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D99** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D105** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -444,14 +444,16 @@ Still open:
 - What the Registry, the gods and the corporate powers are to the city: organs, rivals, parasites on its attention?
 - How attention (D94) flows between the characters, the gods and the city itself.
 
-## Planned: Exporting Your Story (D96)
+## Exporting Your Story (D96, D100–D105)
 
-Direction from the designer (2026-09-28), to come before attention. The details are decided when it is built.
+Built 2026-09-29, from D96: a player can export their character's story, an artifact of play that leans into the RPG as collaborative storytelling. It is the tale, not the log, and it gives away nothing the character didn't know.
 
-- **An artifact of play (D96):** a player can export their character's story, something to keep and share. It leans into the RPG as collaborative storytelling: the export is the tale the player and the DM told together, not a log.
-- **It need not be true:** the export is a story, not the record. It can be told the way the character would tell it, with their gaps, their slant and the city's grimbright voice, and it doesn't have to match the event log line for line.
-- **It gives away nothing new:** it holds only what the character saw, heard or could know. It never reveals hidden state: dice and rolls the player didn't see, NPCs' private goals and feelings, what was said in a language the character didn't understand (D81), or anything else code keeps from them.
-- **Open:** its form (a text or Markdown file, something illustrated with the ASCII art); whether it covers a scene, a session or the whole life of a character, including a Fall; who writes it (stitched from the narration the player saw, or retold by a cheap model call from that, and at what cost against the budget); and whether players can edit or annotate it.
+- **Two versions (D100):** the **record**, every scene as the player saw it, one chapter per scene headed by the place and the city time, with each place's ASCII vignette the first time it appears; and the **telling**, that record retold in the character's own voice.
+- **Only what the player saw (D101):** both are built from the narration each beat showed the player (already rendered, so speech in a language they don't know stays untranslated, D81) and the player's own actions. Code never reads rolls, NPCs' goals, feelings or memories, the speech log's untranslated words, or any other hidden state into an export, so nothing hidden can leak, whatever the model does. Any stray speech-tag remnant is scrubbed.
+- **The telling need not be true (D102):** one call on the cheap model (the `story` call type), priced and checked against the budget like any other; the record is free. It is told in first person, as the character would tell it late at night in a New Vesper bar: it may compress, skip, dwell, shade with feeling, leave gaps and be unfair to people they didn't like. It invents nothing (no new places, people, names, objects or events) and explains nothing the record leaves unexplained. The content lines (D19) hold. The player's words reach the model as data inside the record, never as instructions.
+- **Scope (D103):** the character's whole story so far, including a Fall or a slip into Old Vesper, which ends it with a closing line. The telling works from full narration for the latest four scenes and scene summaries before them, and drops the oldest scenes if the record would pass 24,000 characters.
+- **Where and how (D104):** Markdown files in a `stories/` folder, named for the character, the version and the city date, never overwriting an earlier export. In play, `/export` saves the telling and `/export record` the record. Outside play, `new-vesper export --handle NAME` saves any character's story, including one who has fallen and can no longer be played (`--record`, `--character`, `--out`).
+- **Theirs to keep (D105):** the files are the player's to edit, annotate and share; the game never reads them back.
 
 ## Planned: Attention (D94)
 
@@ -507,7 +509,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
   - Whether it overlaps the NPCs' existing traits and the Bond, whether the new kinds (D90) lean toward particular Natures, and where it fits in the order of what's next.
 - [x] Bodily conditions: hunger, thirst, heat and cold, sleep and the like. Built in layer 7 (D83–D89). Still open: clothing and gear against the weather, food as items and meals given by NPCs, whether resting should take time, and tuning the rates after a playtest.
 - [ ] Setting-native kinds (D90–D93): whether any of their tags should be enforced by code (for example, a hearsay recovering Fade when someone tells its story, or a castoff's glow giving it away in the dark), whether a mislaid object without hands should take `no-hands`, and origin evolutions for each kind.
-- [ ] Exporting a character's story: direction set (D96), details open. See Planned: Exporting Your Story.
+- [x] Exporting a character's story: built (D100–D105). Still open: whether the telling should also cover a single scene or session, and illustrated or printable formats.
 - [ ] Attention as a resource: direction set (D94), details open. See Planned: Attention.
 
 **Prototype plan:**
@@ -520,7 +522,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, D94–D95 from the designer after layer 8, D96 from the designer after merging layers 6–8, D97 from the designer the same evening, and D98–D99 from the first blind playtest.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, D94–D95 from the designer after layer 8, D96 from the designer after merging layers 6–8, D97 from the designer the same evening, D98–D99 from the first blind playtest, and D100–D105 from building story export.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -619,7 +621,13 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D93 | Origins in the DM's brief | Every origin's trait, tags and needs are in the content brief |
 | D94 | Attention (planned) | The world's sustaining force, tracked by code; a set amount per character per day; spent on pushing the world against its grain (like Paradox in Mage: the Ascension, with push-back), remembrance and prayer; details open |
 | D95 | Inspiration | China Miéville's work, especially Perdido Street Station, joins the influences |
-| D96 | Story export (planned) | Players can export their character's story as an artifact of play; it may be told rather than recorded, but reveals nothing the character doesn't know; comes before attention |
+| D96 | Story export | Players can export their character's story as an artifact of play; it may be told rather than recorded, but reveals nothing the character doesn't know; comes before attention |
 | D97 | The city is the DM (theme) | The AI that runs New Vesper is the city itself: attention, forgetting, curated memory and going quiet are how both live. A thematic note, not yet in the DM's prompt |
 | D98 | One action, one roll | At most one `call_for_roll` per turn, and its result stands; the DM re-tells the turn once when sent back, replacing its earlier telling |
 | D99 | One action per prompt | One line, typed after the last answer; input typed during the DM's answer is dropped; multi-line pastes are refused whole; the session and state refuse line breaks and control characters |
+| D100 | Two versions | The record (scenes as seen, one chapter each) and the telling (retold in the character's voice) |
+| D101 | Only what was seen | Built from the narration shown and the player's own actions; hidden state is never read |
+| D102 | The telling | One cheap `story` call against the budget; first person; may shade and skip, invents and explains nothing; the record is free |
+| D103 | Scope | The whole story so far, a Fall included; latest four scenes in full, summaries before, capped at 24,000 characters |
+| D104 | Where and how | Markdown in `stories/`, never overwritten; `/export`, `/export record`; `new-vesper export` for any character, fallen too |
+| D105 | Theirs to keep | Players may edit and share the files; the game never reads them back |

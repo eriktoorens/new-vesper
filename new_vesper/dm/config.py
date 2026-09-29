@@ -15,6 +15,7 @@ class CallType(StrEnum):
     SCENE_SUMMARY = "scene_summary"
     RECAP = "recap"
     NPC_MEMORY = "npc_memory"
+    STORY = "story"  # retelling a character's story for export (D100)
 
 
 @dataclass(frozen=True)
@@ -26,6 +27,8 @@ class DMConfig:
     turn_max_tokens: int = 8000
     turn_effort: str | None = "medium"
     summary_max_tokens: int = 400
+    # A told story runs to about 900 words.
+    story_max_tokens: int = 2500
     # Tool rounds per turn before the model must narrate without tools.
     max_tool_rounds: int = 8
     recent_beats: int = 3

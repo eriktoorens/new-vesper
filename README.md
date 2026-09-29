@@ -74,6 +74,8 @@ In-game commands:
 | `/speak <language>` | Choose which of your languages your character speaks aloud |
 | `/eat`, `/drink` | Buy food or drink where it's sold |
 | `/rest` | Sleep at a haven |
+| `/export` | Save your story as your character would tell it (a small model cost) |
+| `/export record` | Save your story exactly as you saw it (free) |
 | `/go <place>` | Move somewhere in the district, e.g. `/go tarp-row` |
 | `/places` | Places you can go |
 | `/level` | Spend XP on a level |
@@ -95,7 +97,7 @@ Check spending from outside the game with `new-vesper budget`.
 
 ## Where we are, what's next
 
-**Done** (all on this branch, 881 tests passing):
+**Done** (all on this branch, 894 tests passing):
 - Build steps 1–5: the rules engine, the SQLite state, the Market District content, the DM agent with its validated tool contract, and the budget with a usage ledger, caps and allowances.
 - Playtest layers 1–5:
   - fixes from the first playtest
@@ -107,14 +109,14 @@ Check spending from outside the game with `new-vesper budget`.
   - languages: speech in a language your character doesn't know shows as gibberish or a note, a Heart roll gets the gist, and `/speak` picks what you speak aloud
   - bodily needs: hunger, thirst, tiredness, cold and heat wear down stats and, at their worst, cost Harm or Fade; `/eat`, `/drink` and `/rest` ease them
   - setting-native kinds: play a Hearsay (a story walking), a Castoff (a dead brand's mascot) or a Mislaid (a lost thing become someone)
-- Decisions D1–D99 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
+- Exporting your story: `/export` saves it as your character would tell it, `/export record` exactly as you saw it, and `new-vesper export` saves any character's, even one who has fallen. Files go in `stories/`.
+- Decisions D1–D105 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
 
 **Next:**
 1. **Playtest layers 6–8: languages, bodily needs and the new kinds (D76–D93).** Watch whether the DM tags every line and keeps translations out of plain narration, whether the needs' rates feel right, and how the DM plays a hearsay, a castoff or a mislaid.
-2. **Exporting your story (D96):** players can export their character's story as a keepsake of play: told, not logged, and never revealing more than the character knows. Direction set; details open (see "Planned: Exporting Your Story" in `docs/design.md`).
-3. **Attention (D94):** the world's sustaining force, a daily amount per character spent on pushing the world against its grain, remembrance and prayer. Direction set; details open (see "Planned: Attention" in `docs/design.md`).
-4. **Nature and Demeanor**, borrowed from World of Darkness. This is proposed, not decided; the open questions are in `docs/design.md`.
-5. Then multiplayer (D32): a shared city, and a second look at the city-day rule (D29/D50).
+2. **Attention (D94):** the world's sustaining force, a daily amount per character spent on pushing the world against its grain, remembrance and prayer. Direction set; details open (see "Planned: Attention" in `docs/design.md`).
+3. **Nature and Demeanor**, borrowed from World of Darkness. This is proposed, not decided; the open questions are in `docs/design.md`.
+4. Then multiplayer (D32): a shared city, and a second look at the city-day rule (D29/D50).
 
 **Open question, high priority:** D10, who a favor is owed to. The player should understand where a debt accrues and have some choice in it. See the open questions in `docs/design.md`.
 
