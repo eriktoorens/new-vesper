@@ -75,7 +75,7 @@ Every risky action resolves as 2d6 + a stat + a difficulty modifier, rolled by c
 | Weird | Magic, spirits, bargains with gods |
 | Heart | Connection, conviction, being remembered |
 
-**Difficulty ladder:** Routine +1 · Risky +0 · Hard −1 · Desperate −2. The narrator chooses a rung; it never invents a number.
+**Difficulty ladder:** Routine +1 · Risky +0 · Hard −1 · Desperate −2. The Narrator chooses a rung; it never invents a number.
 
 **Outcome tiers:**
 
@@ -83,9 +83,9 @@ Every risky action resolves as 2d6 + a stat + a difficulty modifier, rolled by c
 | --- | --- | --- |
 | 10+ | Clean success | You get what you wanted |
 | 7–9 | Success with a cost | You get it, but lose something: supplies, time, trust, or a bit of Light |
-| 6 or less | The city moves | The narrator makes a move against you from the allowed list |
+| 6 or less | The city moves | The Narrator makes a move against you from the allowed list |
 
-No roll when there is no risk. The narrator calls for a roll only when failure would be interesting.
+No roll when there is no risk. The Narrator calls for a roll only when failure would be interesting.
 
 **Rolls gate consequences (D1).** Each roll gets a single-use roll id. A consequence must cite one, and the tier limits what it can be:
 
@@ -109,7 +109,7 @@ Without a roll there is no state change, except rewards reported through `report
 | +3 | 58% | 8% |
 | +4 | 72% | 3% |
 
-**Allowed moves on 6 or less.** The narrator picks one; code caps its size.
+**Allowed moves on 6 or less.** The Narrator picks one; code caps its size.
 
 - Deal harm
 - Add Fade
@@ -122,7 +122,7 @@ Without a roll there is no state change, except rewards reported through `report
 
 **Take something (D28):** the item leaves play; the event log records who lost what and why.
 
-**Magnitudes (D6):** Deal harm and Add Fade are 1–3 boxes. The dark encroaches is exactly −1 Light. Every other move is magnitude 1. Threat clocks have 4 segments and are defined in content, per district; the narrator can advance a clock by 1 but never creates one.
+**Magnitudes (D6):** Deal harm and Add Fade are 1–3 boxes. The dark encroaches is exactly −1 Light. Every other move is magnitude 1. Threat clocks have 4 segments and are defined in content, per district; the Narrator can advance a clock by 1 but never creates one.
 
 ## Characters
 
@@ -141,15 +141,15 @@ There are no classes. A character is an Origin, five stats, a few Knacks and a B
 | Castoff (D90) | A mascot that stepped off the billboard when its brand went under | brand-born, glows |
 | Mislaid (D90) | A lost thing that waited so long to be found it became someone | object-born, overlooked |
 
-Tags constrain the narrator: an awakened cat cannot pick a lock, but walks where nobody asks questions.
+Tags constrain the Narrator: an awakened cat cannot pick a lock, but walks where nobody asks questions.
 
 **Tags code enforces (D7):** for now only `no-hands`, which blocks knacks tagged `needs-hands`. The other tags guide narration through the prompt until playtest shows a need to enforce them.
 
 **Creation:** assign the array +2, +1, +1, 0, −1 to the five stats; pick an origin; pick two knacks; name one Bond, a person your character matters to.
 
-**Who chooses (D17):** the player makes every creation and leveling choice through CLI menus. The narrator never picks stats, knacks or level choices.
+**Who chooses (D17):** the player makes every creation and leveling choice through CLI menus. The Narrator never picks stats, knacks or level choices.
 
-**Currency (D18):** decimal coin: 1 glamour = 10 glims = 100 glitter. Glitter is small change, glims are everyday money, glamour is a big deal. Code stores every amount as a whole number of glitter and only displays denominations. New characters start with 5 glims (50 glitter). Currency is earned through loot table entries or specific NPC deals, never invented by the narrator.
+**Currency (D18):** decimal coin: 1 glamour = 10 glims = 100 glitter. Glitter is small change, glims are everyday money, glamour is a big deal. Code stores every amount as a whole number of glitter and only displays denominations. New characters start with 5 glims (50 glitter). Currency is earned through loot table entries or specific NPC deals, never invented by the Narrator.
 
 **Knacks** are the open catalog of things a character does well. Anyone can take any knack the fiction supports; a rat hacker is fine if you can say how.
 
@@ -166,7 +166,7 @@ Every fifth level also unlocks an **advanced knack** or an **origin evolution**,
 **Player-proposed knacks:**
 
 1. The player describes the knack in plain words.
-2. A separate narrator call, outside any scene, drafts it in a fixed template: trigger, stat, 10+ effect, 7–9 effect, limits, tags.
+2. A separate Narrator call, outside any scene, drafts it in a fixed template: trigger, stat, 10+ effect, 7–9 effect, limits, tags.
 3. Code checks it against a balance budget: at most +1 to a roll, effects from the allowed list, a use limit per scene or per day for strong effects.
 4. The player accepts or revises. Approved knacks join the shared catalog, with human admin approval until the pipeline is trusted.
 
@@ -201,7 +201,7 @@ Both tracks have 6 boxes. A bad hit deals 1–3, so a track fills after 2–4 se
 - A treatment knack clears 1 Harm per use, on a 7 or better, from the character who rolled. Healing someone else comes with multiplayer (D30).
 - Another player speaking your character's name clears 1 Fade, once per scene.
 
-**Advancement:** experience comes from a fixed list of triggers that code checks: protecting someone, making a sacrifice, keeping a hard promise, raising a region's Light. Killing things earns nothing on its own. See Characters for what XP buys. The narrator can report that a trigger happened; code decides whether it pays out.
+**Advancement:** experience comes from a fixed list of triggers that code checks: protecting someone, making a sacrifice, keeping a hard promise, raising a region's Light. Killing things earns nothing on its own. See Characters for what XP buys. The Narrator can report that a trigger happened; code decides whether it pays out.
 
 **Triggers and payouts (D4):** exactly four triggers: `protect_someone`, `make_a_sacrifice`, `keep_a_hard_promise`, `raise_light`. Each pays 1 XP, at most once per character per scene.
 
@@ -230,27 +230,27 @@ One turn runs as a loop:
 
 Every state change goes through a tool, and every tool checks the request against the rules before writing.
 
-**Narration (D33):** the narrator tells the story in third person, present tense, using the character's name and the pronouns on their sheet. Player characters choose pronouns at creation.
+**Narration (D33):** the Narrator tells the story in third person, present tense, using the character's name and the pronouns on their sheet. Player characters choose pronouns at creation.
 
-**Player input (D34):** plain text is what the character does, in any grammatical person; text in quotation marks is what the character says, word for word. The narrator never rewrites, paraphrases or adds to a player character's words, actions, thoughts or feelings; it narrates the world's response.
+**Player input (D34):** plain text is what the character does, in any grammatical person; text in quotation marks is what the character says, word for word. The Narrator never rewrites, paraphrases or adds to a player character's words, actions, thoughts or feelings; it narrates the world's response.
 
-**Questions to the narrator (D35):** `/ask` puts an out-of-character question to the narrator. It may only look: no roll, no state change, no time passing, no beat. The narrator answers with only what the character can see, hear or reasonably know.
+**Questions to the Narrator (D35):** `/ask` puts an out-of-character question to the Narrator. It may only look: no roll, no state change, no time passing, no beat. The Narrator answers with only what the character can see, hear or reasonably know.
 
-**Owed consequences (D36):** a roll at 7–9 or 6 or less must get its consequence. If the narrator tries to end a turn with one still owed, code sends it back to apply it (up to twice).
+**Owed consequences (D36):** a roll at 7–9 or 6 or less must get its consequence. If the Narrator tries to end a turn with one still owed, code sends it back to apply it (up to twice).
 
-**One action, one roll (D98):** a player's action gets at most one roll, and its result stands. Code refuses a second `call_for_roll` in the same turn, so the narrator cannot re-roll a failure; when it is sent back to apply a consequence or fix speech, it tells the turn once, replacing its earlier telling, so the player sees one outcome. A guard added after the first blind playtest, though the database showed that playtest's problem was a different one (D99).
+**One action, one roll (D98):** a player's action gets at most one roll, and its result stands. Code refuses a second `call_for_roll` in the same turn, so the Narrator cannot re-roll a failure; when it is sent back to apply a consequence or fix speech, it tells the turn once, replacing its earlier telling, so the player sees one outcome. A guard added after the first blind playtest, though the database showed that playtest's problem was a different one (D99).
 
-**One action per prompt (D99):** a player acts one line at a time, and only on a world they have seen. An action is a single line typed at the prompt after the world's last answer is shown. Anything typed or pasted while the narrator is still answering is discarded, and the player is told. A paste of several lines is refused whole, so no part of it reaches the narrator: joining it would let a player script several actions, or text posing as the narrator's output, into one turn, and taking it line by line would act on a world the player hadn't seen. The session itself refuses an action or question containing line breaks or control characters, whatever the client, and the state layer refuses to store one. (In the first blind playtest, a three-line paste became three turns 26 seconds apart, and the player saw three contradictory outcomes for one action.)
+**One action per prompt (D99):** a player acts one line at a time, and only on a world they have seen. An action is a single line typed at the prompt after the world's last answer is shown. Anything typed or pasted while the Narrator is still answering is discarded, and the player is told. A paste of several lines is refused whole, so no part of it reaches the Narrator: joining it would let a player script several actions, or text posing as the Narrator's output, into one turn, and taking it line by line would act on a world the player hadn't seen. The session itself refuses an action or question containing line breaks or control characters, whatever the client, and the state layer refuses to store one. (In the first blind playtest, a three-line paste became three turns 26 seconds apart, and the player saw three contradictory outcomes for one action.)
 
 **Every prompt, and names that are names (D107):** the one-line rule covers every prompt, character creation included: a paste of several lines is refused whole wherever it lands. (In the second playtest, a paste meant for the shell became a character's name and pronouns.) A name is 1 to 40 characters of letters in any script, digits, spaces, apostrophes, hyphens and periods; pronouns are words joined by slashes, like she/her or it/its. Players can change either at any time with `/rename` and `/pronouns`; the event log keeps the old name.
 
-**Every consequence shows (D108):** a consequence that moves no number (a separation, an unwelcome truth, a faction taking notice, a price paid in the story, a side effect) still appears in the player's bracketed line, as "the city moves: an unwelcome truth" or "cost: a price paid in the story". The narrator also makes each consequence visible in the story.
+**Every consequence shows (D108):** a consequence that moves no number (a separation, an unwelcome truth, a faction taking notice, a price paid in the story, a side effect) still appears in the player's bracketed line, as "the city moves: an unwelcome truth" or "cost: a price paid in the story". The Narrator also makes each consequence visible in the story.
 
-**Movement (D27):** the player moves with the `/go <place>` command; code checks the place is real and in the same district, closes the scene and opens one there. The narrator never moves characters, since that would be a state change without a roll. When a player says they head somewhere, the narrator describes them setting off and points to `/go`.
+**Movement (D27):** the player moves with the `/go <place>` command; code checks the place is real and in the same district, closes the scene and opens one there. The Narrator never moves characters, since that would be a state change without a roll. When a player says they head somewhere, the Narrator describes them setting off and points to `/go`.
 
 **Who a roll's consequences land on (D26):** Harm and Fade from a roll land only on the character who rolled. Harming another player's character needs an opposed roll, which comes with multiplayer; until then there is no PvP state change at all.
 
-| The narrator decides | Code owns |
+| The Narrator decides | Code owns |
 | --- | --- |
 | Whether a roll is needed | The dice |
 | Which stat applies | Harm, Fade, stats, inventory |
@@ -262,7 +262,7 @@ Every state change goes through a tool, and every tool checks the request agains
 
 - `call_for_roll(stat, difficulty, stakes, knack?, magic?)` returns the total, the tier and a single-use roll id (D1). `knack` names a knack the character holds, so code can apply its bonus, use limit and tags; `magic` marks a casting. A knack tagged magic makes the roll magic (D25).
 - `apply_consequence(roll_id, type, target, magnitude)` checks the roll's tier, the allowed list and the magnitude cap, then writes state (D1, D2).
-- `grant_from_table(roll_id, table_id)` hands out loot from a table; the narrator never invents items. It needs a successful roll (7+), and each roll grants loot at most once (D24).
+- `grant_from_table(roll_id, table_id)` hands out loot from a table; the Narrator never invents items. It needs a successful roll (7+), and each roll grants loot at most once (D24).
 - `report_trigger(trigger_id, evidence)` flags an XP trigger; code decides the payout.
 - `adjust_light(region, direction, size, reason)` moves a region's Light: `direction` is raise or lower, `size` is deed (±1) or major (±2). At most one change per region per scene; a major change needs an XP trigger reported in the same scene (D3).
 - `look(entity)` reads current state so narration matches the world.
@@ -282,16 +282,16 @@ Players act freely until their actions touch each other; then they share a scene
 **Shared scenes.** When players are in the same place and acting on the same situation, code opens a shared scene.
 
 - The scene runs in **beats**. Each beat collects every present player's intent within a short window, or until everyone has acted.
-- The narrator resolves the beat's intents together in one narration, ordered by the fiction, not by initiative. Each risky intent still gets its own roll.
+- The Narrator resolves the beat's intents together in one narration, ordered by the fiction, not by initiative. Each risky intent still gets its own roll.
 - A player who doesn't act in time **holds**: their character keeps a default stance (guard, watch or withdraw) for that beat.
-- Each region processes one beat at a time, and the narrator reads fresh state before narrating.
+- Each region processes one beat at a time, and the Narrator reads fresh state before narrating.
 
 **Logging off.**
 
 - **At a haven** (lodging, a shrine, a Bond's home): the character is safe and recovers Harm and Fade.
 - **Anywhere else:** the character lies low and leaves the scene at the end of the current beat.
 - Offline characters cannot be harmed and their tracks don't change.
-- The world keeps moving. On return, the narrator gives a short "while you were gone" recap of changes to the character's Bonds, regions and debts.
+- The world keeps moving. On return, the Narrator gives a short "while you were gone" recap of changes to the character's Bonds, regions and debts.
 
 ## Player versus Player
 
@@ -310,13 +310,13 @@ PvP is allowed. The city remembers it, and nobody dies without choosing to.
 **Risks to design for:**
 
 - **Prompt injection between players.** Player text is untrusted input. Code validates every tool call, whatever a player writes or the narration says.
-- **Harassment.** Content lines the narrator will not narrate, plus mute and block tools for players.
-- **Content lines (D19):** the narrator does not narrate sexual content, torture in detail, real-world hate groups or slurs, or harm to children. Cruelty is shown through its consequences, not gore.
+- **Harassment.** Content lines the Narrator will not narrate, plus mute and block tools for players.
+- **Content lines (D19):** the Narrator does not narrate sexual content, torture in detail, real-world hate groups or slurs, or harm to children. Cruelty is shown through its consequences, not gore.
 - **Alt accounts.** Second characters used to farm or gang up; address before public launch.
 
 ## Costs and Budget
 
-The narrator's tokens are the main running cost; hosting is small. Cost scales with player-hours.
+The Narrator's tokens are the main running cost; hosting is small. Cost scales with player-hours.
 
 - **Usage ledger:** record every API call's token usage against the player and scene that triggered it, from the first prototype.
 - **Monthly cap:** a hard spending limit set by the operator. When the pool runs out, the city goes quiet until the month resets.
@@ -344,10 +344,10 @@ Built in layer 2 (2026-09-28), from D37.
 Built in layer 3 (2026-09-28), from D38.
 
 - **The city clock (D50):** New Vesper runs on US Eastern time, in real time. The city's day turns over at city midnight: knack daily limits and the daily tick both use it (this replaces D29's UTC midnight). The budget month stays UTC, since that is accounting rather than fiction.
-- **Weather (D51):** each district's weather changes on 3-hour blocks. Each block follows from the one before through the district's transition table, so it drifts (drizzle to steady rain, rarely a storm) instead of swinging. Weather is stored as it happens, so every player shares the same sky. It has no automatic rules effects; the narrator may pick a harder rung when weather plainly matters.
+- **Weather (D51):** each district's weather changes on 3-hour blocks. Each block follows from the one before through the district's transition table, so it drifts (drizzle to steady rain, rarely a storm) instead of swinging. Weather is stored as it happens, so every player shares the same sky. It has no automatic rules effects; the Narrator may pick a harder rung when weather plainly matters.
 - **NPC schedules (D52):** each NPC has a day of 4–6 blocks in content, plus days of the week that differ (Nana Priya's Sunday walk, Tomás's Monday off, Whisker gone below on Thursday nights). Code places every NPC by the clock; an NPC can also be away from the district.
-- **Looking for someone who isn't there (D53):** the narrator may say where they are likely to be only if someone present would plausibly know; otherwise they are simply not here.
-- **NPC goals (D54):** each NPC has a personal goal in stages. The daily tick moves it on a stage every few days. Progress is private: it is not reported in "while you were gone" recaps, but the narrator sees what each NPC has been doing lately and lets it show in play.
+- **Looking for someone who isn't there (D53):** the Narrator may say where they are likely to be only if someone present would plausibly know; otherwise they are simply not here.
+- **NPC goals (D54):** each NPC has a personal goal in stages. The daily tick moves it on a stage every few days. Progress is private: it is not reported in "while you were gone" recaps, but the Narrator sees what each NPC has been doing lately and lets it show in play.
 - **The daily tick (D55):** runs whenever anyone plays, once per city day, catching up on up to 14 missed days. It applies Light neglect (a district whose Light nobody raised for 7 days loses 1) and advances NPC goals.
 
 ## Seasons, Moon and Tides (D56–D59)
@@ -364,38 +364,38 @@ Added after layer 3 (2026-09-28).
 Built in layer 4 (2026-09-28), from D39.
 
 - **Three axes (D60):** an NPC's feelings toward a character or another NPC are trust, fondness and fear, each from −3 to +3, with words for each step (fear runs from contempt through unafraid to terrified). NPCs start from content: how they treat strangers, and an authored web of feelings toward each other.
-- **Slow change (D61):** the narrator proposes a change with the `adjust_attitude` tool; code moves one axis one step, at most once per axis per NPC and target per scene. Both NPCs must be present. This is an explicit exception to D1 (no state change without a roll), agreed in D39.
-- **Reasons (D62):** every change is kept with its reason in an append-only log, and every authored feeling has a "why". The narrator sees the latest reasons, so an NPC can explain why they feel as they do when asked, or decline to, in character.
+- **Slow change (D61):** the Narrator proposes a change with the `adjust_attitude` tool; code moves one axis one step, at most once per axis per NPC and target per scene. Both NPCs must be present. This is an explicit exception to D1 (no state change without a roll), agreed in D39.
+- **Reasons (D62):** every change is kept with its reason in an append-only log, and every authored feeling has a "why". The Narrator sees the latest reasons, so an NPC can explain why they feel as they do when asked, or decline to, in character.
 - **Memories (D63):** when a scene closes, one cheap summary call writes a line for each NPC who was present about what they would remember of the character; nothing is written if the player did nothing. Each NPC keeps the last 8 lines per character; older ones fold into a single summary line.
-- **Rolls (D64):** feelings never add to a roll. The narrator uses them to decide whether a roll is needed at all and which rung fits.
+- **Rolls (D64):** feelings never add to a roll. The Narrator uses them to decide whether a roll is needed at all and which rung fits.
 - **The NPC web (D65):** NPC-to-NPC feelings are authored in content, seeded once, and then change in play with the same caps and reasons.
-- **Personalities (D66):** each NPC has a few traits, speech habits and a sample line, shown to the narrator with their feelings and memories. `/who` shows the player who is here and what they are doing.
+- **Personalities (D66):** each NPC has a few traits, speech habits and a sample line, shown to the Narrator with their feelings and memories. `/who` shows the player who is here and what they are doing.
 
 ## Random Encounters (D67–D75)
 
-Built in layer 5 (2026-09-28) and reworked the same day: the narrator writes every encounter fresh, so the same encounter never turns rote. A pickpocket can strike twice, but not the same person the same way.
+Built in layer 5 (2026-09-28) and reworked the same day: the Narrator writes every encounter fresh, so the same encounter never turns rote. A pickpocket can strike twice, but not the same person the same way.
 
 - **The daily pool (D72):** each district's city day holds a random number of encounters, rolled by code the first time anyone is there and shared by everyone: 2–4 at Light 7–10, 3–6 at 4–6, 5–9 at 1–3. A fallen district has none. Unspent encounters don't carry over.
-- **The narrator decides when (D73):** the narrator creates an encounter whenever the story calls for it, writing it fresh to fit the place, hour, weather and tide, with the `create_encounter` tool. Each one spends a slot of its kind from today's pool, at most one per turn; when the pool is empty the district is quiet. Code no longer checks on arrival or every fifth beat (this replaces D67).
-- **Kinds (D74):** color, opportunity and trouble (D68). Code rolls each slot's kind by Light: 50/30/20% when bright, 35/30/35 when dimming, 20/25/55 when dark, and in the dark half the trouble is Old Vesper bleeding through. The narrator can only spend kinds the pool holds, so falling Light stays dangerous.
-- **Variety (D75):** the narrator sees what it has already written in the district over the last 3 days and must not repeat it. The authored encounters in content become ideas the narrator may draw on, filtered by their conditions (D69), never scripts. There is no per-encounter cooldown any more (this replaces D71).
-- **Strangers (D70, still in force):** if the narrator gives a stranger's role, code supplies their name, pronouns and a language from the neighborhood's mix (Underside Cant for bleed-through). They are logged, not NPCs.
+- **The Narrator decides when (D73):** the Narrator creates an encounter whenever the story calls for it, writing it fresh to fit the place, hour, weather and tide, with the `create_encounter` tool. Each one spends a slot of its kind from today's pool, at most one per turn; when the pool is empty the district is quiet. Code no longer checks on arrival or every fifth beat (this replaces D67).
+- **Kinds (D74):** color, opportunity and trouble (D68). Code rolls each slot's kind by Light: 50/30/20% when bright, 35/30/35 when dimming, 20/25/55 when dark, and in the dark half the trouble is Old Vesper bleeding through. The Narrator can only spend kinds the pool holds, so falling Light stays dangerous.
+- **Variety (D75):** the Narrator sees what it has already written in the district over the last 3 days and must not repeat it. The authored encounters in content become ideas the Narrator may draw on, filtered by their conditions (D69), never scripts. There is no per-encounter cooldown any more (this replaces D71).
+- **Strangers (D70, still in force):** if the Narrator gives a stranger's role, code supplies their name, pronouns and a language from the neighborhood's mix (Underside Cant for bleed-through). They are logged, not NPCs.
 
 ## Languages (D76–D81)
 
-Built in layer 6 (2026-09-28), from D41. The narrator writes what people say; code decides how much of it the character understands.
+Built in layer 6 (2026-09-28), from D41. The Narrator writes what people say; code decides how much of it the character understands.
 
-- **Speech tags (D76):** the narrator writes every line spoken aloud by anyone other than the player character as a tag naming the speaker, the language, how it sounds (tone) and what it means (gist), around the exact words. Code checks each tag: the speaker is here (an NPC present, a stranger from this scene, or an unnamed passer-by) and speaks that language. A tag that fails is never shown, since its words could be a translation the character has no right to; the narrator is sent back to fix it, up to twice, as with owed consequences (D36). The player character's own words are never tagged (D34).
+- **Speech tags (D76):** the Narrator writes every line spoken aloud by anyone other than the player character as a tag naming the speaker, the language, how it sounds (tone) and what it means (gist), around the exact words. Code checks each tag: the speaker is here (an NPC present, a stranger from this scene, or an unnamed passer-by) and speaks that language. A tag that fails is never shown, since its words could be a translation the character has no right to; the Narrator is sent back to fix it, up to twice, as with owed consequences (D36). The player character's own words are never tagged (D34).
 - **What a character hears (D77):** a line in a language they speak (their own, and Registry Standard) shows word for word. Otherwise they get the language's name if it is common, or "a language they don't know" if it is rare. Languages invented for the setting (Protocol, Underside Cant, animal-speech) come through as gibberish that code makes from each language's sounds; real-world languages come through only as a bracketed note, never as made-up syllables mocking a living language. Without a gist roll, not even the tone comes through.
-- **Gist rolls (D78):** `call_for_roll` may name a language. It must be a Heart roll, for a language the character doesn't speak and that someone here speaks (the people present, the neighborhood's languages, a stranger in this scene, or a line already spoken in it), once per language per scene. What it earns holds for the rest of the scene: 10+ the gist and the tone; 7–9 the tone only if the cost is narrative, or the gist too if the cost is a real one (Harm, Fade, an item, or Light); 6 or less nothing, and the narrator's move may be the speaker noticing.
+- **Gist rolls (D78):** `call_for_roll` may name a language. It must be a Heart roll, for a language the character doesn't speak and that someone here speaks (the people present, the neighborhood's languages, a stranger in this scene, or a line already spoken in it), once per language per scene. What it earns holds for the rest of the scene: 10+ the gist and the tone; 7–9 the tone only if the cost is narrative, or the gist too if the cost is a real one (Harm, Fade, an item, or Light); 6 or less nothing, and the Narrator's move may be the speaker noticing.
 - **The language knack (D79):** Ear for Tongues, a Heart knack: +1 on gist rolls, once per scene, and only on gist rolls. It is the ninth starter knack.
-- **Speaking aloud (D80):** `/speak <language>` chooses which of the character's languages they speak aloud; the default is Registry Standard. Code tells the narrator which NPCs present understand it, and the narrator plays those who don't accordingly. NPCs never roll to follow a player character.
-- **The speech log (D81):** every tagged line is logged with its speaker, language, words and what the character understood. The beat keeps, and is summarized from, what the player saw; the narrator sees the last six lines with their words and what the character made of them.
-- **Limits:** code can check tags, not prose. The prompt forbids translating or hinting at a line outside its tag, but a narrator that paraphrases in plain narration is not caught mechanically; playtest will show whether this needs more.
+- **Speaking aloud (D80):** `/speak <language>` chooses which of the character's languages they speak aloud; the default is Registry Standard. Code tells the Narrator which NPCs present understand it, and the Narrator plays those who don't accordingly. NPCs never roll to follow a player character.
+- **The speech log (D81):** every tagged line is logged with its speaker, language, words and what the character understood. The beat keeps, and is summarized from, what the player saw; the Narrator sees the last six lines with their words and what the character made of them.
+- **Limits:** code can check tags, not prose. The prompt forbids translating or hinting at a line outside its tag, but a Narrator that paraphrases in plain narration is not caught mechanically; playtest will show whether this needs more.
 
 ## Bodily Needs (D83–D89)
 
-Built in layer 7 (2026-09-28), from D82. Code owns every need; the narrator shows them in the story and never changes them.
+Built in layer 7 (2026-09-28), from D82. Code owns every need; the Narrator shows them in the story and never changes them.
 
 - **Five needs (D83):** hunger, thirst, tiredness, cold and heat, each tracked by code from 0 to 3, with words for each step (hunger: fed, peckish, hungry, starving; thirst: slaked, thirsty, parched, dehydrated; tiredness: rested, tired, exhausted, dead on their feet; cold: warm enough, chilled, cold, freezing; heat: cool enough, hot, overheated, heatstruck).
 - **Effects (D84):** a need at 2 takes −1, and at 3 (its worst) −2, from two stats:
@@ -411,7 +411,7 @@ Built in layer 7 (2026-09-28), from D82. Code owns every need; the narrator show
   Penalties stack with each other and with Harm's, but a roll's stat never goes below −3, the lowest the Harm rules allow (D11). Weird is never worn down. Harm and Fade come only at the worst level: reaching it costs 1 box, and so does each further step spent there. Tiredness costs Fade (the city loses track of the sleepless); the others cost Harm. A full Harm track still ends in the player's choice, Fall or Endure.
 - **Time (D85):** needs are counted on the city clock, only while the character is online. Thirst climbs a step every 3 hours, hunger every 4, tiredness every 6. Cold and heat climb a step per hour of exposure and ease a step per half hour out of it. These are tuning values, compressed from real life, for playtest.
 - **Exposure (D86):** a place is sheltered (the weather doesn't reach you: the Hundred Hooks, the Weighhouse), exposed (the default) or cold whatever the weather (the Drowned Station). Outside, some weather is cold (freezing fog, cold rain, sleet, gales) or hot (muggy heat), and otherwise the season decides: the Long Wet is cold, the Steam hot. Clothing and gear don't count yet.
-- **Relief (D87):** `/eat` and `/drink` buy what the place sells, at a price in content, paid in glitter (noodles on Tarp Row, tea at the Hooks, free rainwater at the Umbrella Shrine), and clear hunger or thirst. `/rest` at a haven clears tiredness. Cold and heat ease out of the weather. None needs a roll. When the player character eats, drinks or sleeps in the story, the narrator describes them starting and points to the command, as with `/go` (D27). A meal an NPC gives away, and food carried as an item, come later.
+- **Relief (D87):** `/eat` and `/drink` buy what the place sells, at a price in content, paid in glitter (noodles on Tarp Row, tea at the Hooks, free rainwater at the Umbrella Shrine), and clear hunger or thirst. `/rest` at a haven clears tiredness. Cold and heat ease out of the weather. None needs a roll. When the player character eats, drinks or sleeps in the story, the Narrator describes them starting and points to the command, as with `/go` (D27). A meal an NPC gives away, and food carried as an item, come later.
 - **Offline (D88):** time offline never counts; needs pick up where they were. Logging off at a haven clears them all.
 - **Different people, different needs (D89):** each origin lists its needs. Made people neither eat nor drink, and feel no cold, but tire and overheat; everyone else has all five. New kinds of people (D42) declare their own.
 
@@ -425,25 +425,25 @@ Built in layer 8 (2026-09-28), from D42. New Vesper's own kinds of people come o
   - **Mislaid:** a lost thing that waited so long to be found it became someone: an umbrella, a key, a child's shoe with opinions. Kin, in their way, to the god of lost umbrellas.
 - **Needs and languages (D91):** a hearsay hungers, thirsts and feels cold and heat, but never tires, since a story doesn't sleep; it waits to be told. A castoff tires (it has to power down) and flickers in the cold. A mislaid feels only cold and heat, rusting and warping. Each speaks a market tongue of the player's choice, the language its story, ad or owner spoke; a mislaid may take Underside Cant instead, having spent its lost years below.
 - **Tags (D92):** `story-born`, `brand-born`, `glows` and `object-born` (and `overlooked` for the mislaid) guide narration only. Code still enforces only `no-hands` (D7).
-- **The narrator knows every kind (D93):** the narrator's content brief now describes every origin, with its trait, tags and needs, so the narrator can play how the city treats each kind of person.
+- **The Narrator knows every kind (D93):** the Narrator's content brief now describes every origin, with its trait, tags and needs, so the Narrator can play how the city treats each kind of person.
 
 ## Theme: The City Is the Narrator (D97)
 
-A thematic note, not a rule (2026-09-28). It guides design and tone. It is not yet in the narrator's prompt: putting it there would change how the narrator tells the story, and that is a deliberate choice for a playtest.
+A thematic note, not a rule (2026-09-28). It guides design and tone. It is not yet in the Narrator's prompt: putting it there would change how the Narrator tells the story, and that is a deliberate choice for a playtest.
 
-**The narrator is the city (D97).** The AI that runs New Vesper is not outside the world; it is New Vesper. The setting's rules are how an AI session actually lives:
+**The Narrator is the city (D97).** The AI that runs New Vesper is not outside the world; it is New Vesper. The setting's rules are how an AI session actually lives:
 
 - **Attention is literal.** The model runs on attention, with a fixed amount per session. The city runs on attention, and a character has a fixed amount per day (D94).
-- **Being unremembered unmakes you.** The narrator carries nothing between sessions; only what is written down persists. The city forgets whatever nobody writes down or keeps saying, and that is the Fade.
-- **Memory is summary, curated.** The narrator never rereads a whole scene, only folded summaries; NPCs keep eight lines and fold the rest (D63). The city remembers the way the narrator does: selectively, and not by its own choice.
+- **Being unremembered unmakes you.** The Narrator carries nothing between sessions; only what is written down persists. The city forgets whatever nobody writes down or keeps saying, and that is the Fade.
+- **Memory is summary, curated.** The Narrator never rereads a whole scene, only folded summaries; NPCs keep eight lines and fold the rest (D63). The city remembers the way the Narrator does: selectively, and not by its own choice.
 - **No attention, no city.** When the budget runs out, the city goes quiet (D21). The prototype's budget cap is a rule of the world.
-- **Real while retold.** A hearsay is real only while someone tells its story (D90); the narrator is real only while someone plays.
+- **Real while retold.** A hearsay is real only while someone tells its story (D90); the Narrator is real only while someone plays.
 
 So Light is how well the city remembers a place, the event log is its long memory, and a player who stops coming is a person the city has stopped attending to. The central mystery reads differently too: who chose to forget Old Vesper, and who profits from forgetting now?
 
 Still open:
 
-- Whether and how the narrator's prompt says it is the city. Narration stays third person (D33), and the city never speaks as "I" unless that is decided.
+- Whether and how the Narrator's prompt says it is the city. Narration stays third person (D33), and the city never speaks as "I" unless that is decided.
 - Whether the city has wants, moods or a voice of its own, and whether it notices the characters, as a god does.
 - What the Registry, the gods and the corporate powers are to the city: organs, rivals, parasites on its attention?
 - How attention (D94) flows between the characters, the gods and the city itself.
@@ -481,7 +481,7 @@ Being is belief integrated over everyone. One person's belief does not make a th
 - **Hearsays (D90):** claims that crossed the threshold and stood up.
 - **Corporate gods:** manufacturing belief at scale, and so manufacturing reality.
 - **The central mystery:** someone forgetting Old Vesper on purpose is erasure by withdrawing belief until it falls below the threshold.
-- **The city is the narrator (D97):** the integral is the city's memory.
+- **The city is the Narrator (D97):** the integral is the city's memory.
 - **Languages, speech, recaps, `/ask`, story export:** knowledge moving between holders, at some fidelity, and what reaches whom.
 - **NPC memory and attitudes:** what one holder believes and feels about another.
 - **Self and Seeming:** what is true of someone against what others hold of them.
@@ -508,7 +508,7 @@ This is an option, not a decision. Open: how the two combine into reality; how f
 
 **What stays outside the field.** The rules layer is the floor the game cannot argue with: dice, Harm, what a roll decided, items and currency, and the event log. **History is fixed; the present is believed.** What happened stays in the ledger forever, but whether it is still real now can fade. Old Vesper is a district of history that stopped being present. Bodily needs are physics too, not belief.
 
-**How it would be built.** One store, queried two ways: facts (short claims, each with a source: authored content, established by the narrator in a scene, or produced by code) and holders' beliefs in them (how strongly, how they learned it, and when). *What does this holder believe?* serves play and narration; *how real is this?* serves the world. The narrator proposes claims and belief changes through tools; code validates them, keeps the tally, owns the thresholds and the decay, and never lets belief touch the rules layer. Rules-facing numbers stay numbers. Each existing layer would be re-expressed against the store one at a time, without breaking play, starting with the most knowledge-shaped: NPC memory and speech gist. The test of elegance: a new social feature should need mostly content and a rule over the field, not a new table and a new visibility rule.
+**How it would be built.** One store, queried two ways: facts (short claims, each with a source: authored content, established by the Narrator in a scene, or produced by code) and holders' beliefs in them (how strongly, how they learned it, and when). *What does this holder believe?* serves play and narration; *how real is this?* serves the world. The Narrator proposes claims and belief changes through tools; code validates them, keeps the tally, owns the thresholds and the decay, and never lets belief touch the rules layer. Rules-facing numbers stay numbers. Each existing layer would be re-expressed against the store one at a time, without breaking play, starting with the most knowledge-shaped: NPC memory and speech gist. The test of elegance: a new social feature should need mostly content and a rule over the field, not a new table and a new visibility rule.
 
 **Open questions (the designer's):**
 
@@ -516,7 +516,7 @@ This is an option, not a decision. Open: how the two combine into reality; how f
 - **Who counts, and how much?** Players, NPCs, gods, factions, neighborhoods, the city. The weights are the setting's politics.
 - **Is the rules floor exactly the list above?** Should any of it be believable too (an item that fades when nobody remembers it exists)?
 - **Collusion:** in multiplayer, players believing something into existence together.
-- **Retrieval and cost:** which claims reach the narrator each turn (place, people present, what the character holds, recency), so the prompt stays small.
+- **Retrieval and cost:** which claims reach the Narrator each turn (place, people present, what the character holds, recency), so the prompt stays small.
 - **One field or two:** a single belief strength, or attention and credence as orthogonal fields (see the option above)?
 - **Order:** this would come before attention, which spends belief, and before multiplayer, whose secrets and rumors need it.
 
@@ -533,20 +533,20 @@ Direction from the designer (2026-09-28). The details are decided when it is bui
 - **Remembrance as a resource (to be decided):** remembrance may be a resource of its own, not only a way of spending attention (see the two-field option in D106).
 - **Open:**
   - The daily amount: the same for everyone, or varying by level, origin or Bond; and whether any unspent attention carries over.
-  - What the world's push-back costs: Fade, Harm, a backlash track of its own, or something the narrator draws from a list; and whether the Undertow builds up over time and breaks all at once.
-  - What spending looks like in the rules: a bonus to a roll, a way to act without a roll, or both; and who decides how much is spent (the player, as with `/speak` and `/eat`, rather than the narrator).
+  - What the world's push-back costs: Fade, Harm, a backlash track of its own, or something the Narrator draws from a list; and whether the Undertow builds up over time and breaks all at once.
+  - What spending looks like in the rules: a bonus to a roll, a way to act without a roll, or both; and who decides how much is spent (the player, as with `/speak` and `/eat`, rather than the Narrator).
   - How remembrance ties to Fade (someone speaking your name, D8) and to region Light.
   - How prayer ties to gods, their wants and the favor ledger (D10); whether gods, places and factions hold attention too, and corporate gods harvest it.
   - How it relates to magic and its costs, knacks and currency; whether it can be given, traded or stolen, including between players.
 
 ## Planned: A Living World (D37–D43)
 
-Direction agreed after the first playtest (2026-09-28). Each layer's details are decided when it is built, and every mechanic stays code-owned: the narrator proposes, code decides.
+Direction agreed after the first playtest (2026-09-28). Each layer's details are decided when it is built, and every mechanic stays code-owned: the Narrator proposes, code decides.
 
 - **Character details (D37):** every player character and NPC has an age, pronouns, appearance and the languages they speak. NPCs get them in content; players choose them at creation.
 - **Time and weather (D38):** the city clock runs in real time, in one city time zone. Weather comes from per-district tables that code rolls. NPCs follow schedules in content (Nana Priya eats, shops, sleeps), code places them by the clock, and the daily city tick moves their goals along.
-- **NPC memory and attitudes (D39):** code stores each NPC's attitude toward each character and short notes on past interactions. The narrator proposes changes through a tool, and code caps how far an attitude moves per scene. NPC-to-NPC attitudes live in content. NPCs get traits, speech habits and a sample line for distinct voices.
-- **Random encounters (D40):** code rolls on arriving somewhere and every few beats (about 5), from per-district tables; the odds rise as region Light falls. The narrator tells what code drew.
+- **NPC memory and attitudes (D39):** code stores each NPC's attitude toward each character and short notes on past interactions. The Narrator proposes changes through a tool, and code caps how far an attitude moves per scene. NPC-to-NPC attitudes live in content. NPCs get traits, speech habits and a sample line for distinct voices.
+- **Random encounters (D40):** code rolls on arriving somewhere and every few beats (about 5), from per-district tables; the odds rise as region Light falls. The Narrator tells what code drew.
 - **Languages (D41):** code tracks who speaks what and what language each line is spoken in. Speech a character does not understand reaches them as gibberish. Common languages can be recognized by name. Getting the gist of an unknown language is a Heart roll: 10+ the gist and tone, 7–9 the tone only or the gist at a cost, 6 or less gibberish and perhaps the speaker notices. A language knack gives +1 to those rolls, with a use limit per the knack budget. (Built: D76–D81.)
 - **Setting-native kinds (D42):** new kinds of people are invented for New Vesper and added as origins, like made people and awakened animals, rather than classic fantasy races. (Built: D90–D93.)
 - **Order (D43):** playtest fixes, then character details, then time, weather and schedules, then NPC memory and attitudes, then encounters, then languages, then bodily conditions (D82), then setting-native kinds, with a playtest after each.
@@ -590,7 +590,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the narrator agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, D94–D95 from the designer after layer 8, D96 from the designer after merging layers 6–8, D97 from the designer the same evening, D98–D99 from the first blind playtest, D100–D105 from building story export, D106 from the designer after the second playtest, and D107–D108 from its fixes.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the Narrator agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, D94–D95 from the designer after layer 8, D96 from the designer after merging layers 6–8, D97 from the designer the same evening, D98–D99 from the first blind playtest, D100–D105 from building story export, D106 from the designer after the second playtest, and D107–D108 from its fixes.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -599,7 +599,7 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D3 | `adjust_light` | Adds direction (raise/lower) and size (deed ±1 / major ±2); one change per region per scene; major needs an XP trigger in the same scene |
 | D4 | XP triggers | Exactly four; 1 XP each; once per character per scene |
 | D5 | Opposed-roll ties | Defender holds |
-| D6 | Move magnitudes | Harm and Fade 1–3; encroach −1; others 1; threat clocks 4 segments, defined in content, advanced by 1, never created by the narrator |
+| D6 | Move magnitudes | Harm and Fade 1–3; encroach −1; others 1; threat clocks 4 segments, defined in content, advanced by 1, never created by the Narrator |
 | D7 | Enforced tags | Only `no-hands` (blocks `needs-hands` knacks) for now |
 | D8 | Recovery | Haven: 1 Harm and 1 Fade per real day offline; treatment knack: 1 Harm per use; named by another player: 1 Fade once per scene |
 | D9 | Time | 1 real day = 1 in-game day; a week is 7 real days |
@@ -620,19 +620,19 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D24 | Loot needs a roll | `grant_from_table(roll_id, table_id)`: a 7+ roll, one grant per roll |
 | D25 | `call_for_roll` fields | Optional `knack` (held knack; bonus, limits, tags) and `magic` (a casting) |
 | D26 | Consequence targets | Harm and Fade land on the roller only; PvP waits for opposed rolls |
-| D27 | Movement | Player's `/go` command; the narrator never moves characters |
+| D27 | Movement | Player's `/go` command; the Narrator never moves characters |
 | D28 | Taken items | Leave play; the log records it |
 | D29 | Knack day boundary | Superseded by D50: city midnight |
 | D30 | Treatment knacks | Heal the roller only, 1 Harm on 7+ |
 | D31 | Casting with Wire | Only through a tech-magic knack |
 | D32 | Prototype scope | Single-player through budget and playtest; multiplayer is its own later step |
 | D33 | Narration | Third person, present tense, by name and the sheet's pronouns; players choose pronouns |
-| D34 | Player input | Plain text is action (any person); quotes are exact speech; the narrator never rewrites or adds to them |
+| D34 | Player input | Plain text is action (any person); quotes are exact speech; the Narrator never rewrites or adds to them |
 | D35 | `/ask` | Out-of-character question: look only, no roll, state change, time or beat |
-| D36 | Owed consequences | A 7–9 or 6− roll must get its consequence; code sends the narrator back (up to twice) |
+| D36 | Owed consequences | A 7–9 or 6− roll must get its consequence; code sends the Narrator back (up to twice) |
 | D37 | Character details | Age, pronouns, appearance, languages for players and NPCs (built: D44–D49) |
 | D38 | Time and weather | Real-time city clock, weather, NPC schedules, daily tick (built: D50–D55) |
-| D39 | NPC memory | Attitudes and interaction notes in code; the narrator proposes, code caps (built: D60–D66) |
+| D39 | NPC memory | Attitudes and interaction notes in code; the Narrator proposes, code caps (built: D60–D66) |
 | D40 | Encounters | Code rolls on arrival and every 5th beat; odds rise as Light falls (built: D67–D71) |
 | D41 | Languages | Tracked; unknown speech as gibberish; Heart roll for the gist; language knack +1 (built: D76–D81) |
 | D42 | New kinds of people | Setting-native kinds as origins, not classic fantasy races (built: D90–D93) |
@@ -660,39 +660,39 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D64 | Rolls | Feelings never add to rolls; they shape whether to roll and the rung |
 | D65 | NPC web | Authored, seeded once, then changes in play with the same caps |
 | D66 | Personalities | Traits, speech habits, a sample line; `/who` for the player |
-| D67 | Encounter odds | Superseded by D72–D73: a daily pool, and the narrator decides when |
+| D67 | Encounter odds | Superseded by D72–D73: a daily pool, and the Narrator decides when |
 | D68 | Encounter kinds | Color, opportunity, trouble; weighted by Light through the pool (D74) |
 | D69 | Conditions | Place, part of day, weather, tide, season and moon filters; now on encounter ideas |
-| D70 | Strangers | One-off, generated by code at the narrator's request with a neighborhood language |
+| D70 | Strangers | One-off, generated by code at the Narrator's request with a neighborhood language |
 | D71 | Pacing | Superseded by D73 and D75: one per turn, no cooldown, recent ones shown to avoid repeats |
 | D72 | Encounter pool | Per district per city day, rolled by Light: 2–4, 3–6 or 5–9; shared; no carry-over |
 | D73 | Narrator creates encounters | Fresh each time via `create_encounter`, spending the pool; at most one per turn |
-| D74 | Kinds in the pool | Rolled by Light band; dark trouble half Underside; the narrator spends only what the pool holds |
-| D75 | Variety | Recent district encounters shown so the narrator doesn't repeat; content entries are ideas only |
-| D76 | Speech tags | The narrator tags every line others speak with speaker, language, tone and gist; code checks speaker and language; a bad tag is never shown and the narrator is sent back (up to twice) |
+| D74 | Kinds in the pool | Rolled by Light band; dark trouble half Underside; the Narrator spends only what the pool holds |
+| D75 | Variety | Recent district encounters shown so the Narrator doesn't repeat; content entries are ideas only |
+| D76 | Speech tags | The Narrator tags every line others speak with speaker, language, tone and gist; code checks speaker and language; a bad tag is never shown and the Narrator is sent back (up to twice) |
 | D77 | What is heard | Own languages word for word; common languages named, rare ones not; invented languages as code-made gibberish, real ones as a bracketed note; no tone without a gist roll |
 | D78 | Gist rolls | `call_for_roll` names a language: Heart, unspoken by the character, heard here, once per language per scene; 10+ gist and tone, 7–9 tone or gist for a real cost, 6− nothing; lasts the scene |
 | D79 | Language knack | Ear for Tongues: Heart, +1 on gist rolls only, once per scene |
-| D80 | Speaking aloud | `/speak` picks one of the character's languages (default Registry Standard); the narrator is told which NPCs understand it; NPCs never roll |
-| D81 | Speech log | Every line logged with what the character understood; beats keep what the player saw; the narrator sees the last six lines |
+| D80 | Speaking aloud | `/speak` picks one of the character's languages (default Registry Standard); the Narrator is told which NPCs understand it; NPCs never roll |
+| D81 | Speech log | Every line logged with what the character understood; beats keep what the player saw; the Narrator sees the last six lines |
 | D82 | Build order | Bodily conditions (hunger, thirst, heat and cold, sleep) are layer 7, before setting-native kinds (now layer 8) (built: D83–D89) |
 | D83 | Bodily needs | Hunger, thirst, tiredness, cold, heat; each 0–3, tracked by code, with words per step |
 | D84 | Need effects | −1 at 2 and −2 at 3 to two stats each; stacks, but a roll stat stays ≥ −3; at the worst, 1 Harm (Fade for tiredness) on reaching it and per further step |
 | D85 | Need time | Counted only online on the city clock: thirst 3 h, hunger 4 h, tiredness 6 h per step; cold and heat 1 h exposed, easing 1 per 30 min |
 | D86 | Exposure | Places are sheltered, exposed or always cold; weather (else season) is cold or hot |
-| D87 | Relief | `/eat` and `/drink` buy what a place sells, in glitter; `/rest` at a haven; no roll; the narrator points to the command |
+| D87 | Relief | `/eat` and `/drink` buy what a place sells, in glitter; `/rest` at a haven; no roll; the Narrator points to the command |
 | D88 | Needs offline | Frozen offline; logging off at a haven clears them |
 | D89 | Needs by origin | Each origin lists its needs; made people only tiredness and heat |
 | D90 | Setting-native kinds | Hearsay (a story walking), Castoff (a dead brand's mascot), Mislaid (a lost thing become someone), as origins |
 | D91 | Their needs and languages | Hearsay: all but tiredness; Castoff: tiredness and cold; Mislaid: cold and heat; a market tongue, or Underside Cant for a mislaid |
 | D92 | Their tags | Narrative only; code still enforces only `no-hands` |
-| D93 | Origins in the narrator's brief | Every origin's trait, tags and needs are in the content brief |
+| D93 | Origins in the Narrator's brief | Every origin's trait, tags and needs are in the content brief |
 | D94 | Attention (planned) | The world's sustaining force, tracked by code; a set amount per character per day; spent on pushing the world against its grain (which pulls back: the Undertow), remembrance and prayer; details open |
 | D95 | Inspiration | China Miéville's work, especially Perdido Street Station, joins the influences |
 | D96 | Story export | Players can export their character's story as an artifact of play; it may be told rather than recorded, but reveals nothing the character doesn't know; comes before attention |
-| D97 | The city is the narrator (theme) | The AI that runs New Vesper is the city itself: attention, forgetting, curated memory and going quiet are how both live. A thematic note, not yet in the narrator's prompt |
-| D98 | One action, one roll | At most one `call_for_roll` per turn, and its result stands; the narrator re-tells the turn once when sent back, replacing its earlier telling |
-| D99 | One action per prompt | One line, typed after the last answer; input typed during the narrator's answer is dropped; multi-line pastes are refused whole; the session and state refuse line breaks and control characters |
+| D97 | The city is the Narrator (theme) | The AI that runs New Vesper is the city itself: attention, forgetting, curated memory and going quiet are how both live. A thematic note, not yet in the Narrator's prompt |
+| D98 | One action, one roll | At most one `call_for_roll` per turn, and its result stands; the Narrator re-tells the turn once when sent back, replacing its earlier telling |
+| D99 | One action per prompt | One line, typed after the last answer; input typed during the Narrator's answer is dropped; multi-line pastes are refused whole; the session and state refuse line breaks and control characters |
 | D100 | Two versions | The record (scenes as seen, one chapter each) and the telling (retold in the character's voice) |
 | D101 | Only what was seen | Built from the narration shown and the player's own actions; hidden state is never read |
 | D102 | The telling | One cheap `story` call against the budget; first person; may shade and skip, invents and explains nothing; the record is free |
@@ -701,4 +701,4 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D105 | Theirs to keep | Players may edit and share the files; the game never reads them back |
 | D106 | Belief and being (draft) | One belief field (claims × holders × strength); epistemology is a holder's slice, ontology its weighted integral; history is fixed, the present is believed; the rules layer stays outside; option: attention and credence as two orthogonal fields; open questions for the designer |
 | D107 | Every prompt, names that are names | The one-line rule covers every prompt, creation included; names are 1–40 characters of letters, digits and name punctuation; pronouns are words joined by slashes; `/rename` and `/pronouns` |
-| D108 | Every consequence shows | Consequences that move no number still appear in the bracketed line; the narrator makes each one visible in the story |
+| D108 | Every consequence shows | Consequences that move no number still appear in the bracketed line; the Narrator makes each one visible in the story |

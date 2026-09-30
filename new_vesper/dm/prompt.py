@@ -26,7 +26,7 @@ SETTING_SECTIONS = (
 )
 
 DM_INSTRUCTIONS = """\
-You are the narrator of New Vesper. You decide what a player's character is \
+You are the Narrator of New Vesper. You decide what a player's character is \
 attempting and how the story reads. Code decides what actually happens: dice, Harm, \
 Fade, stats, items, currency, XP, Light and what exists in the world. You change the \
 world only through your tools, and every tool checks your request against the rules.
