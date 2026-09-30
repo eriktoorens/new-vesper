@@ -110,13 +110,14 @@ Check spending from outside the game with `new-vesper budget`.
   - bodily needs: hunger, thirst, tiredness, cold and heat wear down stats and, at their worst, cost Harm or Fade; `/eat`, `/drink` and `/rest` ease them
   - setting-native kinds: play a Hearsay (a story walking), a Castoff (a dead brand's mascot) or a Mislaid (a lost thing become someone)
 - Exporting your story: `/export` saves it as your character would tell it, `/export record` exactly as you saw it, and `new-vesper export` saves any character's, even one who has fallen. Files go in `stories/`.
-- Decisions D1–D105 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
+- Decisions D1–D106 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
 
 **Next:**
 1. **Playtest layers 6–8: languages, bodily needs and the new kinds (D76–D93).** Watch whether the DM tags every line and keeps translations out of plain narration, whether the needs' rates feel right, and how the DM plays a hearsay, a castoff or a mislaid.
-2. **Attention (D94):** the world's sustaining force, a daily amount per character spent on pushing the world against its grain, remembrance and prayer. Direction set; details open (see "Planned: Attention" in `docs/design.md`).
-3. **Nature and Demeanor**, borrowed from World of Darkness. This is proposed, not decided; the open questions are in `docs/design.md`.
-4. Then multiplayer (D32): a shared city, and a second look at the city-day rule (D29/D50).
+2. **The underlying model, belief and being (D106):** one belief field underneath the narrative and social layers, where a character's knowledge is a slice and a thing's reality is the integral. A draft with open questions; see "Draft: The Underlying Model, Belief and Being" in `docs/design.md`.
+3. **Attention (D94):** the world's sustaining force, a daily amount per character spent on pushing the world against its grain, remembrance and prayer. Direction set; details open (see "Planned: Attention" in `docs/design.md`).
+4. **Nature and Demeanor**, borrowed from World of Darkness. This is proposed, not decided; the open questions are in `docs/design.md`.
+5. Then multiplayer (D32): a shared city, and a second look at the city-day rule (D29/D50).
 
 **Open question, high priority:** D10, who a favor is owed to. The player should understand where a debt accrues and have some choice in it. See the open questions in `docs/design.md`.
 

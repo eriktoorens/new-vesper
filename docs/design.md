@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D105** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D106** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -455,6 +455,46 @@ Built 2026-09-29, from D96: a player can export their character's story, an arti
 - **Where and how (D104):** Markdown files in a `stories/` folder, named for the character, the version and the city date, never overwriting an earlier export. In play, `/export` saves the telling and `/export record` the record. Outside play, `new-vesper export --handle NAME` saves any character's story, including one who has fallen and can no longer be played (`--record`, `--character`, `--out`).
 - **Theirs to keep (D105):** the files are the player's to edit, annotate and share; the game never reads them back.
 
+## Draft: The Underlying Model, Belief and Being (D106)
+
+A draft direction from the designer (2026-09-30), written before any code. It is meant to be reshaped; the open questions at the end are the designer's to answer.
+
+**Why.** Each layer so far has brought its own way of storing information and its own rule for who may see it: Harm boxes, attitude steps, speech "heard" levels, NPC memory lines, encounter prose, scene summaries. Adding layers accumulates rather than converges. It is like stacking rectangles from different graphs when a Riemann sum needs every slice to sample the same function. The first playtests showed the cost: the facts that mattered most (a trunk under the stairs, a child's shoe with H. Okoye's name and a date, that Okoye once stayed at the Hooks) exist only in narration prose. Nothing records them, nothing says who knows them, and a later telling can contradict them without anything noticing.
+
+**One function, seen two ways.** In New Vesper, belief and being are inextricable, so knowledge and existence are not modelled separately. There is one **belief field**: for each claim about the world and each holder (a character, an NPC, a god, a faction, a neighborhood, the city itself), how strongly that holder believes it.
+
+- **Epistemology is a slice:** everything one holder believes. It is partial, can be wrong, and it is what that holder acts on and what narration to them may draw on.
+- **Ontology is the integral:** a claim's reality is its belief summed over every holder, weighted by how much each holder's attention counts. A god outweighs a stranger, a neighborhood outweighs a person. Above a threshold a claim is real; below it, it thins and fades.
+
+Being is belief integrated over everyone. One person's belief does not make a thing real, so a character can still be mistaken, but enough belief does.
+
+**What the existing design becomes, read off the same field:**
+
+- **The Fade:** a character's integral falling as the people who hold them in mind forget them.
+- **Light:** the integral over a region.
+- **Attention (D94):** the inflow. Spending it raises belief; remembrance and prayer are attention aimed at particular claims.
+- **The world pushing back:** trying to make real what the integral says is not. The cost scales with how far the push goes against it, as Paradox does.
+- **Hearsays (D90):** claims that crossed the threshold and stood up.
+- **Corporate gods:** manufacturing belief at scale, and so manufacturing reality.
+- **The central mystery:** someone forgetting Old Vesper on purpose is erasure by withdrawing belief until it falls below the threshold.
+- **The city is the DM (D97):** the integral is the city's memory.
+- **Languages, speech, recaps, `/ask`, story export:** knowledge moving between holders, at some fidelity, and what reaches whom.
+- **NPC memory and attitudes:** what one holder believes and feels about another.
+- **Nature and Demeanor:** what is true of someone against what others hold of them.
+
+**What stays outside the field.** The rules layer is the floor the game cannot argue with: dice, Harm, what a roll decided, items and currency, and the event log. **History is fixed; the present is believed.** What happened stays in the ledger forever, but whether it is still real now can fade. Old Vesper is a district of history that stopped being present. Bodily needs are physics too, not belief.
+
+**How it would be built.** One store, queried two ways: facts (short claims, each with a source: authored content, established by the DM in a scene, or produced by code) and holders' beliefs in them (how strongly, how they learned it, and when). *What does this holder believe?* serves play and narration; *how real is this?* serves the world. The DM proposes claims and belief changes through tools; code validates them, keeps the tally, owns the thresholds and the decay, and never lets belief touch the rules layer. Rules-facing numbers stay numbers. Each existing layer would be re-expressed against the store one at a time, without breaking play, starting with the most knowledge-shaped: NPC memory and speech gist. The test of elegance: a new social feature should need mostly content and a rule over the field, not a new table and a new visibility rule.
+
+**Open questions (the designer's):**
+
+- **Do lies become true at scale?** If enough of the city believes a false rumor, is it now real? The premise says yes. If so, what brakes it: counter-belief (the Registry, rival gods), attention budgets, thresholds that rise with how large a claim is?
+- **Who counts, and how much?** Players, NPCs, gods, factions, neighborhoods, the city. The weights are the setting's politics.
+- **Is the rules floor exactly the list above?** Should any of it be believable too (an item that fades when nobody remembers it exists)?
+- **Collusion:** in multiplayer, players believing something into existence together.
+- **Retrieval and cost:** which claims reach the DM each turn (place, people present, what the character holds, recency), so the prompt stays small.
+- **Order:** this would come before attention, which spends belief, and before multiplayer, whose secrets and rumors need it.
+
 ## Planned: Attention (D94)
 
 Direction from the designer (2026-09-28). The details are decided when it is built; everything below the first two points is open.
@@ -510,6 +550,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 - [x] Bodily conditions: hunger, thirst, heat and cold, sleep and the like. Built in layer 7 (D83–D89). Still open: clothing and gear against the weather, food as items and meals given by NPCs, whether resting should take time, and tuning the rates after a playtest.
 - [ ] Setting-native kinds (D90–D93): whether any of their tags should be enforced by code (for example, a hearsay recovering Fade when someone tells its story, or a castoff's glow giving it away in the dark), whether a mislaid object without hands should take `no-hands`, and origin evolutions for each kind.
 - [x] Exporting a character's story: built (D100–D105). Still open: whether the telling should also cover a single scene or session, and illustrated or printable formats.
+- [ ] The underlying model, belief and being (D106): a draft direction with open questions. See Draft: The Underlying Model, Belief and Being.
 - [ ] Attention as a resource: direction set (D94), details open. See Planned: Attention.
 
 **Prototype plan:**
@@ -522,7 +563,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, D94–D95 from the designer after layer 8, D96 from the designer after merging layers 6–8, D97 from the designer the same evening, D98–D99 from the first blind playtest, and D100–D105 from building story export.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the DM agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, D94–D95 from the designer after layer 8, D96 from the designer after merging layers 6–8, D97 from the designer the same evening, D98–D99 from the first blind playtest, D100–D105 from building story export, and D106 from the designer after the second playtest.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -631,3 +672,4 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D103 | Scope | The whole story so far, a Fall included; latest four scenes in full, summaries before, capped at 24,000 characters |
 | D104 | Where and how | Markdown in `stories/`, never overwritten; `/export`, `/export record`; `new-vesper export` for any character, fallen too |
 | D105 | Theirs to keep | Players may edit and share the files; the game never reads them back |
+| D106 | Belief and being (draft) | One belief field (claims × holders × strength); epistemology is a holder's slice, ontology its weighted integral; history is fixed, the present is believed; the rules layer stays outside; open questions for the designer |
