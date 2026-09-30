@@ -52,7 +52,7 @@ HELP = """Type what your character does, or a command:
   /map           the district map: where you are and where you've been
   /time          the city clock and the weather
   /who           who's here and what they're doing
-  /ask <question>  ask the narrator what your character sees or knows (no time passes)
+  /ask <question>  ask the Narrator what your character sees or knows (no time passes)
   /speak <language>  choose the language your character speaks aloud
   /rename <name>     change your character's name
   /pronouns <p>      change your character's pronouns (e.g. /pronouns it/its)

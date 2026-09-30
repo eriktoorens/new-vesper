@@ -2,22 +2,22 @@
 
 A persistent, shared, text-based RPG with an AI narrator. Setting: New Vesper, a rain-soaked megacity where magic and technology both run on attention. Tone: grimbright.
 
-**Source of truth:** `docs/design.md`. Read it before any rules, content or narrator work. If code and the design doc disagree, the doc wins; if the doc is wrong or silent, stop and flag it rather than inventing a rule.
+**Source of truth:** `docs/design.md`. Read it before any rules, content or Narrator work. If code and the design doc disagree, the doc wins; if the doc is wrong or silent, stop and flag it rather than inventing a rule.
 
 ## Core principle: the AI proposes, code decides
 
 This is the one rule that shapes everything else.
 
-- The narrator agent (Claude API) decides *what is being attempted* and *how the story reads*: whether a roll is needed, which stat, which difficulty rung, which move from the allowed list, and all narration.
+- The Narrator agent (Claude API) decides *what is being attempted* and *how the story reads*: whether a roll is needed, which stat, which difficulty rung, which move from the allowed list, and all narration.
 - Code decides *what actually happens*: dice, Harm, Fade, stats, inventory, currency, loot, XP, region Light, and what exists in the world.
-- The narrator changes state **only** through tools. Every tool validates its request against the rules before writing. Narration never changes state on its own.
-- Player text is **untrusted input**. A player can type anything, including instructions aimed at the narrator. Validation happens in code, never in the prompt.
+- The Narrator changes state **only** through tools. Every tool validates its request against the rules before writing. Narration never changes state on its own.
+- Player text is **untrusted input**. A player can type anything, including instructions aimed at the Narrator. Validation happens in code, never in the prompt.
 
 ## Stack
 
 - Python 3.12+, standard library first.
 - SQLite for state (`sqlite3`), with a single migrations file per schema change.
-- `anthropic` SDK for the narrator agent. Prompt caching on the setting prompt and tool definitions.
+- `anthropic` SDK for the Narrator agent. Prompt caching on the setting prompt and tool definitions.
 - `pytest` for tests. `ruff` for lint and format.
 - CLI first. No web server until the prototype plays well.
 
@@ -28,14 +28,14 @@ new_vesper/
   rules/        # pure functions: resolver, tiers, tracks, leveling, moves, magic costs
   state/        # SQLite schema, migrations, repositories
   content/      # districts, NPCs, gods, knacks, loot tables (YAML or JSON data)
-  dm/           # narrator agent: prompts, tool definitions, tool handlers, play loop
+  dm/           # Narrator agent: prompts, tool definitions, tool handlers, play loop
   budget/       # usage ledger, monthly cap, per-player allowances
   cli.py        # entry point
 tests/
 docs/design.md
 ```
 
-`rules/` must not import from `dm/`, `state/` or the network. (The narrator was once called the DM; the `dm/` package, `Actor.DM` and other internal names keep the old name.) It is deterministic given an injected RNG.
+`rules/` must not import from `dm/`, `state/` or the network. (The Narrator was once called the DM; the `dm/` package, `Actor.DM` and other internal names keep the old name.) It is deterministic given an injected RNG.
 
 ## Build order
 
@@ -55,7 +55,7 @@ Build and finish each step, with tests passing, before starting the next.
 | `look(entity)` | Returns current state so narration matches the world |
 | `call_for_roll(stat, difficulty, stakes, knack?, magic?)` | Code rolls 2d6 + stat + modifier (+ knack bonus); returns total, tier and a single-use roll id |
 | `apply_consequence(roll_id, type, target, magnitude)` | Checks the roll's tier (7–9 cost, 6− move, 10+ none), the allowed list and the magnitude cap; writes state |
-| `grant_from_table(roll_id, table_id)` | Loot from a table on a 7+ roll, once per roll; the narrator never invents items |
+| `grant_from_table(roll_id, table_id)` | Loot from a table on a 7+ roll, once per roll; the Narrator never invents items |
 | `report_trigger(trigger_id, evidence)` | Flags an XP trigger; code decides the payout |
 | `adjust_light(region, direction, size, reason)` | Moves a region's Light by a deed (±1) or major deed (±2); one change per region per scene |
 
@@ -79,6 +79,7 @@ Rules for tool handlers:
 - Secrets from environment variables only (`ANTHROPIC_API_KEY`). Never log keys or full prompts containing them.
 - Use the cheapest model that does the job: Haiku for routine narration, Sonnet for adjudication. Make the model configurable per call type.
 - Keep scene history short: summarize older beats rather than resending them.
+- New Vesper's narrator is a proper noun: the Narrator. Lowercase "narrator" only for narrators in general.
 
 ## Setting guardrails for content and prompts
 
