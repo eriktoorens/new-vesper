@@ -32,6 +32,9 @@ ATTR = re.compile(r'([a-z]+)\s*=\s*"([^"]*)"', re.IGNORECASE)
 UNCLOSED = re.compile(r"<say\b.*?(?=\n\s*\n|\Z)", re.DOTALL | re.IGNORECASE)
 STRAY_CLOSE = re.compile(r"</say\s*>", re.IGNORECASE)
 ATTRIBUTES = frozenset({"who", "lang", "tone", "gist"})
+# Quote marks a narrator may wrap around speech; code adds its own.
+QUOTES = '"\u201c\u201d'
+QUOTE_MARKS = frozenset(QUOTES)
 # Lines of recent speech the DM sees each turn.
 RECENT_LINES = 6
 
@@ -231,7 +234,7 @@ def render_line(ctx: "TurnContext", line: Line, listener: str) -> str:
     if line.problem is not None or line.language is None:
         return f"[words {listener} can't make out]"
     if line.heard is Heard.FLUENT:
-        return f'"{line.tag.words}"'
+        return f'"{line.tag.words.strip(QUOTES)}"'
     lang = ctx.content.languages[line.language]
     where = f"in {lang.name}" if lang.common else f"in a language {listener} doesn't know"
     tone = line.tag.attrs.get("tone")
@@ -252,8 +255,12 @@ def render(ctx: "TurnContext", narration: str, lines: list[Line]) -> str:
     listener = characters.get_character(ctx.conn, ctx.character_id).name
     out, cursor = [], 0
     for line in lines:
-        out += [narration[cursor : line.tag.start], render_line(ctx, line, listener)]
-        cursor = line.tag.end
+        start, end = line.tag.start, line.tag.end
+        # Code adds the quote marks; any the narrator put around the tag would double them.
+        if narration[start - 1 : start] in QUOTE_MARKS and narration[end : end + 1] in QUOTE_MARKS:
+            start, end = start - 1, end + 1
+        out += [narration[cursor:start], render_line(ctx, line, listener)]
+        cursor = end
     out.append(narration[cursor:])
     shown = "".join(out)
     # Anything left of a broken tag could be untranslated words: never show it.

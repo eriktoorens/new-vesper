@@ -8,7 +8,7 @@ import sqlite3
 from dataclasses import dataclass
 from typing import Any
 
-from new_vesper.rules.character import Sheet
+from new_vesper.rules.character import Sheet, validate_name, validate_pronouns
 from new_vesper.rules.currency import STARTING_GLITTER
 from new_vesper.rules.errors import require_int, require_range
 from new_vesper.rules.languages import COMMON_TONGUE
@@ -150,9 +150,10 @@ def create_character(
     """Store a new character. Build ``sheet`` with ``rules.character.create_character``."""
     player = get_player(conn, player_id)
     origin = get_origin(conn, origin_id)
-    clean_name = text(name, "name", 60).strip()
+    with as_state_error():
+        clean_name = validate_name(name)
+        clean_pronouns = None if pronouns is None else validate_pronouns(pronouns)
     clean_bond = text(bond, "bond", 200).strip()
-    clean_pronouns = None if pronouns is None else text(pronouns, "pronouns", 30).strip()
     clean_age = None if age is None else text(age, "age", 60).strip()
     clean_look = None if appearance is None else text(appearance, "appearance", 300).strip()
     spoken = _check_languages(conn, languages)
@@ -411,9 +412,24 @@ def set_pronouns(
 ) -> Character:
     """Set or change a character's pronouns."""
     character = get_character(conn, character_id)
-    value = text(pronouns, "pronouns", 30).strip()
+    with as_state_error():
+        value = validate_pronouns(pronouns)
     return _update_field(
         conn, character, "pronouns", value, "pronouns_set", cause, {"pronouns": value}
+    )
+
+
+def rename_character(
+    conn: sqlite3.Connection, character_id: int, name: str, cause: Cause
+) -> Character:
+    """Change a character's name (D107). The event log keeps the old one."""
+    character = get_character(conn, character_id)
+    with as_state_error():
+        value = validate_name(name)
+    if value == character.name:
+        raise StateError(f"{character.name} is already called that")
+    return _update_field(
+        conn, character, "name", value, "renamed", cause, {"from": character.name, "to": value}
     )
 
 

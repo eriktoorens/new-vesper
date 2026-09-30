@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D106** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D108** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -241,6 +241,10 @@ Every state change goes through a tool, and every tool checks the request agains
 **One action, one roll (D98):** a player's action gets at most one roll, and its result stands. Code refuses a second `call_for_roll` in the same turn, so the narrator cannot re-roll a failure; when it is sent back to apply a consequence or fix speech, it tells the turn once, replacing its earlier telling, so the player sees one outcome. A guard added after the first blind playtest, though the database showed that playtest's problem was a different one (D99).
 
 **One action per prompt (D99):** a player acts one line at a time, and only on a world they have seen. An action is a single line typed at the prompt after the world's last answer is shown. Anything typed or pasted while the narrator is still answering is discarded, and the player is told. A paste of several lines is refused whole, so no part of it reaches the narrator: joining it would let a player script several actions, or text posing as the narrator's output, into one turn, and taking it line by line would act on a world the player hadn't seen. The session itself refuses an action or question containing line breaks or control characters, whatever the client, and the state layer refuses to store one. (In the first blind playtest, a three-line paste became three turns 26 seconds apart, and the player saw three contradictory outcomes for one action.)
+
+**Every prompt, and names that are names (D107):** the one-line rule covers every prompt, character creation included: a paste of several lines is refused whole wherever it lands. (In the second playtest, a paste meant for the shell became a character's name and pronouns.) A name is 1 to 40 characters of letters in any script, digits, spaces, apostrophes, hyphens and periods; pronouns are words joined by slashes, like she/her or it/its. Players can change either at any time with `/rename` and `/pronouns`; the event log keeps the old name.
+
+**Every consequence shows (D108):** a consequence that moves no number (a separation, an unwelcome truth, a faction taking notice, a price paid in the story, a side effect) still appears in the player's bracketed line, as "the city moves: an unwelcome truth" or "cost: a price paid in the story". The narrator also makes each consequence visible in the story.
 
 **Movement (D27):** the player moves with the `/go <place>` command; code checks the place is real and in the same district, closes the scene and opens one there. The narrator never moves characters, since that would be a state change without a roll. When a player says they head somewhere, the narrator describes them setting off and points to `/go`.
 
@@ -586,7 +590,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the narrator agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, D94–D95 from the designer after layer 8, D96 from the designer after merging layers 6–8, D97 from the designer the same evening, D98–D99 from the first blind playtest, D100–D105 from building story export, and D106 from the designer after the second playtest.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the narrator agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, D94–D95 from the designer after layer 8, D96 from the designer after merging layers 6–8, D97 from the designer the same evening, D98–D99 from the first blind playtest, D100–D105 from building story export, D106 from the designer after the second playtest, and D107–D108 from its fixes.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -696,3 +700,5 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D104 | Where and how | Markdown in `stories/`, never overwritten; `/export`, `/export record`; `new-vesper export` for any character, fallen too |
 | D105 | Theirs to keep | Players may edit and share the files; the game never reads them back |
 | D106 | Belief and being (draft) | One belief field (claims × holders × strength); epistemology is a holder's slice, ontology its weighted integral; history is fixed, the present is believed; the rules layer stays outside; option: attention and credence as two orthogonal fields; open questions for the designer |
+| D107 | Every prompt, names that are names | The one-line rule covers every prompt, creation included; names are 1–40 characters of letters, digits and name punctuation; pronouns are words joined by slashes; `/rename` and `/pronouns` |
+| D108 | Every consequence shows | Consequences that move no number still appear in the bracketed line; the narrator makes each one visible in the story |

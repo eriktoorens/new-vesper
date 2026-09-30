@@ -400,49 +400,46 @@ def test_typed_lines_stay_separate() -> None:
 
 
 def test_play_drops_typing_ahead_and_refuses_pastes(tmp_path: Path) -> None:
-    """In the game loop: input typed while the DM answered is dropped with a note, and a
-    paste reaches neither the DM nor the story."""
-    client = StubClient(say("Nana Priya looks up."), say("Tomas waves."))
-    feed = iter(
-        [
-            "1",
-            "1",
-            "1",
-            "1",
-            "1",
-            "1",
-            "1",
-            "1",
-            "1",
-            "1",
-            "Ada",
-            "she/her",
-            "30",
-            "Tall",
-            "Her brother",
-            "I pick the lock",
-            "I walk to the counter",
-            "/quit",
-        ]
-    )
-    # Before each prompt: discard reports whether anything was typed ahead.
-    typed_ahead = iter([True, False, False, False])
-    # After each line: whether more lines came with it (the paste's second line).
-    more = iter([True, False, False])
-    out: list[str] = []
-    conn = open_database(tmp_path / "v.db")
+    """Every prompt refuses a paste whole, creation included (D107), and input typed
+    while the narrator answered is dropped with a note (D99)."""
     import random
 
-    from new_vesper.cli import play
+    from new_vesper.cli import PASTED, TYPED_AHEAD, play
     from new_vesper.content.loader import load_content
     from new_vesper.dm.config import DMConfig
 
-    def ask(_: str) -> str:
-        try:
-            return next(feed)
-        except StopIteration as exc:
-            raise EOFError from exc
+    client = StubClient(say("Nana Priya looks up."), say("Tomas waves."))
+    # (what arrives, whether more lines arrived with it)
+    script = [
+        *[("1", False)] * 10,
+        ("source .venv/bin/activate", True),  # the second playtest's accident
+        ("Ada", False),
+        ("she/her", False),
+        ("30", False),
+        ("Tall", False),
+        ("Her brother", False),
+        ("I pick the lock", True),
+        ("I walk to the counter", False),
+        ("/quit", False),
+    ]
+    pasted = [False]
+    # What discard finds: the creation paste's rest, typing-ahead before the first
+    # game prompt, then the game prompt paste's rest.
+    found = [True, True, True]
 
+    def ask(_: str) -> str:
+        if not script:
+            raise EOFError
+        line, more = script.pop(0)
+        pasted[0] = more
+        return line
+
+    def discard() -> bool:
+        pasted[0] = False
+        return found.pop(0) if found else False
+
+    out: list[str] = []
+    conn = open_database(tmp_path / "v.db")
     play(
         conn,
         load_content(),
@@ -454,16 +451,32 @@ def test_play_drops_typing_ahead_and_refuses_pastes(tmp_path: Path) -> None:
         config=DMConfig(),
         rng=random.Random(1),
         now=lambda: NOON_TUESDAY,
-        waiting=lambda: next(more),
-        discard=lambda: next(typed_ahead, False),
+        waiting=lambda: pasted[0],
+        discard=discard,
     )
+    assert out.count(PASTED) == 2
+    assert out.count(TYPED_AHEAD) == 1
+    [ada] = characters.characters_of(conn, players.find_player(conn, "ash").id)
+    assert ada.name == "Ada"
+    rows = conn.execute("SELECT intent FROM beat_intents WHERE intent IS NOT NULL")
+    assert [r[0] for r in rows] == ["I walk to the counter"]
+
+
+def test_creation_asks_again_for_a_bad_name(tmp_path: Path) -> None:
+    out = run(
+        tmp_path,
+        [*["1"] * 10, "src/.venv", "Ada", "pip install -e .", "she/her", "30", "Tall", "Her",
+         "/rename Ada Okoye", "/pronouns they/them", "/rename x/y", "/quit"],
+        StubClient(say("Hi.")),
+    )  # fmt: skip
     text = "\n".join(out)
-    assert "typed while the city was answering was dropped" in text
-    assert "One action at a time, on one line. None of that was sent" in text
-    intents = [
-        r[0] for r in conn.execute("SELECT intent FROM beat_intents WHERE intent IS NOT NULL")
-    ]
-    assert intents == ["I walk to the counter"]
+    assert "(a name uses letters, digits, spaces, apostrophes, hyphens and periods)" in text
+    assert "(write pronouns as words joined by slashes" in text
+    assert "[Your character is now Ada Okoye.]" in text
+    assert "[Ada Okoye's pronouns are now they/them.]" in text
+    conn = open_database(tmp_path / "v.db")
+    [ada] = characters.characters_of(conn, players.find_player(conn, "ash").id)
+    assert (ada.name, ada.pronouns) == ("Ada Okoye", "they/them")
 
 
 CREATE_ADA = [
@@ -511,3 +524,16 @@ def test_export_a_fallen_character_from_outside(tmp_path: Path, monkeypatch) -> 
     assert "Ada fell" in path.read_text()
     assert main([*args, "--character", "Nobody"], say=out.append) == 1
     assert out[-1] == "No such character."
+
+
+def test_look_offers_only_what_the_character_needs(tmp_path: Path) -> None:
+    """The second playtest: /look offered dal and tea to an umbrella."""
+    out = run(
+        tmp_path,
+        ["8", "5", "4", "2", "2", "1", "8", "8", "6", "4", "Zeno", "it/its", "31 years",
+         "An umbrella", "H. Okoye", "/look", "/quit"],
+        StubClient(say("The Hooks.")),
+    )  # fmt: skip
+    text = "\n".join(out)
+    assert "Zeno (it/its)" in text and "At: The Hundred Hooks" in text
+    assert "Food here" not in text and "Drink here" not in text

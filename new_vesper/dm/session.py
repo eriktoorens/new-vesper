@@ -550,6 +550,23 @@ class PlaySession:
             raise SessionError(str(exc)) from exc
         return speech.render(ctx, result.narration, speech.check_speech(ctx, result.narration))
 
+    def rename(self, name: str) -> Character:
+        """Change the character's name (D107). The old name stays in the event log."""
+        if not name:
+            raise SessionError("give the new name after /rename")
+        try:
+            return characters.rename_character(self.conn, self.character_id, name, self._cause())
+        except StateError as exc:
+            raise SessionError(str(exc)) from exc
+
+    def set_pronouns(self, pronouns: str) -> Character:
+        if not pronouns:
+            raise SessionError("give the pronouns after /pronouns, e.g. /pronouns it/its")
+        try:
+            return characters.set_pronouns(self.conn, self.character_id, pronouns, self._cause())
+        except StateError as exc:
+            raise SessionError(str(exc)) from exc
+
     def speak(self, language: str) -> Character:
         """Choose the language the character speaks aloud, from those they know (D80)."""
         me = self.character

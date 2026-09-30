@@ -465,3 +465,27 @@ def test_ask_answers_are_rendered_too(conn: sqlite3.Connection, content: Content
     play.start()
     answer = play.ask("What did Tomás just say?")
     assert SECRET not in answer and "[something in Arabic]" in answer
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        '"<say who="tomas-haddad" lang="registry-standard">Two skewers, then.</say>"',
+        '<say who="tomas-haddad" lang="registry-standard">"Two skewers, then."</say>',
+        '"<say who="tomas-haddad" lang="registry-standard">"Two skewers, then."</say>"',
+        '“<say who="tomas-haddad" lang="registry-standard">Two skewers, then.</say>”',
+    ],
+)
+def test_quote_marks_are_never_doubled(ctx_factory: Any, mira: Any, text: str) -> None:
+    """The second playtest showed ""Evening, child…"": code adds its own quotes."""
+    ctx = ctx_factory(mira)
+    assert (
+        shown(ctx, f"Tomás grins. {text} He turns.")
+        == 'Tomás grins. "Two skewers, then." He turns.'
+    )
+
+
+def test_quotes_around_a_line_not_understood_go_too(ctx_factory: Any, mira: Any) -> None:
+    ctx = ctx_factory(mira)
+    text = '"<say who="tomas-haddad" lang="arabic">Two skewers.</say>"'
+    assert shown(ctx, text) == "[something in Arabic]"

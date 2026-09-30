@@ -543,3 +543,26 @@ def test_failed_call_rolls_back_turn_flags(
     refused(ctx, "look", {"entity": "nowhere"})
     assert ctx.changes == ["earlier"]
     assert not ctx.fall_or_endure_pending
+
+
+@pytest.mark.parametrize(
+    ("dice", "kind", "shown"),
+    [
+        ((1, 2), "reveal_unwelcome_truth", "the city moves: an unwelcome truth"),
+        ((1, 2), "separate_them", "the city moves: separated"),
+        ((1, 2), "faction_takes_notice", "the city moves: a faction takes notice"),
+        ((4, 3), "narrative_cost", "cost: a price paid in the story"),
+    ],
+)
+def test_every_consequence_shows(
+    mira: Character, ctx_factory: Ctx, dice: tuple[int, int], kind: str, shown: str
+) -> None:
+    """The second playtest: a 7-9 cost and a 6 move changed no numbers and never showed."""
+    ctx = ctx_factory(mira, *dice)
+    rolled = roll(ctx)
+    ok(
+        ctx,
+        "apply_consequence",
+        {"roll_id": rolled["roll_id"], "type": kind, "target": "me", "magnitude": 1},
+    )
+    assert ctx.changes[-1] == shown

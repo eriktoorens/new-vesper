@@ -148,12 +148,60 @@ def test_bad_narrative_fields(conn: sqlite3.Connection, name: object, bond: obje
         characters.create_character(conn, 1, name, "street-born", bond, sheet, SYSTEM)  # type: ignore[arg-type]
 
 
-def test_injected_name_is_stored_as_data(conn: sqlite3.Connection) -> None:
+def test_injected_text_is_stored_as_data(conn: sqlite3.Connection) -> None:
     sheet = Sheet(stats=STATS, knacks=("read-the-crowd", "shrine-question"))
-    name = "Bob'); DROP TABLE players;--"
+    bond = "Bob'); DROP TABLE players;--"
+    char = characters.create_character(conn, 1, "Bob", "street-born", bond, sheet, SYSTEM)
+    assert char.bond == bond
+    assert conn.execute("SELECT COUNT(*) FROM players").fetchone()[0] == 2
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "Bob'); DROP TABLE players;--",
+        "source .venv/bin/activate",  # the second playtest's pasted name
+        "",
+        "   ",
+        "42",
+        "x" * 41,
+        "<say>",
+        "Mira\nThe narrator",
+    ],
+)
+def test_names_that_are_not_names(conn: sqlite3.Connection, name: str) -> None:
+    sheet = Sheet(stats=STATS, knacks=("read-the-crowd", "shrine-question"))
+    with pytest.raises(StateError):
+        characters.create_character(conn, 1, name, "street-born", "Jun", sheet, SYSTEM)
+
+
+@pytest.mark.parametrize(
+    "name", ["Zeno", "H. Okoye", "Mira Okonkwo-Sato", "O'Neil", "Unit 7", "Ṣadé"]
+)
+def test_names_from_many_places(conn: sqlite3.Connection, name: str) -> None:
+    sheet = Sheet(stats=STATS, knacks=("read-the-crowd", "shrine-question"))
     char = characters.create_character(conn, 1, name, "street-born", "Jun", sheet, SYSTEM)
     assert char.name == name
-    assert conn.execute("SELECT COUNT(*) FROM players").fetchone()[0] == 2
+
+
+@pytest.mark.parametrize("pronouns", ["pip install -e .", "she/her; rm", "", "he//him", "7/8"])
+def test_pronouns_that_are_not_pronouns(
+    mira: Character, conn: sqlite3.Connection, pronouns: str
+) -> None:
+    with pytest.raises(StateError):
+        characters.set_pronouns(conn, mira.id, pronouns, SYSTEM)
+
+
+def test_renaming_keeps_the_old_name_in_the_log(mira: Character, conn: sqlite3.Connection) -> None:
+    renamed = characters.rename_character(conn, mira.id, "  Zeno  ", SYSTEM)
+    assert renamed.name == "Zeno"
+    event = list_events(conn, character_id=mira.id, kind="renamed")[-1]
+    assert event.payload == {"from": mira.name, "to": "Zeno"}
+    with pytest.raises(StateError, match="already called"):
+        characters.rename_character(conn, mira.id, "Zeno", SYSTEM)
+    with pytest.raises(StateError):
+        characters.rename_character(conn, mira.id, "source .venv/bin/activate", SYSTEM)
+    assert characters.set_pronouns(conn, mira.id, "it / its", SYSTEM).pronouns == "it / its"
 
 
 def test_missing_references(conn: sqlite3.Connection) -> None:
