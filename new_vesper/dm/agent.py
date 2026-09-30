@@ -16,7 +16,7 @@ from new_vesper.dm.prompt import SUMMARY_SYSTEM
 from new_vesper.dm.tools import TOOLS
 
 REFUSAL_NARRATION = (
-    "The rain thickens and the moment won't come into focus. (The DM couldn't narrate that; "
+    "The rain thickens and the moment won't come into focus. (The narrator couldn't narrate that; "
     "try something else.)"
 )
 EMPTY_NARRATION = "The city holds its breath. Nothing seems to change."
