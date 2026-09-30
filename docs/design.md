@@ -465,6 +465,12 @@ A draft direction from the designer (2026-09-30), written before any code. It is
 
 **Why.** Each layer so far has brought its own way of storing information and its own rule for who may see it: Harm boxes, attitude steps, speech "heard" levels, NPC memory lines, encounter prose, scene summaries. Adding layers accumulates rather than converges. It is like stacking rectangles from different graphs when a Riemann sum needs every slice to sample the same function. The first playtests showed the cost: the facts that mattered most (a trunk under the stairs, a child's shoe with H. Okoye's name and a date, that Okoye once stayed at the Hooks) exist only in narration prose. Nothing records them, nothing says who knows them, and a later telling can contradict them without anything noticing.
 
+**The third playtest showed it inside a single scene.** At the Drowned Station the Narrator called Zeno, a Mislaid umbrella, a "shoe-turned-umbrella." The child's shoe was a separate object found in the trunk. No state changed, since narration has no force and the database still says Zeno is an umbrella, but the Narrator's picture of the world drifted from what code holds. It was not simple forgetting. The Narrator took a relation and made it an identity: the shoe and Zeno both carry the name Okoye, which doesn't make them the same thing, or even tie them to the same Okoye (the shoe may be the child's own; Zeno may have belonged to a parent). It settled a question the world hasn't answered yet, which is worse than forgetting. Proposed fixes, not yet decided:
+
+1. A short identity block, built by code, in the Narrator's state every turn: who is present, what each one is, their pronouns, and the key objects and how they relate.
+2. Objects that matter to the story, like the shoe, tracked as entities, not only as narration.
+3. Lower priority: a cheap check after each turn that flags a present character described as a different kind of thing.
+
 **One function, seen two ways.** In New Vesper, belief and being are inextricable, so knowledge and existence are not modelled separately. There is one **belief field**: for each claim about the world and each holder (a character, an NPC, a god, a faction, a neighborhood, the city itself), how strongly that holder believes it.
 
 - **Epistemology is a slice:** everything one holder believes. It is partial, can be wrong, and it is what that holder acts on and what narration to them may draw on.
@@ -519,6 +525,9 @@ This is an option, not a decision. Open: how the two combine into reality; how f
 - **Retrieval and cost:** which claims reach the Narrator each turn (place, people present, what the character holds, recency), so the prompt stays small.
 - **One field or two:** a single belief strength, or attention and credence as orthogonal fields (see the option above)?
 - **Order:** this would come before attention, which spends belief, and before multiplayer, whose secrets and rumors need it.
+- **Unknowns are state:** entities, relations and unknowns are distinct kinds of state, and an open question is state too (for example, whether the shoe's Okoye and Zeno's Okoye are the same person). The Narrator may not resolve an unknown by narration, only through a roll, a discovery or a tool. This extends "narration never changes state" to knowledge. (From the third playtest's slip.)
+- **The city can forget, but code decides when:** forgetting could be a mechanic, triggered by low Light, nearness to Old Vesper, or things left unattended, and may tie to remembrance as a resource. An unforced slip by the model is still a bug. A forgetting that code chooses is weather.
+- **The turtle question:** does the city exist inside a wider reality, and whose attention carries it: the citizens', the players', the Narrator's own session? The designer decides. If it is meant to stay unanswerable, this doc should say so, so that nothing fills it in.
 
 ## Planned: Attention (D94)
 
