@@ -576,6 +576,8 @@ The first build is a playable CLI prototype: one player, one district, the full 
   - Whether it overlaps the NPCs' existing traits and the Bond, whether the new kinds (D90) lean toward particular Selves, and where it fits in the order of what's next.
 - [x] Bodily conditions: hunger, thirst, heat and cold, sleep and the like. Built in layer 7 (D83–D89). Still open: clothing and gear against the weather, food as items and meals given by NPCs, whether resting should take time, and tuning the rates after a playtest.
 - [ ] Setting-native kinds (D90–D93): whether any of their tags should be enforced by code (for example, a hearsay recovering Fade when someone tells its story, or a castoff's glow giving it away in the dark), whether a mislaid object without hands should take `no-hands`, and origin evolutions for each kind.
+- [ ] **Label speech by language:** a line the character understands in a language other than Registry Standard should say which it was, as `"…" [Underside Cant]`, and so should the character's own quoted words when they speak one. Otherwise a player can't tell what they would need to speak to answer in kind. (From the third playtest.)
+- [ ] **One line in another language (idea):** an inline override for a single line, such as `(in Cantonese) "Two skewers."`, alongside `/speak`, which sets the language until changed.
 - [x] Exporting a character's story: built (D100–D105). Still open: whether the telling should also cover a single scene or session, and illustrated or printable formats.
 - [ ] The underlying model, belief and being (D106): a draft direction with open questions. See Draft: The Underlying Model, Belief and Being.
 - [ ] Attention as a resource: direction set (D94), details open. See Planned: Attention.
