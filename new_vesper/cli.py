@@ -50,7 +50,7 @@ HELP = """Type what your character does, or a command:
   /map           the district map: where you are and where you've been
   /time          the city clock and the weather
   /who           who's here and what they're doing
-  /ask <question>  ask the DM what your character sees or knows (no time passes)
+  /ask <question>  ask the narrator what your character sees or knows (no time passes)
   /speak <language>  choose the language your character speaks aloud
   /eat, /drink   buy food or drink where it's sold
   /export        save your story, as your character would tell it

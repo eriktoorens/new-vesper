@@ -1,6 +1,6 @@
 # New Vesper
 
-A persistent, text-based RPG with an AI dungeon master. It's set in New Vesper, a rain-soaked megacity where magic and technology both run on attention. The tone is grimbright. Start with the [teaser](docs/teaser.md). The full rules are in [docs/design.md](docs/design.md).
+A persistent, text-based RPG with an AI narrator. It's set in New Vesper, a rain-soaked megacity where magic and technology both run on attention. The tone is grimbright. Start with the [teaser](docs/teaser.md). The full rules are in [docs/design.md](docs/design.md).
 
 The AI tells the story. Code rolls the dice and keeps the books, and the AI can't talk its way around them.
 
@@ -60,7 +60,7 @@ $env:ANTHROPIC_API_KEY = "sk-ant-..."        # Windows PowerShell
 new-vesper play --handle yourname
 ```
 
-The first time you play, you make a character: origin, stats, two knacks, languages, name, pronouns, and a few details. After that, write what your character does in third person ("Mara ducks under the awning and…") and put their spoken words in quotes. The DM narrates and calls for rolls.
+The first time you play, you make a character: origin, stats, two knacks, languages, name, pronouns, and a few details. After that, write what your character does in third person ("Mara ducks under the awning and…") and put their spoken words in quotes. The narrator tells the story and calls for rolls.
 
 In-game commands:
 
@@ -98,14 +98,14 @@ Check spending from outside the game with `new-vesper budget`.
 ## Where we are, what's next
 
 **Done** (all on this branch, 894 tests passing):
-- Build steps 1–5: the rules engine, the SQLite state, the Market District content, the DM agent with its validated tool contract, and the budget with a usage ledger, caps and allowances.
+- Build steps 1–5: the rules engine, the SQLite state, the Market District content, the narrator agent with its validated tool contract, and the budget with a usage ledger, caps and allowances.
 - Playtest layers 1–5:
   - fixes from the first playtest
   - character details and ASCII art (vignettes, NPC portraits, a district map)
   - the city clock, weather, NPC routines and the daily tick
   - seasons, the moon, tides and the harbor
   - NPC memory and attitudes
-  - encounters, which the DM writes fresh from a daily pool for each district
+  - encounters, which the narrator writes fresh from a daily pool for each district
   - languages: speech in a language your character doesn't know shows as gibberish or a note, a Heart roll gets the gist, and `/speak` picks what you speak aloud
   - bodily needs: hunger, thirst, tiredness, cold and heat wear down stats and, at their worst, cost Harm or Fade; `/eat`, `/drink` and `/rest` ease them
   - setting-native kinds: play a Hearsay (a story walking), a Castoff (a dead brand's mascot) or a Mislaid (a lost thing become someone)
@@ -113,10 +113,10 @@ Check spending from outside the game with `new-vesper budget`.
 - Decisions D1–D106 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
 
 **Next:**
-1. **Playtest layers 6–8: languages, bodily needs and the new kinds (D76–D93).** Watch whether the DM tags every line and keeps translations out of plain narration, whether the needs' rates feel right, and how the DM plays a hearsay, a castoff or a mislaid.
+1. **Playtest layers 6–8: languages, bodily needs and the new kinds (D76–D93).** Watch whether the narrator tags every line and keeps translations out of plain narration, whether the needs' rates feel right, and how the narrator plays a hearsay, a castoff or a mislaid.
 2. **The underlying model, belief and being (D106):** one belief field underneath the narrative and social layers, where a character's knowledge is a slice and a thing's reality is the integral. A draft with open questions; see "Draft: The Underlying Model, Belief and Being" in `docs/design.md`.
 3. **Attention (D94):** the world's sustaining force, a daily amount per character spent on pushing the world against its grain, remembrance and prayer. Direction set; details open (see "Planned: Attention" in `docs/design.md`).
-4. **Nature and Demeanor**, borrowed from World of Darkness. This is proposed, not decided; the open questions are in `docs/design.md`.
+4. **Self and Seeming:** who a character really is and the face they show. This is proposed, not decided; the open questions are in `docs/design.md`.
 5. Then multiplayer (D32): a shared city, and a second look at the city-day rule (D29/D50).
 
 **Open question, high priority:** D10, who a favor is owed to. The player should understand where a debt accrues and have some choice in it. See the open questions in `docs/design.md`.
