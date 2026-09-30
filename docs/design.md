@@ -482,6 +482,26 @@ Being is belief integrated over everyone. One person's belief does not make a th
 - **NPC memory and attitudes:** what one holder believes and feels about another.
 - **Nature and Demeanor:** what is true of someone against what others hold of them.
 
+**Option under consideration: two orthogonal fields, attention and credence.** Like electricity and magnetism, belief may be two fields rather than one:
+
+- **Credence:** how *true* a holder takes a claim to be.
+- **Attention:** how *present* the claim is in their mind, how much it is thought about.
+
+They vary independently, and the setting lives in the corners where they come apart:
+
+| | Little attention | Much attention |
+| --- | --- | --- |
+| **High credence** | **The Fade:** everyone agrees Old Vesper existed, and nobody thinks about it, so it thins | Solid, ordinary reality |
+| **Low credence** | Oblivion | **Hearsays:** nobody believes the story, everyone tells it, and it stands up. **Corporate gods** work here too: advertising buys attention, not faith |
+
+Old gods hold devout credence from a few and little attention from anyone, which is their plight. One reading: **attention gives *that* a thing is; credence gives *what* it is**, existence and essence. The Fade is attention decaying, not credence. Remembrance is attention; prayer is attention carrying credence.
+
+The analogy goes further. Each field induces the other: repetition makes things feel true (attention inducing credence), and a startling belief grabs attention (credence inducing attention). Together they carry a wave through the city, which is what a rumor is. And the design already named a region's measure of being real *Light*: in physics, light is exactly that wave.
+
+It also rhymes with **Nature and Demeanor**: a Demeanor is the face others attend to, a Nature is what is true underneath. Two views of a person, as attention and credence are two views of a claim.
+
+This is an option, not a decision. Open: how the two combine into reality; how fast each decays; whether and at what cost a player can spend attention to raise credence; and whether **remembrance** becomes a resource of its own alongside attention (to be decided).
+
 **What stays outside the field.** The rules layer is the floor the game cannot argue with: dice, Harm, what a roll decided, items and currency, and the event log. **History is fixed; the present is believed.** What happened stays in the ledger forever, but whether it is still real now can fade. Old Vesper is a district of history that stopped being present. Bodily needs are physics too, not belief.
 
 **How it would be built.** One store, queried two ways: facts (short claims, each with a source: authored content, established by the DM in a scene, or produced by code) and holders' beliefs in them (how strongly, how they learned it, and when). *What does this holder believe?* serves play and narration; *how real is this?* serves the world. The DM proposes claims and belief changes through tools; code validates them, keeps the tally, owns the thresholds and the decay, and never lets belief touch the rules layer. Rules-facing numbers stay numbers. Each existing layer would be re-expressed against the store one at a time, without breaking play, starting with the most knowledge-shaped: NPC memory and speech gist. The test of elegance: a new social feature should need mostly content and a rule over the field, not a new table and a new visibility rule.
@@ -493,6 +513,7 @@ Being is belief integrated over everyone. One person's belief does not make a th
 - **Is the rules floor exactly the list above?** Should any of it be believable too (an item that fades when nobody remembers it exists)?
 - **Collusion:** in multiplayer, players believing something into existence together.
 - **Retrieval and cost:** which claims reach the DM each turn (place, people present, what the character holds, recency), so the prompt stays small.
+- **One field or two:** a single belief strength, or attention and credence as orthogonal fields (see the option above)?
 - **Order:** this would come before attention, which spends belief, and before multiplayer, whose secrets and rumors need it.
 
 ## Planned: Attention (D94)
@@ -505,6 +526,7 @@ Direction from the designer (2026-09-28). The details are decided when it is bui
   - **Pushing the world where it doesn't want to go:** fueling an attempt to change the world against its grain, the way Paradox works in Mage: the Ascension. The world pushes back.
   - **Remembrance:** keeping a person, place or thing real.
   - **Prayer:** feeding a god.
+- **Remembrance as a resource (to be decided):** remembrance may be a resource of its own, not only a way of spending attention (see the two-field option in D106).
 - **Open:**
   - The daily amount: the same for everyone, or varying by level, origin or Bond; and whether any unspent attention carries over.
   - What the world's push-back costs: Fade, Harm, a backlash track of its own, or something the DM draws from a list; and whether it builds up over time as Paradox does.
@@ -546,6 +568,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
   - Chosen from a short list of setting-flavored archetypes, or written as free text?
   - What acting true to your Nature earns. There is no Willpower here, so the options are: a fifth XP trigger (this changes D4's "exactly four"), clearing a box of Fade (being true to yourself keeps you real), a little attention (D94), or narrative only.
   - Who can see what. Everyone sees the Demeanor. Is the Nature hidden from NPCs and other players until earned (a Heart roll, a raised attitude)?
+  - How it relates to the belief model (D106): a Demeanor as what others attend to, a Nature as what is true underneath.
   - Whether it overlaps the NPCs' existing traits and the Bond, whether the new kinds (D90) lean toward particular Natures, and where it fits in the order of what's next.
 - [x] Bodily conditions: hunger, thirst, heat and cold, sleep and the like. Built in layer 7 (D83–D89). Still open: clothing and gear against the weather, food as items and meals given by NPCs, whether resting should take time, and tuning the rates after a playtest.
 - [ ] Setting-native kinds (D90–D93): whether any of their tags should be enforced by code (for example, a hearsay recovering Fade when someone tells its story, or a castoff's glow giving it away in the dark), whether a mislaid object without hands should take `no-hands`, and origin evolutions for each kind.
@@ -672,4 +695,4 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D103 | Scope | The whole story so far, a Fall included; latest four scenes in full, summaries before, capped at 24,000 characters |
 | D104 | Where and how | Markdown in `stories/`, never overwritten; `/export`, `/export record`; `new-vesper export` for any character, fallen too |
 | D105 | Theirs to keep | Players may edit and share the files; the game never reads them back |
-| D106 | Belief and being (draft) | One belief field (claims × holders × strength); epistemology is a holder's slice, ontology its weighted integral; history is fixed, the present is believed; the rules layer stays outside; open questions for the designer |
+| D106 | Belief and being (draft) | One belief field (claims × holders × strength); epistemology is a holder's slice, ontology its weighted integral; history is fixed, the present is believed; the rules layer stays outside; option: attention and credence as two orthogonal fields; open questions for the designer |
