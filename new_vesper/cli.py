@@ -29,8 +29,10 @@ from new_vesper.content.seed import seed
 from new_vesper.dm.agent import ModelClient
 from new_vesper.dm.config import CallType, DMConfig
 from new_vesper.dm.handlers import NEEDS_HANDS, NO_HANDS
+from new_vesper.dm.needs import needs_of
 from new_vesper.dm.session import ONE_LINE, PlaySession, SessionError, TurnOutcome
 from new_vesper.rules.character import create_character as new_sheet
+from new_vesper.rules.character import validate_name, validate_pronouns
 from new_vesper.rules.currency import format_glitter
 from new_vesper.rules.errors import RulesError
 from new_vesper.rules.languages import COMMON_TONGUE
@@ -52,6 +54,8 @@ HELP = """Type what your character does, or a command:
   /who           who's here and what they're doing
   /ask <question>  ask the narrator what your character sees or knows (no time passes)
   /speak <language>  choose the language your character speaks aloud
+  /rename <name>     change your character's name
+  /pronouns <p>      change your character's pronouns (e.g. /pronouns it/its)
   /eat, /drink   buy food or drink where it's sold
   /export        save your story, as your character would tell it
   /export record save your story exactly as you saw it
@@ -108,6 +112,30 @@ def discard_waiting() -> bool:
     except (ImportError, OSError, ValueError):
         return False
     return True
+
+
+PASTED = "(That came in as several lines at once, so none of it was used. Type one line.)"
+
+
+def one_line_at_a_time(
+    ask: Ask, say: Say, waiting: Callable[[], bool], discard: Callable[[], bool]
+) -> Ask:
+    """Wrap a prompt so a multi-line paste is refused whole, at every prompt (D107).
+
+    In the second playtest, a paste meant for the shell filled in a character's
+    name and pronouns line by line.
+    """
+
+    def guarded(question: str) -> str:
+        while True:
+            line = ask(question)
+            if waiting() or "\n" in line or "\r" in line:
+                discard()
+                say(PASTED)
+                continue
+            return line
+
+    return guarded
 
 
 def read_action(ask: Ask, waiting: Callable[[], bool], discard: Callable[[], bool]) -> str | None:
@@ -174,8 +202,10 @@ def create_character(conn, content: Content, player_id: int, ask: Ask, say: Say)
     )
     languages = choose_languages(content, origin, ask, say)
     while True:
-        name = _ask(ask, "Name: ")
-        pronouns = _ask(ask, "Pronouns (e.g. she/her, he/him, they/them): ")
+        name = ask_valid(ask, say, "Name: ", validate_name)
+        pronouns = ask_valid(
+            ask, say, "Pronouns (e.g. she/her, he/him, they/them): ", validate_pronouns
+        )
         age, appearance = ask_age_and_looks(ask)
         bond = _ask(
             ask,
@@ -225,6 +255,16 @@ def choose_languages(content: Content, origin: str, ask: Ask, say: Say) -> tuple
     return starting_languages(content, origin, pick, extra)
 
 
+def ask_valid(ask: Ask, say: Say, question: str, check: Callable[[str], str]) -> str:
+    """Ask until the answer passes ``check``, saying why when it doesn't."""
+    while True:
+        answer = _ask(ask, question)
+        try:
+            return check(answer)
+        except RulesError as exc:
+            say(f"  ({exc})")
+
+
 def ask_age_and_looks(ask: Ask) -> tuple[str, str]:
     age = _ask(ask, "Age, in a few words (e.g. mid-twenties, built three winters ago): ")
     looks = _ask(ask, "Appearance, in a line (what people notice first): ")
@@ -255,7 +295,10 @@ def show_sheet(character: Character, content: Content, say: Say) -> None:
         say(f"  Speaks: {', '.join(spoken)}  (speaking aloud: {aloud})")
     if place is not None:
         say(f"  At: {place.name}{' (haven)' if place.is_haven else ''}")
+        needs = needs_of(content, character)
         for need, offer in sorted(place.provisions.items()):
+            if need not in needs:
+                continue  # a Mislaid doesn't eat; don't offer it dal (D89)
             kind = "Food" if need.value == "hunger" else "Drink"
             price = format_glitter(offer.price) if offer.price else "free"
             say(f"  {kind} here: {offer.what}, {price}")
@@ -396,6 +439,11 @@ def play(
     ``waiting`` says whether more input has already arrived; ``discard`` throws
     it away and says whether there was any. Both default to the real terminal.
     """
+    live = ask is input and sys.stdin.isatty()
+    waiting = waiting or (stdin_has_more if live else (lambda: False))
+    discard = discard or (discard_waiting if live else (lambda: False))
+    # Every prompt, from creation on, takes one typed line at a time (D99, D107).
+    ask = one_line_at_a_time(ask, say, waiting, discard)
     seed(conn, content)
     player = players.find_player(conn, handle) or players.create_player(
         conn, handle, Cause(Actor.PLAYER)
@@ -455,9 +503,6 @@ def play(
         session.end()
         return
     say("(/help for commands)")
-    live = ask is input and sys.stdin.isatty()
-    waiting = waiting or (stdin_has_more if live else (lambda: False))
-    discard = discard or (discard_waiting if live else (lambda: False))
     try:
         while True:
             if discard():
@@ -505,6 +550,12 @@ def play(
                     say("")
                     say(wrap(session.ask(line[4:].strip())))
                     say("")
+                elif line.startswith("/rename"):
+                    me = session.rename(line[len("/rename") :].strip())
+                    say(f"  [Your character is now {me.name}.]")
+                elif line.startswith("/pronouns"):
+                    me = session.set_pronouns(line[len("/pronouns") :].strip())
+                    say(f"  [{me.name}'s pronouns are now {me.pronouns}.]")
                 elif line.startswith("/speak"):
                     choice = line[len("/speak") :].strip()
                     me = session.character

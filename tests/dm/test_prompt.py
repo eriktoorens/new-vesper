@@ -65,3 +65,14 @@ def test_the_brief_says_what_every_origin_is() -> None:
     for origin in content.origins.values():
         assert f"`{origin.id}` {origin.name}: {origin.trait}" in brief
     assert "`castoff` Castoff" in brief and "Bodily needs: cold, tired." in brief
+
+
+def test_the_second_playtests_lessons_are_in_the_prompt() -> None:
+    """Over-rolling, unseen consequences, speaking for the character, continuity."""
+    from new_vesper.dm.prompt import DM_INSTRUCTIONS
+
+    text = " ".join(DM_INSTRUCTIONS.split())
+    assert "lifting a coat" in text and "is not a roll either" in text
+    assert "make it visible on the page" in text
+    assert "Never say what the player character realizes" in text
+    assert "A book closed is closed" in text

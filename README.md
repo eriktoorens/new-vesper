@@ -72,6 +72,8 @@ In-game commands:
 | `/who` | Who's here and what they're doing |
 | `/ask <question>` | Ask what your character sees or knows (no time passes) |
 | `/speak <language>` | Choose which of your languages your character speaks aloud |
+| `/rename <name>` | Change your character's name |
+| `/pronouns <pronouns>` | Change your character's pronouns, e.g. `/pronouns it/its` |
 | `/eat`, `/drink` | Buy food or drink where it's sold |
 | `/rest` | Sleep at a haven |
 | `/export` | Save your story as your character would tell it (a small model cost) |
@@ -97,7 +99,7 @@ Check spending from outside the game with `new-vesper budget`.
 
 ## Where we are, what's next
 
-**Done** (all on this branch, 894 tests passing):
+**Done** (all on this branch, 969 tests passing):
 - Build steps 1–5: the rules engine, the SQLite state, the Market District content, the narrator agent with its validated tool contract, and the budget with a usage ledger, caps and allowances.
 - Playtest layers 1–5:
   - fixes from the first playtest
@@ -110,7 +112,7 @@ Check spending from outside the game with `new-vesper budget`.
   - bodily needs: hunger, thirst, tiredness, cold and heat wear down stats and, at their worst, cost Harm or Fade; `/eat`, `/drink` and `/rest` ease them
   - setting-native kinds: play a Hearsay (a story walking), a Castoff (a dead brand's mascot) or a Mislaid (a lost thing become someone)
 - Exporting your story: `/export` saves it as your character would tell it, `/export record` exactly as you saw it, and `new-vesper export` saves any character's, even one who has fallen. Files go in `stories/`.
-- Decisions D1–D106 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
+- Decisions D1–D108 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
 
 **Next:**
 1. **Playtest layers 6–8: languages, bodily needs and the new kinds (D76–D93).** Watch whether the narrator tags every line and keeps translations out of plain narration, whether the needs' rates feel right, and how the narrator plays a hearsay, a castoff or a mislaid.

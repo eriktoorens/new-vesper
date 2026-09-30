@@ -51,7 +51,9 @@ def _parse_time(value: str) -> datetime:
 
 def clean(narration: str) -> str:
     """Drop any speech-tag remnant: a tag's words are never shown untranslated (D81)."""
-    return SAY_TAG.sub("", SAY_PAIR.sub("[words that can't be made out]", narration)).strip()
+    cleaned = SAY_TAG.sub("", SAY_PAIR.sub("[words that can't be made out]", narration))
+    # Narration saved before quote marks were fixed can hold doubled ones.
+    return cleaned.replace('""', '"').strip()
 
 
 def chapters(conn: sqlite3.Connection, content: Content, character_id: int) -> list[Chapter]:
@@ -167,17 +169,26 @@ def telling_request(character: Character, content: Content, story: list[Chapter]
         "shade it with their feelings, leave gaps, and be unfair to people they didn't "
         "like. But invent nothing: no places, people, names, objects or events that are "
         "not in the record, and explain nothing the record leaves unexplained. What they "
-        "didn't understand stays not understood. Grimbright: the city is cruel but not "
-        "nihilistic, and kindness and effort matter. No sexual content, no torture in "
+        "didn't understand stays not understood. Let the tone come through what happened "
+        "and how they tell it; never state a moral or sum up what it all meant, and end "
+        "on a detail, not a lesson. No sexual content, no torture in "
         "detail, no harm to children. 300 to 900 words of plain prose in paragraphs, no "
         "headings, no title.\n"
         f"<story>{payload}</story>"
     )
 
 
+def as_told_by(character: Character) -> str:
+    """'as she tells it', 'as it tells it'; 'as they tell it' when unsure."""
+    subject = (character.pronouns or "").split("/")[0].strip().lower()
+    if not subject or subject == "they" or " " in subject:
+        return "as they tell it"
+    return f"as {subject} tells it"
+
+
 def telling(character: Character, content: Content, told: str) -> str:
     """The telling, in Markdown: a short title page, then the character's own words."""
-    lines = [*_title(character, content), "", "*as they tell it*", "", told.strip()]
+    lines = [*_title(character, content), "", f"*{as_told_by(character)}*", "", told.strip()]
     lines += _ending(character)
     return "\n".join(lines).rstrip() + "\n"
 

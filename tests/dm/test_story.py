@@ -225,3 +225,38 @@ def _sheet() -> Any:
     from tests.dm.conftest import STATS
 
     return create_character(STATS, ("rooftop-runner", "back-alley-patch"))
+
+
+def test_old_doubled_quotes_are_cleaned() -> None:
+    assert story.clean('""Evening, child.""') == '"Evening, child."'
+
+
+@pytest.mark.parametrize(
+    ("pronouns", "line"),
+    [
+        ("it/its", "as it tells it"),
+        ("she/her", "as she tells it"),
+        ("he / him", "as he tells it"),
+        ("they/them", "as they tell it"),
+        (None, "as they tell it"),
+        ("xe/xem", "as xe tells it"),
+    ],
+)
+def test_the_telling_uses_the_characters_pronouns(pronouns: str | None, line: str) -> None:
+    """The second playtest's telling said 'as they tell it' of an it/its umbrella."""
+    char = type("C", (), {"pronouns": pronouns})()
+    assert story.as_told_by(char) == line  # type: ignore[arg-type]
+
+
+def test_the_telling_is_not_handed_a_moral(content: Content) -> None:
+    """It echoed 'kindness matters' straight back from the prompt."""
+    beat = story.Beat("Zeno waits", "Rain.")
+    chapter = story.Chapter(1, "tarp-row", "Tarp Row", "Tuesday", "", (beat,))
+    char = characters.Character(
+        id=1, player_id=1, name="Zeno", origin_id="mislaid", bond="x", pronouns="it/its",
+        age=None, appearance=None, languages=(), sheet=_sheet(), tags=frozenset(),
+        currency=0, online=False, location_id=None, version=1,
+    )  # fmt: skip
+    request = story.telling_request(char, content, [chapter])
+    assert "kindness" not in request.lower()
+    assert "never state a moral" in request

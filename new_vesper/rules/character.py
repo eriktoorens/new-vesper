@@ -27,6 +27,41 @@ STARTING_KNACKS = 2
 _ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9_-]{0,63}")
 
 
+NAME_MAX = 40
+PRONOUNS_MAX = 30
+# Letters in any script, digits, and the punctuation names use: spaces, apostrophes,
+# hyphens and periods (O'Neil, Okoye-Lim, H. Okoye). No slashes, symbols or code.
+_NAME_PUNCTUATION = frozenset(" '\u2019-.")
+# One or more words joined by slashes: she/her, it/its, they/them, xe/xem, any.
+_PRONOUNS = re.compile(r"[^\W\d_]+(?:\s*/\s*[^\W\d_]+)*")
+
+
+def validate_name(value: object) -> str:
+    """A character's name: 1-40 characters of letters, digits and name punctuation (D107)."""
+    if not isinstance(value, str):
+        raise RulesError("a name must be text")
+    if any(ord(c) < 32 or ord(c) == 127 for c in value):
+        raise RulesError("a name is one line, with no control characters")
+    name = " ".join(value.split())
+    if not name or len(name) > NAME_MAX:
+        raise RulesError(f"a name is 1 to {NAME_MAX} characters")
+    if not any(c.isalpha() for c in name):
+        raise RulesError("a name needs at least one letter")
+    if any(not (c.isalnum() or c in _NAME_PUNCTUATION) for c in name):
+        raise RulesError("a name uses letters, digits, spaces, apostrophes, hyphens and periods")
+    return name
+
+
+def validate_pronouns(value: object) -> str:
+    """Pronouns as words joined by slashes, such as she/her or it/its (D107)."""
+    if not isinstance(value, str):
+        raise RulesError("pronouns must be text")
+    pronouns = value.strip()
+    if len(pronouns) > PRONOUNS_MAX or not _PRONOUNS.fullmatch(pronouns):
+        raise RulesError("write pronouns as words joined by slashes, like she/her or they/them")
+    return pronouns
+
+
 def validate_id(value: object, name: str) -> str:
     """Knack, scar and evolution ids are short slugs; free text is rejected."""
     if not isinstance(value, str) or not _ID_PATTERN.fullmatch(value):

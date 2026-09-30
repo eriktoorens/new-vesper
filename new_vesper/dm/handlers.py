@@ -101,6 +101,16 @@ NARRATIVE_ONLY = frozenset(
 )
 
 
+# How a consequence that changes no numbers reads in the player's bracketed line (D108).
+NARRATIVE_WORDS = {
+    ConsequenceType.SEPARATE_THEM: "separated",
+    ConsequenceType.REVEAL_UNWELCOME_TRUTH: "an unwelcome truth",
+    ConsequenceType.FACTION_TAKES_NOTICE: "a faction takes notice",
+    ConsequenceType.NARRATIVE_COST: "a price paid in the story",
+    ConsequenceType.SIDE_EFFECT: "a side effect",
+}
+
+
 class ToolError(Exception):
     """A request the rules refuse. The message goes back to the model."""
 
@@ -765,6 +775,9 @@ def apply_consequence(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
             )
             result["recorded"] = True
             assert kind in NARRATIVE_ONLY
+            # Shown to the player like any other consequence, though no number moves (D108).
+            lead = "cost" if roll.tier is Tier.COST else "the city moves"
+            ctx.changes.append(f"{lead}: {NARRATIVE_WORDS[kind]}")
         rolls.use_roll(ctx.conn, roll.id, rolls.RollUse.CONSEQUENCE, kind.value)
     return result
 
