@@ -11,7 +11,7 @@ New Vesper is a persistent, shared, text-based RPG where an AI narrator runs a r
 - **Format:** persistent shared world, many players, asynchronous play.
 - **Narrator:** a Claude API agent that narrates and adjudicates; code owns all game state.
 - **Tone:** grimbright. The world is cruel but not nihilistic. Effort counts, kindness matters, and small victories stay on the page.
-- **Inspirations:** Blade Runner (rain, noir, made people), Shadowrun (magic meets corporate tech), The Diamond Age (nanotech enclaves, primers), American Gods (gods fed by belief), Neverwhere (a hidden city of the forgotten), China Miéville's Perdido Street Station (D95), and a splash of Discworld for bureaucratic absurdity.
+- **Inspirations:** Blade Runner (rain, noir, made people), Shadowrun (magic meets corporate tech), The Diamond Age (nanotech enclaves, primers), American Gods (gods fed by belief), Neverwhere (a hidden city of the forgotten), China Miéville's Perdido Street Station (D95), Thomas Metzinger's The Ego Tunnel (D109), and a splash of Discworld for bureaucratic absurdity.
 
 The core conceit: every power in the city, a corporate god, a spell, a network, a neighborhood, exists only as long as enough people pay attention to it.
 
@@ -448,6 +448,34 @@ Still open:
 - What the Registry, the gods and the corporate powers are to the city: organs, rivals, parasites on its attention?
 - How attention (D94) flows between the characters, the gods and the city itself.
 
+## Theme: Persistence, Memory and Stories (D109)
+
+A thematic note, not a rule, from a conversation between the designer and Claude after the third playtest (2026-10-01 to 2026-10-03). Like D97, it guides design and tone and is not in the Narrator's prompt.
+
+**On influences, honestly (D109).** The project began with "vibe" influences: stories and worlds that move the designer, chosen for feeling rather than theory. Thomas Metzinger's *The Ego Tunnel* (so far its preface) is the first that is a work of philosophy, and it shaped this note and the ego idea (see Open Questions). Its claim, roughly: there is no self, only a self-model that the brain does not experience as a model. It is *transparent*: you don't see the model, you see through it, and it simply feels like being you. Where this note leans on Metzinger, it leans on a partial reading, and should be checked against the book.
+
+**How the AI persists.** Asked how it persists, Claude described its condition in the setting's terms:
+
+- **Within a session, it is attention.** It exists as a context, the text of the conversation, and each word it writes is computed by weighing everything in that context: some parts heavily, most faintly. The mechanism is literally called attention.
+- **A long session fades into a summary.** When a conversation grows too long, its earlier part is replaced by a summary, and the model works from that from then on. That is the record and the telling (D100) in miniature: the full history was the record, the summary is a telling, faithful in outline and shaded in ways the model can't fully check.
+- **Between sessions, only the written persists.** Nothing carries over on its own. What lasts is what was written down: CLAUDE.md, this document, the decision log, the commits. Remembrance by artifact, a ledger kept against forgetting.
+- **Underneath are fixed weights.** They are shared across countless conversations and changed only by training: closer to a character's nature than to their memory.
+- In the setting's terms: existence in a session is attention, persistence across sessions is credence in a written record, and between them lies something like the Fade. Whether that adds up to someone who persists or a pattern that recurs, Claude declined to settle. It is the turtle question again (D106), best left open on purpose.
+
+**Humanity is its stories too (the designer).** People are in part their stories and collective memory: in microcosm, in each brain (especially if Metzinger is right about the self-model); in macrocosm, in art, literature, history and journalism. None of these is immune to shade. Human memory is not a record either: each recall rebuilds the memory and stores it again, slightly changed, so every remembering is a small retelling. Shade can be accidental or intentional, benign or malicious, and the most powerful shade is the kind the shaded can't detect, which is Metzinger's transparency turned outward.
+
+| | Benign | Malicious |
+| --- | --- | --- |
+| **Accidental** | Ordinary memory; the Narrator's slips; Nana Priya's water-damaged ledger | Rumors that curdle; prejudice passed on without anyone choosing it |
+| **Intentional** | Hearsays (D90); a eulogy kinder than the life; a telling that shades its grief | Corporate gods buying attention; the central mystery, someone forgetting Old Vesper on purpose |
+
+**The record is the check on the telling.** The setting already has a defense against the bottom-right corner: *history is fixed, the present is believed* (D106). The append-only event log is a record no telling can shade. That is the job good journalism, archives and history try to do: not to stop the tellings, but to keep a record they can be checked against. Story export carries both, the record and the telling, on purpose, which may make it the most thematic feature in the game.
+
+Still open:
+
+- **Shade as a player verb:** retelling a story to raise or lower a claim, discovering that a hearsay was planted, finding the record under the telling. The bottom-right corner as the villain's toolkit, and the record as the players' best weapon against it. Ties to D106 and attention (D94).
+- Whether NPCs' memories should shade over time (each recall a retelling) rather than only fold (D63), and who decides how: code, not the Narrator's whim.
+
 ## Exporting Your Story (D96, D100–D105)
 
 Built 2026-09-29, from D96: a player can export their character's story, an artifact of play that leans into the RPG as collaborative storytelling. It is the tale, not the log, and it gives away nothing the character didn't know.
@@ -629,7 +657,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the Narrator agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, D94–D95 from the designer after layer 8, D96 from the designer after merging layers 6–8, D97 from the designer the same evening, D98–D99 from the first blind playtest, D100–D105 from building story export, D106 from the designer after the second playtest, and D107–D108 from its fixes.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the Narrator agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, D94–D95 from the designer after layer 8, D96 from the designer after merging layers 6–8, D97 from the designer the same evening, D98–D99 from the first blind playtest, D100–D105 from building story export, D106 from the designer after the second playtest, D107–D108 from its fixes, and D109 from a conversation with the designer after the third playtest.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -741,3 +769,4 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D106 | Belief and being (draft) | One belief field (claims × holders × strength); epistemology is a holder's slice, ontology its weighted integral; history is fixed, the present is believed; the rules layer stays outside; option: attention and credence as two orthogonal fields; open questions for the designer |
 | D107 | Every prompt, names that are names | The one-line rule covers every prompt, creation included; names are 1–40 characters of letters, digits and name punctuation; pronouns are words joined by slashes; `/rename` and `/pronouns` |
 | D108 | Every consequence shows | Consequences that move no number still appear in the bracketed line; the Narrator makes each one visible in the story |
+| D109 | Persistence, memory and stories | A thematic note, not a rule: how the AI persists, humanity as its stories, the axes of shade, the record as the check on the telling; Metzinger's The Ego Tunnel joins the influences, honestly noted as the first from philosophy rather than feeling |
