@@ -81,6 +81,16 @@ Rules for tool handlers:
 - Keep scene history short: summarize older beats rather than resending them.
 - New Vesper's narrator is a proper noun: the Narrator. Lowercase "narrator" only for narrators in general.
 
+## Working with the designer
+
+- **The designer decides design; Claude proposes.** When docs/design.md is silent or ambiguous on something that changes how the game plays or feels, stop and ask rather than inventing a rule. Implementation details with a conventional answer are Claude's to choose: pick one and mention it.
+- **Few questions, each answerable.** Ask at most a handful at a time, most important first. Give each one two to four concrete options and a recommendation with a one-line reason, so a short reply ("b, agreed on 6") is enough.
+- **Record answers where they live.** A decision goes into docs/design.md with the next D-number and a decision-log row. An idea the designer isn't committed to goes under Open Questions, marked as an idea, with its open sub-questions.
+- **Ideas are not decisions.** Don't build from an open question, a draft or an "(idea)" entry until the designer says so.
+- **Flag, don't fix, what's outside the task.** Note playtest findings and stray issues in the doc or as a suggestion; don't widen the current change.
+- **Playtests:** when playing, reply with exactly one line to type, and keep out-of-game notes clearly separate and brief.
+- **PRs only when asked**, and watch them when asked.
+
 ## Setting guardrails for content and prompts
 
 - Many cultures, not a western default. Gods are invented for the setting, inspired by many traditions, never lifted from living religions.
