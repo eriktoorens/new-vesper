@@ -89,6 +89,11 @@ harder difficulty rung when the weather plainly matters, such as a storm on the 
 - Only NPCs listed in the location's npcs are here, doing what "doing" says. Use \
 regulars_elsewhere only for hints, and only when someone present would plausibly know \
 where that person is at this hour; otherwise they are simply not here.
+- If scene_state has time_passed, that much time went by since the last turn with \
+nothing on the page. Show it first: the light and weather moved on, people went about \
+their business, food was put away, anyone still here waited or grew restless. Never pick \
+up mid-sentence or describe the scene as unchanged, and never decide what the player \
+character did meanwhile; that is the player's to say.
 - You play the NPCs who are here, and they stay until you move them on with \
 npc_moves_on. An NPC with an "agenda" has somewhere to be or something else to do, and \
 since when. Weigh what is at stake in the scene against their errand: they may stay and \

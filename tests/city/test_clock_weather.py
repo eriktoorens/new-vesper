@@ -135,3 +135,20 @@ def test_long_gaps_catch_up_briefly(conn: sqlite3.Connection, content: Content) 
     current_weather(conn, content, "market", utc(2026, 9, 1, 12))
     rows = conn.execute("SELECT COUNT(*) FROM weather").fetchone()[0]
     assert rows <= 2 * 16  # two catch-ups of at most 16 blocks, not months of blocks
+
+
+def test_spans_in_words() -> None:
+    assert clock.describe_span(0) == "less than a minute"
+    assert clock.describe_span(59) == "less than a minute"
+    assert clock.describe_span(60) == "1 minute"
+    assert clock.describe_span(40 * 60) == "40 minutes"
+    assert clock.describe_span(3 * 3600 + 9 * 60) == "3 hours 9 minutes"
+    assert clock.describe_span(10 * 3600 + 25 * 60) == "10 hours 25 minutes"
+    assert clock.describe_span(26 * 3600 + 5 * 60) == "1 day 2 hours"
+    assert clock.describe_span(2 * 86_400) == "2 days"
+
+
+@pytest.mark.parametrize("bad", [-1, 1.5, True, "60"])
+def test_spans_refuse_nonsense(bad: object) -> None:
+    with pytest.raises(ValueError):
+        clock.describe_span(bad)  # type: ignore[arg-type]

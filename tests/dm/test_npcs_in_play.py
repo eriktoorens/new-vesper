@@ -155,3 +155,36 @@ def test_an_npc_whose_day_keeps_them_here_cannot_be_moved_on(
     result, error = dispatch(ctx, "npc_moves_on", moves_on())
     assert error and "keeps them here" in result["error"]
     assert where(conn, content, "nana-priya", ctx.now) == "hundred-hooks"
+
+
+# --- time that passes shows (D114) -------------------------------------------------
+
+
+def test_a_long_gap_reaches_the_narrator(conn: sqlite3.Connection, content: Content) -> None:
+    # Fourth playtest: three hours in the cold, then a whole night, and the scene carried on
+    # as if no time had passed.
+    play, clock, client = at_the_hooks(conn, content, say("Nana looks up."), say("Later."))
+    play.turn("Mira sits by the kettle")
+    assert "time_passed" not in scene_state(client)
+    clock.pass_minutes(3 * 60 + 9)
+    play.turn("Mira looks up")
+    assert scene_state(client)["time_passed"] == {
+        "since_last_turn": "3 hours 9 minutes",
+        "last_turn_was": "Tuesday 4:55 pm, afternoon",
+    }
+
+
+def test_a_short_gap_is_not_news(conn: sqlite3.Connection, content: Content) -> None:
+    play, clock, client = at_the_hooks(conn, content, say("Nana looks up."), say("Hm."))
+    play.turn("Mira sits by the kettle")
+    clock.pass_minutes(14)
+    play.turn("Mira looks up")
+    assert "time_passed" not in scene_state(client)
+
+
+def test_a_new_scene_starts_without_a_gap(conn: sqlite3.Connection, content: Content) -> None:
+    play, clock, client = at_the_hooks(conn, content, say("Nana looks up."), say("The Row."))
+    play.turn("Mira sits by the kettle")
+    clock.pass_minutes(60)
+    play.go("tarp-row")
+    assert "time_passed" not in scene_state(client)

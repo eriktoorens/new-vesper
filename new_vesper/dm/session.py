@@ -58,6 +58,8 @@ ARRIVAL = (
     "place, who is around, one thing that invites action. No roll."
 )
 SECONDS_PER_DAY = 86_400
+# A gap between turns this long or longer is shown to the Narrator (D114).
+TIME_PASSED_SHOWN = 15 * 60
 # Events the recap leaves out: bookkeeping, or things the character couldn't know
 # (an NPC's private progress surfaces in play through what the DM sees instead).
 PRIVATE_EVENTS = frozenset(
@@ -143,6 +145,8 @@ class PlaySession:
         self.scene_id: int | None = None
         # NPCs who were present at some point in the current scene.
         self.scene_npcs: set[str] = set()
+        # When the last turn in the current scene was told, on the city clock (D114).
+        self.last_turn_at: datetime | None = None
 
     # --- budget ------------------------------------------------------------
 
@@ -210,6 +214,7 @@ class PlaySession:
         sky = current_weather(self.conn, self.content, scene.region_id, ctx.now)
         return {
             "time": clock.describe(ctx.now),
+            **self._time_passed(ctx.now),
             "weather": {"now": sky.name, "description": sky.description},
             "encounters": {
                 "left_today_in_district": left_today(self.conn, scene.region_id, ctx.now),
@@ -230,6 +235,20 @@ class PlaySession:
             },
         }
 
+    def _time_passed(self, now: datetime) -> dict[str, Any]:
+        """A long gap since the last turn in this scene, for the Narrator to show (D114)."""
+        if self.last_turn_at is None:
+            return {}
+        gap = int((now - self.last_turn_at).total_seconds())
+        if gap < TIME_PASSED_SHOWN:
+            return {}
+        return {
+            "time_passed": {
+                "since_last_turn": clock.describe_span(gap),
+                "last_turn_was": clock.describe(self.last_turn_at),
+            }
+        }
+
     def _open_scene(self) -> None:
         me = self.character
         if me.location_id is None:
@@ -239,6 +258,7 @@ class PlaySession:
             self.conn, region, self._cause(Actor.SYSTEM), location_id=me.location_id
         )
         self.scene_id = scene.id
+        self.last_turn_at = None
         scenes.join_scene(self.conn, scene.id, me.id, self._cause(Actor.SYSTEM))
 
     def _close_scene(self) -> None:
@@ -342,6 +362,7 @@ class PlaySession:
             self.conn, beat.id, result.narration, summary[:2000], self._cause(Actor.DM)
         )
         self._fold(beat.number)
+        self.last_turn_at = ctx.now
         me = self.character
         return TurnOutcome(
             status=self.status_line(),
