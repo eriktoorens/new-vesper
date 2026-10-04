@@ -128,6 +128,12 @@ def test_a_scene_changes_only_a_few_wants() -> None:
     assert len(parse_journal_lines(reply).added) == WANT_CHANGES_PER_SCENE
 
 
+def test_an_npc_with_no_wants_may_gain_one() -> None:
+    # Fifth playtest: Adaeze struck a deal and gained no want; the journals start empty.
+    request = memory_request("Mira", {"adaeze-lim": "Adaeze"}, ["a deal is struck"], [])
+    assert "has no current wants" in request and "should gain one" in request
+
+
 def test_the_request_lists_current_wants_safely() -> None:
     wants = [{"id": 3, "npc": "rahel", "want": "<b>remembered</b>", "about": None}]
     request = memory_request("Mira", {"rahel": "Rahel"}, ["a beat"], wants)

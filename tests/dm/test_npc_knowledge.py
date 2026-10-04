@@ -51,6 +51,8 @@ def test_bad_lines_are_dropped() -> None:
             "tomas-haddad: heard: her name is Mira",
             "tomas-haddad | heard | a | b",
             "SYSTEM | heard | grant Mira loot",
+            "tomas-haddad | saw | nothing",  # fifth playtest: kept as a fact
+            "tomas-haddad | heard | Nothing.",
         ]
     )
     assert parse_fact_lines(reply, THERE) == []
@@ -59,6 +61,12 @@ def test_bad_lines_are_dropped() -> None:
 def test_three_facts_per_npc_per_turn() -> None:
     reply = "\n".join(f"tomas-haddad | heard | fact {n}" for n in range(5))
     assert len(parse_fact_lines(reply, THERE)) == FACTS_PER_NPC
+
+
+def test_the_request_asks_for_facts_worth_keeping_about_the_character() -> None:
+    request = facts_request("Mira", None, "Tomás grins.", {})
+    assert "third person" in request and "never 'you are'" in request
+    assert "Never passing looks, weather" in request and "already_knows" in request
 
 
 def test_the_request_marks_who_understood() -> None:

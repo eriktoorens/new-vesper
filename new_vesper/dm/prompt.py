@@ -359,7 +359,9 @@ def memory_request(
         "want+ | npc-id | what they now want, under 20 words | who it is about, or - | why\n"
         "want- | want-id | met or dropped | why\n"
         "tension | want-id | want-id | how the two pull against each other, under 20 words\n"
-        "Most scenes change no wants. A want never changes without a reason in this scene. "
+        "A want never changes without a reason in this scene, and most scenes change few. "
+        "But an NPC listed who has no current wants and showed in this scene what they want "
+        "(a deal struck, a wrong to right, a favor asked) should gain one. "
         "A tension may be between two wants of one NPC, or of two NPCs; use ids from "
         "current_wants.\n"
         f"<scene>{_safe_json(payload)}</scene>"
@@ -435,10 +437,15 @@ def facts_request(
         f"Read one turn of a text RPG. For each NPC listed, write what they newly learned "
         f"about {character} on the page: something said in their hearing that they "
         "understood, or something they saw. One line per fact, as 'npc-id | heard | fact' or "
-        "'npc-id | saw | fact', the fact in under 20 words, as the NPC would put it. At most "
-        "three per NPC. Only plain facts on the page: nothing guessed, nothing they already "
-        "know, nothing about anyone else. An NPC who did not understand the character's "
-        "language learns only what they saw. If nothing was learned, write 'nothing'.\n"
+        f"'npc-id | saw | fact', the fact in under 20 words, written about {character} in the "
+        f"third person, as the NPC would note it ('{character} is looking for Sefu', never "
+        "'you are'). Keep only what is worth remembering about who they are: their name, "
+        "what they are, what they want, what they did or promised, who they know. Never "
+        "passing looks, weather, or how they walked in. At most three per NPC, and usually "
+        "fewer. Nothing guessed, nothing about anyone else, and nothing the NPC already knows "
+        "in other words (see already_knows). An NPC who did not understand the character's "
+        "language learns only what they saw. If an NPC learned nothing new, leave them out; "
+        "if nobody did, write only 'nothing'.\n"
         f"<turn>{_safe_json(turn)}</turn>"
     )
 
@@ -454,7 +461,9 @@ def parse_fact_lines(reply: str, allowed: set[str]) -> list[tuple[str, str, str]
         npc_id, how, fact = parts
         if npc_id not in allowed or how not in ("heard", "saw"):
             continue
-        if not fact or len(fact) > MAX_FACT or counts.get(npc_id, 0) >= FACTS_PER_NPC:
+        if not fact or fact.casefold().strip(" .") in ("nothing", "none", "-", "n/a"):
+            continue  # fifth playtest: "nothing" was kept as a fact
+        if len(fact) > MAX_FACT or counts.get(npc_id, 0) >= FACTS_PER_NPC:
             continue
         counts[npc_id] = counts.get(npc_id, 0) + 1
         found.append((npc_id, how, fact))
