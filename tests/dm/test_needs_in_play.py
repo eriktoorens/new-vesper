@@ -61,6 +61,13 @@ def dm_state(play: PlaySession) -> dict[str, Any]:
     return json.loads(message.split("<scene_state>")[1].split("</scene_state>")[0])
 
 
+def test_which_way_a_need_counts_is_stored(conn: sqlite3.Connection, content: Content) -> None:
+    play, clock = playing(conn, content)
+    set_need(play, Need.COLD, NeedState(2, 600, easing=True), clock)
+    found = stored.get_needs(conn, play.character_id, [Need.COLD])
+    assert found[Need.COLD][0] == NeedState(2, 600, easing=True)
+
+
 def test_needs_climb_while_playing(conn: sqlite3.Connection, content: Content) -> None:
     play, clock = playing(conn, content)
     clock.pass_hours(STEP_SECONDS[Need.HUNGER] / HOUR)

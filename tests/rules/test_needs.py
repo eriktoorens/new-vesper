@@ -76,9 +76,28 @@ def test_cold_rises_only_out_in_the_cold() -> None:
 
 def test_out_of_the_cold_a_body_recovers() -> None:
     change = advance(Need.COLD, NeedState(3, 0), RECOVER_SECONDS + 5, NONE)
-    assert change.after == NeedState(2, 5) and change.worst_steps == 0
+    assert change.after == NeedState(2, 5, easing=True) and change.worst_steps == 0
     assert advance(Need.COLD, NeedState(3, 0), 10 * RECOVER_SECONDS, NONE).after == NeedState()
     assert advance(Need.HEAT, NeedState(2, 0), RECOVER_SECONDS, Exposure.COLD).after.level == 1
+
+
+def test_time_toward_climbing_never_counts_toward_easing() -> None:
+    # Fourth playtest: 25 minutes left over from the climb, then 10 minutes indoors,
+    # eased a step that should have taken 30.
+    climbed = NeedState(3, 25 * 60)
+    assert advance(Need.COLD, climbed, 10 * 60, NONE).after == NeedState(3, 10 * 60, easing=True)
+    assert advance(Need.COLD, climbed, RECOVER_SECONDS, NONE).after.level == 2
+
+
+def test_time_toward_easing_never_counts_toward_climbing() -> None:
+    eased = NeedState(2, RECOVER_SECONDS - 60, easing=True)
+    assert advance(Need.COLD, eased, 40 * 60, Exposure.COLD).after == NeedState(2, 40 * 60)
+    assert advance(Need.COLD, eased, HOUR, Exposure.COLD).after.level == 3
+
+
+def test_easing_keeps_counting_the_same_way() -> None:
+    half = NeedState(2, RECOVER_SECONDS // 2, easing=True)
+    assert advance(Need.COLD, half, RECOVER_SECONDS // 2, NONE).after.level == 1
 
 
 def test_no_time_changes_nothing() -> None:
@@ -95,6 +114,8 @@ def test_bad_inputs() -> None:
         NeedState(4, 0)
     with pytest.raises(ValueError):
         NeedState(0, -1)
+    with pytest.raises(ValueError):
+        NeedState(1, 0, easing="yes")  # type: ignore[arg-type]
     with pytest.raises(RulesError):
         parse_need("boredom")
     assert parse_need(" Hunger ") is Need.HUNGER
