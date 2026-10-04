@@ -20,7 +20,7 @@ from new_vesper.budget.ledger import record_call
 from new_vesper.budget.policy import BudgetConfig, BudgetExhausted, BudgetStatus, budget_status
 from new_vesper.budget.pricing import PRICES, ModelPrice, price_of
 from new_vesper.city.encounters import ideas_here, left_today, recent_in_district
-from new_vesper.city.npcs import present_at
+from new_vesper.city.npcs import present_at, settle
 from new_vesper.city.sky import season, tide_at
 from new_vesper.city.tick import run_due_ticks
 from new_vesper.city.weather import current_weather
@@ -300,7 +300,8 @@ class PlaySession:
         # The time since the last turn counts against the character's needs (D85).
         apply_needs(ctx)
         self.scene_npcs |= {
-            w.npc.id for w in present_at(self.content, self.character.location_id or "", ctx.now)
+            w.npc.id
+            for w in present_at(self.conn, self.content, self.character.location_id or "", ctx.now)
         }
         message = prompt.turn_message(self._state(ctx), intent, direction)
         quiet = False
@@ -393,7 +394,7 @@ class PlaySession:
             e.payload.get("npc_id")
             for e in list_events(self.conn, character_id=me.id, kind="npc_met", limit=100_000)
         }
-        for npc in (w.npc for w in present_at(self.content, place.id, self.now())):
+        for npc in (w.npc for w in present_at(self.conn, self.content, place.id, self.now())):
             if npc.id not in met:
                 blocks.append(art_block(npc.name, npc.portrait))
                 append_event(
@@ -435,7 +436,7 @@ class PlaySession:
     def who(self) -> list[str]:
         """Who is here right now and what they're visibly doing."""
         me = self.character
-        present = present_at(self.content, me.location_id or "", self.now())
+        present = present_at(self.conn, self.content, me.location_id or "", self.now())
         return [f"{w.npc.name}: {w.activity}" for w in present]
 
     def location_art(self) -> str | None:
@@ -492,6 +493,8 @@ class PlaySession:
         self._require_budget()
         run_due_ticks(self.conn, self.content, self.now())
         logoff = self._last_logoff()
+        # NPCs went about their day while nobody was here (D113).
+        settle(self.conn, self.content, self.now(), arriving=me.id)
         characters.set_online(self.conn, me.id, True, self._cause())
         # Needs pick up where they were at logoff: offline time never counts (D88).
         stored_needs.resume(self.conn, me.id, sorted(bodily.needs_of(self.content, me)), self.now())
@@ -707,6 +710,8 @@ class PlaySession:
             raise SessionError(f"{target.name} is under water right now; low water is {nxt}")
         self._require_budget()
         self._close_scene()
+        # Whoever is at the new place is there as of now, before the character watches it.
+        settle(self.conn, self.content, self.now())
         characters.move_character(self.conn, me.id, target.id, self._cause())
         art = self._arrival_art()
         self._open_scene()

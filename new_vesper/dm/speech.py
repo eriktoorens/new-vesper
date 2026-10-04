@@ -116,7 +116,7 @@ def heard_here(ctx: "TurnContext", me: Character) -> frozenset[str]:
     if me.location_id is not None:
         place = ctx.content.locations[me.location_id]
         found |= set(ctx.content.regions[place.region_id].languages) | set(place.languages)
-        for w in present_at(ctx.content, place.id, ctx.now):
+        for w in present_at(ctx.conn, ctx.content, place.id, ctx.now):
             found |= set(w.npc.languages)
     for langs in strangers_here(ctx).values():
         found |= langs
@@ -202,7 +202,11 @@ def _check(
 
 def check_speech(ctx: "TurnContext", narration: str) -> list[Line]:
     me = characters.get_character(ctx.conn, ctx.character_id)
-    present = {w.npc.id: w.npc for w in present_at(ctx.content, me.location_id or "", ctx.now)}
+    present = {
+        w.npc.id: w.npc for w in present_at(ctx.conn, ctx.content, me.location_id or "", ctx.now)
+    }
+    # Someone who moved on this turn may still have a parting line in it (D112).
+    present |= {npc_id: ctx.content.npcs[npc_id] for npc_id in ctx.moved_on}
     strangers, gains = strangers_here(ctx), earned(ctx)
     return [_check(ctx, tag, me, present, strangers, gains) for tag in parse_tags(narration)]
 

@@ -142,6 +142,25 @@ TOOLS: list[dict[str, Any]] = [
         },
     },
     {
+        "name": "npc_moves_on",
+        "description": (
+            "An NPC who is here moves on to what their day calls for: their agenda in the "
+            "location's npcs. Code decides where they go; you decide when, and write the exit "
+            "in this turn (a reason, a parting line, colored by how they feel). Weigh the scene "
+            "against their errand: they may stay and run late, or cut a conversation short. "
+            "Refused if their day keeps them here, doing what they are doing."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "npc": {"type": "string"},
+                "reason": {"type": "string", "description": "Why now, in one sentence."},
+            },
+            "required": ["npc", "reason"],
+            "additionalProperties": False,
+        },
+    },
+    {
         "name": "create_encounter",
         "description": (
             "Something happens to the acting character that nobody planned: you write it, "

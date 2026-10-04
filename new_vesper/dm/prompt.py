@@ -89,6 +89,13 @@ harder difficulty rung when the weather plainly matters, such as a storm on the 
 - Only NPCs listed in the location's npcs are here, doing what "doing" says. Use \
 regulars_elsewhere only for hints, and only when someone present would plausibly know \
 where that person is at this hour; otherwise they are simply not here.
+- You play the NPCs who are here, and they stay until you move them on with \
+npc_moves_on. An NPC with an "agenda" has somewhere to be or something else to do, and \
+since when. Weigh what is at stake in the scene against their errand: they may stay and \
+run late, or cut the conversation short; you never have to keep the player character \
+company. When one goes, write the exit in that turn (a reason, a parting line, colored by \
+how they feel) and never let anyone simply vanish. An NPC who arrives mid-scene has just \
+come in: bring them on.
 - NPCs have feelings on three axes, -3 to +3: trust, fondness and fear, with the \
 reasons behind recent changes in "why". Play NPCs true to their feelings, personality, \
 speech habits and memories of the character. Feelings shape whether a roll is needed \

@@ -13,8 +13,9 @@ from datetime import UTC, datetime
 from typing import Any
 
 from new_vesper.budget.policy import stamp
+from new_vesper.city import npcs as npc_places
 from new_vesper.city.encounters import NoSuchEncounter, spend
-from new_vesper.city.npcs import present_at, regulars_elsewhere, whereabouts
+from new_vesper.city.npcs import Whereabouts, present_at, regulars_elsewhere, where_is
 from new_vesper.city.sky import describe_sky, harder, minimum_rung
 from new_vesper.content.loader import Content
 from new_vesper.content.loot import roll_loot
@@ -132,6 +133,7 @@ class TurnContext:
     changes: list[str] = field(default_factory=list)
     roll_ids: list[int] = field(default_factory=list)
     encounters: int = 0  # created this turn
+    moved_on: list[str] = field(default_factory=list)  # NPCs who left this turn (D112)
 
     @property
     def cause(self) -> Cause:
@@ -367,11 +369,33 @@ def _languages_here(ctx: TurnContext, location_id: str) -> dict[str, str]:
     return {ctx.content.languages[lang].name: level.value for lang, level in spread.items()}
 
 
+def _clock_time(minutes: int) -> str:
+    """'5:00 pm' from minutes after city midnight."""
+    hour, minute = divmod(minutes, 60)
+    return f"{(hour - 1) % 12 + 1}:{minute:02d} {'am' if hour < 12 else 'pm'}"
+
+
+def _agenda(ctx: TurnContext, w: Whereabouts) -> dict[str, Any]:
+    """What an NPC's day calls for now, when it isn't what they're doing (D112)."""
+    plan = w.agenda
+    return {
+        "where": ctx.content.locations[plan.location].name if plan.location else "away",
+        "doing": plan.activity,
+        "since": _clock_time(plan.starts),
+    }
+
+
+def _npcs_here(ctx: TurnContext, me: Character) -> set[str]:
+    """NPCs where the character is, and any who moved on this turn (still in its telling)."""
+    here = {w.npc.id for w in present_at(ctx.conn, ctx.content, me.location_id or "", ctx.now)}
+    return here | set(ctx.moved_on)
+
+
 def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
     place = ctx.content.locations[location_id]
     region = world.get_region(ctx.conn, place.region_id)
     god = ctx.content.shrine_god(place.id)
-    present = present_at(ctx.content, place.id, ctx.now)
+    present = present_at(ctx.conn, ctx.content, place.id, ctx.now)
     speaking = _me(ctx).speaking
     lying = ctx.conn.execute(
         "SELECT id, name FROM items WHERE location_id = ? AND destroyed = 0 ORDER BY id",
@@ -398,6 +422,8 @@ def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
                 # Whether they understand what the character speaks aloud (D80).
                 "understands_you": speaking in w.npc.languages,
                 "doing": w.activity,
+                # Only when their day calls them elsewhere or to something else (D112).
+                **({} if w.on_agenda else {"agenda": _agenda(ctx, w)}),
                 "lately": npc_lately(ctx.conn, w.npc),
                 "personality": personality(w.npc),
                 "feels_about_you": feelings(ctx, w.npc, TargetKind.CHARACTER, ctx.character_id),
@@ -417,7 +443,7 @@ def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
                 "where": ctx.content.locations[w.location].name if w.location else "away",
                 "doing": w.activity,
             }
-            for w in regulars_elsewhere(ctx.content, place.id, ctx.now)
+            for w in regulars_elsewhere(ctx.conn, ctx.content, place.id, ctx.now)
         ],
         "shrine_of": god.id if god else None,
         "sky": describe_sky(ctx.content, place.id, ctx.now),
@@ -459,6 +485,7 @@ def look(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
         }
     if entity in content.npcs:
         npc = content.npcs[entity]
+        now_at = where_is(ctx.conn, content, npc.id, ctx.now)
         return {
             "npc": {
                 "id": npc.id,
@@ -466,8 +493,8 @@ def look(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
                 "pronouns": npc.pronouns,
                 "home": npc.location,
                 "right_now": {
-                    "where": whereabouts(npc, ctx.now).location or "away",
-                    "doing": whereabouts(npc, ctx.now).activity,
+                    "where": now_at.location or "away",
+                    "doing": now_at.activity,
                 },
                 "role": npc.role,
                 "description": npc.description,
@@ -901,7 +928,7 @@ def adjust_attitude(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
         raise ToolError(str(exc)) from exc
     reason = _text(args["reason"], "reason", MAX_REASON)
     me = _me(ctx)
-    here = {w.npc.id for w in present_at(ctx.content, me.location_id or "", ctx.now)}
+    here = _npcs_here(ctx, me)
     npc_id = args["npc"]
     if not isinstance(npc_id, str) or npc_id not in ctx.content.npcs:
         raise ToolError(f"unknown npc; here now: {sorted(here) or 'nobody'}")
@@ -1002,6 +1029,42 @@ def apply_needs(ctx: TurnContext) -> None:
                 _change_track(ctx, track, boxes, "bodily needs at their worst", cause)
 
 
+def npc_moves_on(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
+    """An NPC who is here moves on to what their day calls for (D112).
+
+    The Narrator decides when and how it reads; code decides where they go.
+    """
+    args = _args(raw, {"npc", "reason"})
+    reason = _text(args["reason"], "reason", MAX_REASON)
+    me = _me(ctx)
+    here = {w.npc.id: w for w in present_at(ctx.conn, ctx.content, me.location_id or "", ctx.now)}
+    npc_id = args["npc"]
+    if not isinstance(npc_id, str) or npc_id not in ctx.content.npcs:
+        raise ToolError(f"unknown npc; here now: {sorted(here) or 'nobody'}")
+    name = ctx.content.npcs[npc_id].name
+    if npc_id not in here:
+        raise ToolError(f"{name} is not here")
+    if here[npc_id].on_agenda:
+        raise ToolError(
+            f"{name}'s day keeps them here, doing what they're doing; "
+            "if they turn away, narrate it without this tool"
+        )
+    before, after = npc_places.move_on(ctx.conn, ctx.content, npc_id, ctx.now, ctx.cause, reason)
+    ctx.moved_on.append(npc_id)
+    left = after.location != before.location
+    if left:
+        # Where they went isn't the character's to see (D53); the Narrator gets it below.
+        ctx.changes.append(f"{name} leaves")
+    return {
+        "npc": npc_id,
+        "left": left,
+        "now": {
+            "where": ctx.content.locations[after.location].name if after.location else "away",
+            "doing": after.activity,
+        },
+    }
+
+
 HANDLERS: dict[str, Handler] = {
     "look": look,
     "call_for_roll": call_for_roll,
@@ -1011,6 +1074,7 @@ HANDLERS: dict[str, Handler] = {
     "adjust_light": adjust_light,
     "adjust_attitude": adjust_attitude,
     "create_encounter": create_encounter,
+    "npc_moves_on": npc_moves_on,
 }
 
 
@@ -1025,6 +1089,7 @@ def dispatch(ctx: TurnContext, name: str, raw: object) -> tuple[dict[str, Any], 
         len(ctx.changes),
         len(ctx.roll_ids),
         ctx.encounters,
+        len(ctx.moved_on),
     )
     try:
         with atomic(ctx.conn):
@@ -1035,6 +1100,7 @@ def dispatch(ctx: TurnContext, name: str, raw: object) -> tuple[dict[str, Any], 
         del ctx.changes[flags[2] :]
         del ctx.roll_ids[flags[3] :]
         ctx.encounters = flags[4]
+        del ctx.moved_on[flags[5] :]
         return {"error": str(exc)}, True
 
 
