@@ -14,7 +14,6 @@ from datetime import UTC, datetime
 from typing import Any
 
 from new_vesper.budget.policy import stamp
-from new_vesper.city import npcs as npc_places
 from new_vesper.city.encounters import NoSuchEncounter, spend
 from new_vesper.city.moods import mood_now
 from new_vesper.city.npcs import Whereabouts, present_at, regulars_elsewhere, where_is
@@ -146,7 +145,6 @@ class TurnContext:
     changes: list[str] = field(default_factory=list)
     roll_ids: list[int] = field(default_factory=list)
     encounters: int = 0  # created this turn
-    moved_on: list[str] = field(default_factory=list)  # NPCs who left this turn (D112)
     spoken: str | None = None  # the language the character spoke aloud this turn (D115)
 
     @property
@@ -436,9 +434,8 @@ def _known(ctx: TurnContext, npc_id: str) -> dict[str, Any]:
 
 
 def _npcs_here(ctx: TurnContext, me: Character) -> set[str]:
-    """NPCs where the character is, and any who moved on this turn (still in its telling)."""
-    here = {w.npc.id for w in present_at(ctx.conn, ctx.content, me.location_id or "", ctx.now)}
-    return here | set(ctx.moved_on)
+    """NPCs where the character is; anyone leaving goes only after the turn (D132)."""
+    return {w.npc.id for w in present_at(ctx.conn, ctx.content, me.location_id or "", ctx.now)}
 
 
 def identity(ctx: TurnContext, me: Character) -> dict[str, Any]:
@@ -1117,48 +1114,12 @@ def apply_needs(ctx: TurnContext) -> None:
                 _change_track(ctx, track, boxes, "bodily needs at their worst", cause)
 
 
-def npc_moves_on(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
-    """An NPC who is here moves on to what their day calls for (D112).
-
-    The Narrator decides when and how it reads; code decides where they go.
-    """
-    args = _args(raw, {"npc", "reason"})
-    reason = _text(args["reason"], "reason", MAX_REASON)
-    me = _me(ctx)
-    here = {w.npc.id: w for w in present_at(ctx.conn, ctx.content, me.location_id or "", ctx.now)}
-    npc_id = args["npc"]
-    if not isinstance(npc_id, str) or npc_id not in ctx.content.npcs:
-        raise ToolError(f"unknown npc; here now: {sorted(here) or 'nobody'}")
-    name = ctx.content.npcs[npc_id].name
-    if npc_id not in here:
-        raise ToolError(f"{name} is not here")
-    if here[npc_id].on_agenda:
-        raise ToolError(
-            f"{name}'s day keeps them here, doing what they're doing; "
-            "if they turn away, narrate it without this tool"
-        )
-    before, after = npc_places.move_on(ctx.conn, ctx.content, npc_id, ctx.now, ctx.cause, reason)
-    ctx.moved_on.append(npc_id)
-    left = after.location != before.location
-    if left:
-        # Where they went isn't the character's to see (D53); the Narrator gets it below.
-        ctx.changes.append(f"{name} leaves")
-    return {
-        "npc": npc_id,
-        "left": left,
-        "now": {
-            "where": ctx.content.locations[after.location].name if after.location else "away",
-            "doing": after.activity,
-        },
-    }
-
-
 MAX_MOOD = 60
 
 
 def _npc_here(ctx: TurnContext, raw_id: object) -> Any:
     """An NPC id the Narrator gave, checked: real, and where the character is."""
-    here = _npcs_here(ctx, _me(ctx)) - set(ctx.moved_on)
+    here = _npcs_here(ctx, _me(ctx))
     if not isinstance(raw_id, str) or raw_id not in ctx.content.npcs:
         raise ToolError(f"unknown npc; here now: {sorted(here) or 'nobody'}")
     npc = ctx.content.npcs[raw_id]
@@ -1214,7 +1175,6 @@ HANDLERS: dict[str, Handler] = {
     "adjust_light": adjust_light,
     "adjust_attitude": adjust_attitude,
     "create_encounter": create_encounter,
-    "npc_moves_on": npc_moves_on,
     "npc_mood": npc_mood,
 }
 
@@ -1230,7 +1190,6 @@ def dispatch(ctx: TurnContext, name: str, raw: object) -> tuple[dict[str, Any], 
         len(ctx.changes),
         len(ctx.roll_ids),
         ctx.encounters,
-        len(ctx.moved_on),
     )
     try:
         with atomic(ctx.conn):
@@ -1241,7 +1200,6 @@ def dispatch(ctx: TurnContext, name: str, raw: object) -> tuple[dict[str, Any], 
         del ctx.changes[flags[2] :]
         del ctx.roll_ids[flags[3] :]
         ctx.encounters = flags[4]
-        del ctx.moved_on[flags[5] :]
         return {"error": str(exc)}, True
 
 

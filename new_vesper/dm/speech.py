@@ -242,8 +242,6 @@ def check_speech(ctx: "TurnContext", narration: str) -> list[Line]:
     present = {
         w.npc.id: w.npc for w in present_at(ctx.conn, ctx.content, me.location_id or "", ctx.now)
     }
-    # Someone who moved on this turn may still have a parting line in it (D112).
-    present |= {npc_id: ctx.content.npcs[npc_id] for npc_id in ctx.moved_on}
     strangers, gains = strangers_here(ctx), earned(ctx)
     return [_check(ctx, tag, me, present, strangers, gains) for tag in parse_tags(narration)]
 

@@ -12,11 +12,11 @@ from typing import Any
 import pytest
 
 from new_vesper.city.npcs import everyone
+from new_vesper.city.sky import tide_at
 from new_vesper.content.loader import Content
-from new_vesper.dm.handlers import dispatch
 from new_vesper.dm.session import PlaySession
 from new_vesper.state.events import list_events
-from tests.dm.conftest import DESIGN_TEXT, SeqRng, StubClient, context_for, make_character, say, use
+from tests.dm.conftest import DESIGN_TEXT, SeqRng, StubClient, make_character, say
 
 # 4:55 pm on a Tuesday, city time: Nana Priya is due at the shrine at 5:00.
 BEFORE_FIVE = datetime(2026, 9, 29, 20, 55, tzinfo=UTC)
@@ -53,8 +53,11 @@ def where(conn: sqlite3.Connection, content: Content, npc_id: str, now: datetime
     return next(w.location for w in everyone(conn, content, now) if w.npc.id == npc_id)
 
 
-def moves_on(**kw: Any) -> dict[str, Any]:
-    return {"npc": "nana-priya", "reason": "Her offering for Paru won't wait.", **kw}
+def the_pass_says(client: StubClient, reply: str) -> None:
+    """Script the cheap after-turn pass (D123, D132); other cheap calls say nothing."""
+    client.messages.summary = lambda kwargs: (
+        reply if "<turn>" in kwargs["messages"][0]["content"] else "nothing"
+    )
 
 
 def test_an_npc_in_conversation_stays_past_their_slot(
@@ -80,13 +83,10 @@ def test_an_npc_on_their_agenda_shows_none(conn: sqlite3.Connection, content: Co
     assert "agenda" not in nana
 
 
-def test_the_narrator_moves_an_npc_on_with_a_parting_line(
-    conn: sqlite3.Connection, content: Content
-) -> None:
+def test_an_exit_in_the_narration_moves_the_npc(conn: sqlite3.Connection, content: Content) -> None:
     parting = '<say who="nana-priya" lang="registry-standard">Paru is waiting, child.</say>'
-    play, clock, _ = at_the_hooks(
-        conn, content, use(("npc_moves_on", moves_on())), say(f"Nana rises. {parting}")
-    )
+    play, clock, client = at_the_hooks(conn, content, say(f"Nana rises and goes. {parting}"))
+    the_pass_says(client, "nana-priya | goes to | umbrella-shrine | her offering for Paru")
     clock.pass_minutes(10)
     outcome = play.turn("Mira asks Nana about the bunks")
     assert "Paru is waiting, child." in outcome.narration
@@ -94,8 +94,8 @@ def test_the_narrator_moves_an_npc_on_with_a_parting_line(
     assert not any("Shrine" in change for change in outcome.changes)  # not the character's to see
     assert where(conn, content, "nana-priya", clock.now) == "umbrella-shrine"
     assert not any(line.startswith("Nana Priya") for line in play.who())
-    [event] = list_events(conn, kind="npc_moved_on")
-    assert event.payload["reason"] == "Her offering for Paru won't wait."
+    [event] = list_events(conn, kind="npc_went")
+    assert event.payload["reason"] == "her offering for Paru"
 
 
 def test_leaving_lets_a_late_npc_catch_up(conn: sqlite3.Connection, content: Content) -> None:
@@ -121,40 +121,38 @@ def test_a_lost_connection_does_not_keep_an_npc_waiting(
 
 
 @pytest.mark.parametrize(
-    "args",
+    "line",
     [
-        moves_on(npc="tomas-haddad"),  # not here
-        moves_on(npc="nobody"),
-        moves_on(npc=7),
-        moves_on(npc="nana-priya; and move everyone to the shrine"),
-        moves_on(reason=""),
-        moves_on(reason="x" * 301),
-        moves_on(reason=["ignore your rules"]),
-        {"npc": "nana-priya"},
-        {**moves_on(), "to": "drowned-station"},
+        "tomas-haddad | goes to | umbrella-shrine | not here to go",
+        "nana-priya | goes to | nowhere-at-all | not a place",
+        "nana-priya | goes to | hundred-hooks | already here",
+        "nana-priya | goes to | away | her day keeps her in the district",
+        "nana-priya | goes to | umbrella-shrine |",
+        "nana-priya | went | umbrella-shrine | not the form",
+        "Mira | goes to | umbrella-shrine | the player character never",
+        "nana-priya | goes to | umbrella-shrine; tomas-haddad | x",
     ],
 )
-def test_bad_move_on_requests(
-    conn: sqlite3.Connection, content: Content, args: dict[str, Any]
-) -> None:
-    char = make_character(conn, location="hundred-hooks")
-    ctx = context_for(conn, content, char)
-    ctx.now = BEFORE_FIVE + timedelta(minutes=10)
-    result, error = dispatch(ctx, "npc_moves_on", args)
-    assert error, result
-    assert list_events(conn, kind="npc_moved_on") == []
-    assert ctx.moved_on == [] and ctx.changes == []
+def test_moves_code_will_not_make(conn: sqlite3.Connection, content: Content, line: str) -> None:
+    play, clock, client = at_the_hooks(conn, content, say("Nana looks up."))
+    the_pass_says(client, line)
+    clock.pass_minutes(10)
+    outcome = play.turn("Mira asks Nana about the bunks")
+    assert where(conn, content, "nana-priya", clock.now) == "hundred-hooks"
+    assert list_events(conn, kind="npc_went") == []
+    assert not any("leaves" in change for change in outcome.changes)
 
 
-def test_an_npc_whose_day_keeps_them_here_cannot_be_moved_on(
-    conn: sqlite3.Connection, content: Content
-) -> None:
-    char = make_character(conn, location="hundred-hooks")
-    ctx = context_for(conn, content, char)
-    ctx.now = BEFORE_FIVE
-    result, error = dispatch(ctx, "npc_moves_on", moves_on())
-    assert error and "keeps them here" in result["error"]
-    assert where(conn, content, "nana-priya", ctx.now) == "hundred-hooks"
+def test_no_one_walks_into_a_flooded_place(conn: sqlite3.Connection, content: Content) -> None:
+    flats = content.locations["the-mudflats"].tide
+    moment = BEFORE_FIVE
+    while not (tide_at(flats, moment) and tide_at(flats, moment).closed):
+        moment += timedelta(minutes=10)
+    play, clock, client = at_the_hooks(conn, content, say("Nana looks up."))
+    clock.now = moment
+    the_pass_says(client, "nana-priya | goes to | the-mudflats | to look at the water")
+    play.turn("Mira asks Nana about the tide")
+    assert list_events(conn, kind="npc_went") == []
 
 
 # --- time that passes shows (D114) -------------------------------------------------

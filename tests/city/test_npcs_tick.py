@@ -4,7 +4,15 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from new_vesper.city.npcs import agenda, everyone, move_on, present_at, regulars_elsewhere
+from new_vesper.city.npcs import (
+    MAX_DETOUR,
+    agenda,
+    detour_ends,
+    everyone,
+    go,
+    present_at,
+    regulars_elsewhere,
+)
 from new_vesper.city.tick import run_due_ticks
 from new_vesper.content.loader import Content, load_content
 from new_vesper.content.seed import seed
@@ -142,18 +150,42 @@ def test_npcs_still_arrive_where_someone_is(conn: sqlite3.Connection, content: C
     assert where(conn, content, "nana-priya", city(2026, 9, 29, 17, 5)) == "umbrella-shrine"
 
 
-def test_moving_on_follows_the_agenda(conn: sqlite3.Connection, content: Content) -> None:
+def test_going_where_the_agenda_says_is_just_taking_up_the_day(
+    conn: sqlite3.Connection, content: Content
+) -> None:
     where(conn, content, "nana-priya", city(2026, 9, 29, 16, 55))
     someone_at(conn, "hundred-hooks")
     late = city(2026, 9, 29, 17, 20)
     cause = Cause(Actor.DM, None, None)
-    before, after = move_on(conn, content, "nana-priya", late, cause, "her offering can't wait")
+    before, after = go(conn, content, "nana-priya", "umbrella-shrine", late, cause, "offering")
     assert (before.location, after.location) == ("hundred-hooks", "umbrella-shrine")
     assert after.on_agenda
-    assert present_at(conn, content, "hundred-hooks", late) == []
-    [event] = list_events(conn, kind="npc_moved_on")
-    assert event.payload["reason"] == "her offering can't wait"
-    assert event.actor == Actor.DM.value
+    [event] = list_events(conn, kind="npc_went")
+    assert event.payload["detour_until"] is None and event.actor == Actor.DM.value
+
+
+def test_a_want_takes_an_npc_off_their_agenda_for_a_while(
+    conn: sqlite3.Connection, content: Content
+) -> None:
+    # Fifth playtest: Tomás set off to confront Sefu at the Weighhouse (D132, D133).
+    noon = city(2026, 9, 29, 12, 15)  # Tuesday: at his cart until 2 pm
+    where(conn, content, "tomas-haddad", noon)
+    cause = Cause(Actor.DM, None, None)
+    _, after = go(conn, content, "tomas-haddad", "weighhouse", noon, cause, "confronting Sefu")
+    assert (after.location, after.activity) == ("weighhouse", "confronting Sefu")
+    # Nobody is with him at the Weighhouse, yet he stays: he wanted to be there.
+    assert where(conn, content, "tomas-haddad", noon + timedelta(minutes=90)) == "weighhouse"
+    back = noon + MAX_DETOUR + timedelta(minutes=1)
+    assert (
+        where(conn, content, "tomas-haddad", back)
+        == agenda(content.npcs["tomas-haddad"], back).location
+    )
+
+
+def test_a_detour_ends_when_the_day_calls_them_on(content: Content) -> None:
+    nana = content.npcs["nana-priya"]
+    assert detour_ends(nana, city(2026, 9, 29, 16, 30)) == city(2026, 9, 29, 17, 0)
+    assert detour_ends(nana, city(2026, 9, 29, 12, 0)) == city(2026, 9, 29, 14, 0)  # capped
 
 
 def test_an_npc_is_in_one_place_at_every_moment(conn: sqlite3.Connection, content: Content) -> None:

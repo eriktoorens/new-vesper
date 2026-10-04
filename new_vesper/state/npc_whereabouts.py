@@ -13,6 +13,7 @@ class Stored:
     location_id: str | None  # None: away from the district
     activity: str
     since: datetime
+    detour_until: datetime | None = None  # off their agenda until then (D133)
 
 
 def _stamp(moment: datetime) -> str:
@@ -24,9 +25,17 @@ def _parse(value: str) -> datetime:
 
 
 def all_whereabouts(conn: sqlite3.Connection) -> dict[str, Stored]:
-    rows = conn.execute("SELECT npc_id, location_id, activity, since FROM npc_whereabouts")
+    rows = conn.execute(
+        "SELECT npc_id, location_id, activity, since, detour_until FROM npc_whereabouts"
+    )
     return {
-        r["npc_id"]: Stored(r["npc_id"], r["location_id"], r["activity"], _parse(r["since"]))
+        r["npc_id"]: Stored(
+            r["npc_id"],
+            r["location_id"],
+            r["activity"],
+            _parse(r["since"]),
+            None if r["detour_until"] is None else _parse(r["detour_until"]),
+        )
         for r in rows
     }
 
@@ -37,19 +46,27 @@ def put(
     location_id: str | None,
     activity: str,
     since: datetime,
+    detour_until: datetime | None = None,
 ) -> Stored:
-    """Place an NPC: they are here, doing this, from this moment."""
+    """Place an NPC: they are here, doing this, from this moment (until, if on a detour)."""
     if not isinstance(npc_id, str) or not npc_id:
         raise StateError("npc id must be a non-empty string")
     if not isinstance(activity, str) or not 1 <= len(activity) <= 200:
         raise StateError("activity must be 1-200 characters")
     conn.execute(
-        "INSERT INTO npc_whereabouts (npc_id, location_id, activity, since) VALUES (?, ?, ?, ?)"
-        " ON CONFLICT (npc_id) DO UPDATE SET location_id = excluded.location_id,"
-        " activity = excluded.activity, since = excluded.since",
-        (npc_id, location_id, activity, _stamp(since)),
+        "INSERT INTO npc_whereabouts (npc_id, location_id, activity, since, detour_until)"
+        " VALUES (?, ?, ?, ?, ?) ON CONFLICT (npc_id) DO UPDATE SET"
+        " location_id = excluded.location_id, activity = excluded.activity,"
+        " since = excluded.since, detour_until = excluded.detour_until",
+        (
+            npc_id,
+            location_id,
+            activity,
+            _stamp(since),
+            None if detour_until is None else _stamp(detour_until),
+        ),
     )
-    return Stored(npc_id, location_id, activity, since)
+    return Stored(npc_id, location_id, activity, since, detour_until)
 
 
 def watched_locations(conn: sqlite3.Connection, excluding: int | None = None) -> frozenset[str]:

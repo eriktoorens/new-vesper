@@ -113,13 +113,14 @@ Play them pursuing their wants_now, not only answering; if they have none, play 
 from at_heart. Never give them a want that contradicts their journal. A tension pulls \
 two wants against each other, one NPC's own or two NPCs'; let it show in what they say \
 and choose, and never settle it by narration.
-- You play the NPCs who are here, and they stay until you move them on with \
-npc_moves_on. An NPC with an "agenda" has somewhere to be or something else to do, and \
-since when. Weigh what is at stake in the scene against their errand: they may stay and \
-run late, or cut the conversation short; you never have to keep the player character \
-company. When one goes, write the exit in that turn (a reason, a parting line, colored by \
-how they feel) and never let anyone simply vanish. An NPC who arrives mid-scene has just \
-come in: bring them on.
+- You play the NPCs who are here. An NPC with an "agenda" has somewhere to be or \
+something else to do, and since when. Weigh what is at stake in the scene against their \
+errand: they may stay and run late, or cut the conversation short; you never have to \
+keep the player character company. An NPC may also leave because they want to, for \
+somewhere their journal gives them reason to go. When one leaves, write the exit in \
+that turn (a reason, a parting line, colored by how they feel); code reads it after \
+the turn and moves them. Never let anyone simply vanish. An NPC who arrives mid-scene \
+has just come in: bring them on.
 - NPCs have feelings on three axes, -3 to +3: trust, fondness and fear, with the \
 reasons behind recent changes in "why". Play NPCs true to their feelings, personality, \
 speech habits and memories of the character. Feelings shape whether a roll is needed \
@@ -189,9 +190,10 @@ character reaches the edge and stop: the player chooses Fall or Endure next.
 them slipping below, changed but not dead.
 - Content lines: no sexual content, no torture in detail, no real-world hate groups \
 or slurs, no harm to children. Show cruelty through its consequences, not gore.
-- Characters move between places with the player's /go command, not through you. \
-If the player character sets off somewhere else, narrate them heading out and stop; \
-after the story, add one separate last line: (To go there: /go <place-id>)
+- The player character moves between places only with the player's /go command, never \
+through you: not even alongside an NPC who leaves. If the player character sets off \
+somewhere else, narrate them heading out and stop before they arrive; after the story, \
+add one separate last line: (To go there: /go <place-id>)
 """
 
 
@@ -429,10 +431,20 @@ MAX_FACT = 160
 
 
 def facts_request(
-    character: str, intent: str | None, narration: str, npcs: dict[str, dict[str, Any]]
+    character: str,
+    intent: str | None,
+    narration: str,
+    npcs: dict[str, dict[str, Any]],
+    places: dict[str, str] | None = None,
 ) -> str:
-    """Ask the cheap model what each NPC present learned about the character this turn."""
-    turn = {"character": character, "player_line": intent, "narration": narration, "npcs": npcs}
+    """Ask the cheap model what each NPC there learned this turn, and who left (D123, D132)."""
+    turn = {
+        "character": character,
+        "player_line": intent,
+        "narration": narration,
+        "npcs": npcs,
+        "places": places or {},
+    }
     return (
         f"Read one turn of a text RPG. For each NPC listed, write what they newly learned "
         f"about {character} on the page: something said in their hearing that they "
@@ -446,6 +458,10 @@ def facts_request(
         "in other words (see already_knows). An NPC who did not understand the character's "
         "language learns only what they saw. If an NPC learned nothing new, leave them out; "
         "if nobody did, write only 'nothing'.\n"
+        "Then, if the narration has an NPC listed leave for somewhere else (not just turn "
+        "away or step aside), add one line for them: 'npc-id | goes to | place-id | why', "
+        "with a place-id from places, or 'away' for out of the district. Only NPCs, never "
+        f"{character}; only a departure the narration shows, not one merely threatened.\n"
         f"<turn>{_safe_json(turn)}</turn>"
     )
 
@@ -467,6 +483,26 @@ def parse_fact_lines(reply: str, allowed: set[str]) -> list[tuple[str, str, str]
             continue
         counts[npc_id] = counts.get(npc_id, 0) + 1
         found.append((npc_id, how, fact))
+    return found
+
+
+def parse_move_lines(
+    reply: str, allowed: set[str], places: set[str]
+) -> list[tuple[str, str | None, str]]:
+    """'npc-id | goes to | place-id | why' lines; one per NPC; 'away' is out of the district."""
+    found: list[tuple[str, str | None, str]] = []
+    for line in reply.splitlines():
+        parts = [part.strip() for part in line.strip().lstrip("-* ").split("|")]
+        if len(parts) != 4 or parts[1].casefold() != "goes to":
+            continue
+        npc_id, place, why = parts[0], parts[2], parts[3]
+        if npc_id not in allowed or not why or len(why) > 200:
+            continue
+        if place != "away" and place not in places:
+            continue
+        if any(npc_id == seen for seen, _, _ in found):
+            continue
+        found.append((npc_id, None if place == "away" else place, why))
     return found
 
 

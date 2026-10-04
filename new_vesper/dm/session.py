@@ -19,8 +19,9 @@ from typing import Any
 from new_vesper.budget.ledger import record_call
 from new_vesper.budget.policy import BudgetConfig, BudgetExhausted, BudgetStatus, budget_status
 from new_vesper.budget.pricing import PRICES, ModelPrice, price_of
+from new_vesper.city import npcs as npc_places
 from new_vesper.city.encounters import ideas_here, left_today, recent_in_district
-from new_vesper.city.npcs import present_at, settle
+from new_vesper.city.npcs import present_at, settle, where_is
 from new_vesper.city.sky import season, tide_at
 from new_vesper.city.tick import run_due_ticks
 from new_vesper.city.weather import current_weather
@@ -78,6 +79,7 @@ PRIVATE_EVENTS = frozenset(
         # (D113, D119, D121, D124, D126), never in a recap.
         "npc_moved",
         "npc_moved_on",
+        "npc_went",
         "npc_mood_shifted",
         "npc_learned",
         "npc_want_added",
@@ -384,17 +386,23 @@ class PlaySession:
         attitudes.fold_memories(self.conn, npc_id, me.id, [i for i, _ in old], merged[:600])
 
     def _learn_facts(self, ctx: TurnContext, intent: str | None, narration: str) -> None:
-        """A cheap pass reads the turn for what each NPC there learned (D123).
+        """A cheap pass reads the turn: what each NPC there learned, and who left (D123, D132).
 
-        Code keeps only lines for NPCs who were there, at most three each, one line each.
+        Code keeps only lines for NPCs who were there, at most three facts each, and only
+        moves it may make (D134).
         """
         me = self.character
         there = {
             w.npc.id for w in present_at(self.conn, self.content, me.location_id or "", ctx.now)
         }
-        there |= set(ctx.moved_on)
-        if not there or not narration.strip():
+        if not there or not narration.strip() or me.location_id is None:
             return
+        region = self.content.locations[me.location_id].region_id
+        places = {
+            loc.id: loc.name
+            for loc in self.content.locations.values()
+            if loc.region_id == region and loc.id != me.location_id
+        }
         npcs = {
             npc_id: {
                 "name": self.content.npcs[npc_id].name,
@@ -405,7 +413,7 @@ class PlaySession:
             for npc_id in sorted(there)
         }
         reply = self._summarize(
-            CallType.NPC_FACTS, prompt.facts_request(me.name, intent, narration, npcs)
+            CallType.NPC_FACTS, prompt.facts_request(me.name, intent, narration, npcs, places)
         )
         cause = Cause(Actor.DM, self.player_id, ctx.scene_id)
         for npc_id, how, fact in prompt.parse_fact_lines(reply, there):
@@ -420,6 +428,27 @@ class PlaySession:
                     )
             except StateError:
                 continue  # a line code won't keep, such as one with a line break
+        for npc_id, to, why in prompt.parse_move_lines(reply, there, set(places)):
+            self._npc_goes(ctx, npc_id, to, why, cause)
+
+    def _npc_goes(
+        self, ctx: TurnContext, npc_id: str, to: str | None, why: str, cause: Cause
+    ) -> None:
+        """Carry out a move the narration showed, if code allows it (D132-D134).
+
+        The place must be real, in this district and above water; 'away' only when the
+        NPC's day takes them out of the district.
+        """
+        before = where_is(self.conn, self.content, npc_id, ctx.now)
+        if to is None and before.agenda.location is not None:
+            return
+        if to is not None:
+            flooded = tide_at(self.content.locations[to].tide, ctx.now)
+            if flooded is not None and flooded.closed:
+                return
+        npc_places.go(self.conn, self.content, npc_id, to, ctx.now, cause, why)
+        # Where they went isn't the character's to see (D53).
+        ctx.changes.append(f"{self.content.npcs[npc_id].name} leaves")
 
     def _fold_facts(self, npc_id: str, me: Character) -> None:
         """Too many facts to show: the oldest fold into one line (D121)."""

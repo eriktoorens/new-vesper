@@ -1,13 +1,16 @@
-"""Where NPCs are (D111-D113): stored, one place at a time, with the schedule as an agenda.
+"""Where NPCs are (D111-D113, D132-D134): stored, one place at a time, with the schedule
+as an agenda.
 
 An NPC nobody is with follows their agenda (D113). An NPC who is where a player
-character is stays until the Narrator moves them on (D112); the agenda then says
-where they go.
+character is stays until the story has them go (D112); code reads that from the
+narration after each turn (D132). They may go where their agenda says, or where a
+want takes them: a detour that lasts until their next scheduled block, two hours at
+most, before they rejoin their day (D133).
 """
 
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from new_vesper.content.loader import Content
 from new_vesper.content.model import NpcDef
@@ -68,7 +71,11 @@ def settle(
     for npc in content.npcs.values():
         plan = agenda(npc, now)
         was = current.get(npc.id)
+        if was is not None and was.detour_until is not None and now < was.detour_until:
+            continue  # off their agenda for a while, because they wanted to be (D133)
         if was is not None and (was.location_id, was.activity) == (plan.location, plan.activity):
+            if was.detour_until is not None:
+                stored.put(conn, npc.id, plan.location, plan.activity, was.since)
             continue
         if was is not None and was.location_id in watched:
             continue
@@ -115,31 +122,53 @@ def regulars_elsewhere(
     ]
 
 
-def move_on(
+# The longest an NPC stays off their agenda for a want (D133).
+MAX_DETOUR = timedelta(hours=2)
+
+
+def detour_ends(npc: NpcDef, now: datetime) -> datetime:
+    """When the NPC's day next calls them to something new, or two hours on, if sooner."""
+    plan = agenda(npc, now)
+    for minutes in range(1, int(MAX_DETOUR.total_seconds() // 60)):
+        later = now + timedelta(minutes=minutes)
+        nxt = agenda(npc, later)
+        if (nxt.location, nxt.activity) != (plan.location, plan.activity):
+            return later
+    return now + MAX_DETOUR
+
+
+def go(
     conn: sqlite3.Connection,
     content: Content,
     npc_id: str,
+    to: str | None,
     now: datetime,
     cause: Cause,
     reason: str,
 ) -> tuple[Whereabouts, Whereabouts]:
-    """The Narrator moves an NPC on to what their agenda calls for (D112).
+    """An NPC goes somewhere because the story had them go (D132).
 
-    Returns where they were and where they are now. The caller checks they may.
+    Where their agenda says, they simply take up their day; anywhere else is a detour
+    (D133). ``to`` None is away from the district. The caller checks they may.
     """
     before = where_is(conn, content, npc_id, now)
     plan = before.agenda
-    stored.put(conn, npc_id, plan.location, plan.activity, now)
+    if to == plan.location:
+        stored.put(conn, npc_id, plan.location, plan.activity, now)
+        until = None
+    else:
+        until = detour_ends(before.npc, now)
+        stored.put(conn, npc_id, to, reason[:200], now, until)
     append_event(
         conn,
-        "npc_moved_on",
+        "npc_went",
         cause,
         {
             "npc_id": npc_id,
             "from": before.location,
-            "to": plan.location,
-            "activity": plan.activity,
+            "to": to,
             "reason": reason,
+            "detour_until": None if until is None else until.isoformat(),
         },
     )
     return before, where_is(conn, content, npc_id, now)
