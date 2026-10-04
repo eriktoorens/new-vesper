@@ -51,7 +51,17 @@ from new_vesper.rules.tracks import (
     must_fall_or_endure,
 )
 from new_vesper.rules.xp import XP_PER_TRIGGER, parse_trigger
-from new_vesper.state import characters, clocks, favors, items, npc_minds, rolls, scenes, world
+from new_vesper.state import (
+    characters,
+    clocks,
+    favors,
+    held_facts,
+    items,
+    npc_minds,
+    rolls,
+    scenes,
+    world,
+)
 from new_vesper.state.attitudes import (
     TargetKind,
     change_attitude,
@@ -137,6 +147,7 @@ class TurnContext:
     encounters: int = 0  # created this turn
     moved_on: list[str] = field(default_factory=list)  # NPCs who left this turn (D112)
     spoken: str | None = None  # the language the character spoke aloud this turn (D115)
+    learned: list[str] = field(default_factory=list)  # an NPC id per fact learned (D121)
 
     @property
     def cause(self) -> Cause:
@@ -388,6 +399,11 @@ def _agenda(ctx: TurnContext, w: Whereabouts) -> dict[str, Any]:
     }
 
 
+def _known(ctx: TurnContext, npc_id: str) -> dict[str, Any]:
+    found = held_facts.known(ctx.conn, npc_id, ctx.character_id)
+    return {"long_ago": found.summary, "facts": list(found.facts)}
+
+
 def _wants_now(ctx: TurnContext, npc_id: str) -> str | None:
     found = npc_minds.want_in_scene(ctx.conn, ctx.scene_id, npc_id)
     return None if found is None else found.want
@@ -477,6 +493,8 @@ def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
                 "personality": personality(w.npc),
                 "feels_about_you": feelings(ctx, w.npc, TargetKind.CHARACTER, ctx.character_id),
                 "remembers_about_you": remembered(ctx, w.npc),
+                # What they know about the character, and nothing else (D121).
+                "knows_about_you": _known(ctx, w.npc.id),
                 "feels_about_others_here": {
                     other.npc.name: feelings(ctx, w.npc, TargetKind.NPC, other.npc.id)
                     for other in present
@@ -1193,6 +1211,42 @@ def npc_wants(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
     return {"npc": npc.id, "wants_now": after.want, "may_change_again": after.changes == 0}
 
 
+FACTS_PER_TURN = 3  # per NPC
+
+
+def npc_learns(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
+    """An NPC hears or sees something about the character worth keeping (D121).
+
+    Up to three facts per NPC per turn; a fact they already knew changes nothing.
+    """
+    args = _args(raw, {"npc", "fact", "how"})
+    me = _me(ctx)
+    here = _npcs_here(ctx, me)
+    npc_id = args["npc"]
+    if not isinstance(npc_id, str) or npc_id not in ctx.content.npcs:
+        raise ToolError(f"unknown npc; here now: {sorted(here) or 'nobody'}")
+    npc = ctx.content.npcs[npc_id]
+    if npc_id not in here:
+        raise ToolError(f"{npc.name} is not here, so they learn nothing")
+    fact = _one_line(args["fact"], "fact", held_facts.MAX_FACT)
+    how = args["how"]
+    if how not in held_facts.LEARNED:
+        raise ToolError(f"how must be one of {sorted(held_facts.LEARNED)}")
+    if ctx.learned.count(npc_id) >= FACTS_PER_TURN:
+        raise ToolError(f"{npc.name} has learned enough for one turn")
+    new = held_facts.learn(ctx.conn, npc_id, ctx.character_id, fact, how, ctx.scene_id)
+    if new:
+        ctx.learned.append(npc_id)
+        append_event(
+            ctx.conn,
+            "npc_learned",
+            ctx.cause,
+            {"npc_id": npc_id, "fact": fact, "how": how},
+            character_id=ctx.character_id,
+        )
+    return {"npc": npc_id, "fact": fact, "already_knew": not new}
+
+
 HANDLERS: dict[str, Handler] = {
     "look": look,
     "call_for_roll": call_for_roll,
@@ -1205,6 +1259,7 @@ HANDLERS: dict[str, Handler] = {
     "npc_moves_on": npc_moves_on,
     "npc_mood": npc_mood,
     "npc_wants": npc_wants,
+    "npc_learns": npc_learns,
 }
 
 
@@ -1220,6 +1275,7 @@ def dispatch(ctx: TurnContext, name: str, raw: object) -> tuple[dict[str, Any], 
         len(ctx.roll_ids),
         ctx.encounters,
         len(ctx.moved_on),
+        len(ctx.learned),
     )
     try:
         with atomic(ctx.conn):
@@ -1231,6 +1287,7 @@ def dispatch(ctx: TurnContext, name: str, raw: object) -> tuple[dict[str, Any], 
         del ctx.roll_ids[flags[3] :]
         ctx.encounters = flags[4]
         del ctx.moved_on[flags[5] :]
+        del ctx.learned[flags[6] :]
         return {"error": str(exc)}, True
 
 

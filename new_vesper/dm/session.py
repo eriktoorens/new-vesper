@@ -49,7 +49,7 @@ from new_vesper.rules.leveling import LevelUpRequest, level_up
 from new_vesper.rules.needs import Need
 from new_vesper.rules.sky import moon
 from new_vesper.rules.tracks import must_fall_or_endure
-from new_vesper.state import attitudes, characters, scenes, world
+from new_vesper.state import attitudes, characters, held_facts, scenes, world
 from new_vesper.state import needs as stored_needs
 from new_vesper.state.characters import Character
 from new_vesper.state.errors import StateError
@@ -78,6 +78,8 @@ PRIVATE_EVENTS = frozenset(
 )
 # Memory lines each NPC keeps per character before older ones fold into a summary.
 MEMORIES_KEPT = 8
+# Facts an NPC keeps about a character before the oldest fold into one line (D121).
+FACTS_KEPT = 16
 # One action per prompt (D99): refused whole, so nothing of it reaches the DM.
 ONE_LINE = "One action at a time, on one line. None of that was sent; try again."
 # Where exported stories go, next to the world's database by default (D104).
@@ -299,6 +301,8 @@ class PlaySession:
         for npc_id, note in prompt.parse_memory_lines(reply, set(names)).items():
             attitudes.add_memory(self.conn, npc_id, me.id, note, cause)
             self._fold_memories(npc_id, me)
+        for npc_id in names:
+            self._fold_facts(npc_id, me)
 
     def _fold_memories(self, npc_id: str, me: Character) -> None:
         old = attitudes.notes_to_fold(self.conn, npc_id, me.id, keep=MEMORIES_KEPT)
@@ -311,6 +315,19 @@ class PlaySession:
             prompt.fold_memory_request(name, me.name, earlier, [n for _, n in old]),
         ) or " ".join(filter(None, [earlier, *(n for _, n in old)]))
         attitudes.fold_memories(self.conn, npc_id, me.id, [i for i, _ in old], merged[:600])
+
+    def _fold_facts(self, npc_id: str, me: Character) -> None:
+        """Too many facts to show: the oldest fold into one line (D121)."""
+        old = held_facts.facts_to_fold(self.conn, npc_id, me.id, keep=FACTS_KEPT)
+        if not old:
+            return
+        earlier = held_facts.known(self.conn, npc_id, me.id).summary
+        name = self.content.npcs[npc_id].name
+        merged = self._summarize(
+            CallType.NPC_MEMORY,
+            prompt.fold_facts_request(name, me.name, earlier, [f for _, f in old]),
+        ) or "; ".join(filter(None, [earlier, *(f for _, f in old)]))
+        held_facts.fold(self.conn, npc_id, me.id, [i for i, _ in old], merged[:600])
 
     def _run(self, intent: str | None, direction: str | None) -> TurnOutcome:
         """One beat: record the intent, run the agent, resolve the beat."""

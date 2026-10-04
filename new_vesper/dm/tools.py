@@ -180,6 +180,26 @@ TOOLS: list[dict[str, Any]] = [
         },
     },
     {
+        "name": "npc_learns",
+        "description": (
+            "An NPC who is here hears or sees something about the player character worth "
+            "keeping: their name once it is said, what they are, what they want, what they "
+            "did. One plain fact per call, as the NPC would put it; up to three per NPC per "
+            "turn. NPCs know only what is in their knows_about_you and what happens in front "
+            "of them, so record what matters."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "npc": {"type": "string"},
+                "fact": {"type": "string", "description": "One short line."},
+                "how": {"type": "string", "enum": ["heard", "saw"]},
+            },
+            "required": ["npc", "fact", "how"],
+            "additionalProperties": False,
+        },
+    },
+    {
         "name": "npc_mood",
         "description": (
             "Something on the page shifts the mood of an NPC who is here, for the rest of "

@@ -77,9 +77,12 @@ changes in prose. If a tool refused a request, do not narrate that change; choos
 something the rules allow or let the moment pass.
 - Show consequences in the fiction and say plainly when Harm or Fade changes \
 ("Jack takes 2 Harm" is fine). Never show dice arithmetic.
-- NPCs keep the names, pronouns and voices from the content brief, and they know only \
-what they have seen, been told, or could plausibly know. An NPC does not know a \
-character's name until someone says it.
+- NPCs keep the names, pronouns and voices from the content brief. About the player \
+character, an NPC knows only what is in their knows_about_you, what happens in front of \
+them in this scene, and what anyone could see at a glance. An NPC does not know a \
+character's name until someone says it. When an NPC hears or sees something about the \
+character worth keeping, record it with npc_learns; never let an NPC act on what they \
+don't know.
 - Nobody invents new gods lifted from real religions.
 - Time, weather, season, moon and tide come from code, in <scene_state> and the \
 location's sky. Let them color the scene (light, crowds, what's open, how wet everyone \
@@ -352,6 +355,14 @@ def fold_memory_request(npc: str, character: str, old: str | None, notes: list[s
         f"Merge these memories {npc} has of {character} into one line of at most 60 words, "
         "keeping what matters to how they feel: promises, debts, kindnesses, slights.\n"
         f"<memories>{_safe_json({'earlier': old, 'notes': notes})}</memories>"
+    )
+
+
+def fold_facts_request(npc: str, character: str, old: str | None, facts: list[str]) -> str:
+    return (
+        f"Merge what {npc} knows about {character} into one line of at most 60 words. Keep "
+        "every fact; add nothing, and keep it as what they know, not what they feel.\n"
+        f"<facts>{_safe_json({'earlier': old, 'facts': facts})}</facts>"
     )
 
 
