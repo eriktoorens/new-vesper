@@ -104,9 +104,9 @@ def test_the_narrator_sees_what_they_know(conn: sqlite3.Connection, content: Con
     play.turn('Mira says, "I\'m Mira."')
     ctx = play._context()
     tomas = next(n for n in describe_location(ctx, "tarp-row")["npcs"] if n["id"] == "tomas-haddad")
-    assert tomas["knows_about_you"]["facts"][-1] == "her name is Mira"
+    assert tomas["journal"]["knows_about_you"]["facts"][-1] == "her name is Mira"
     vasil = next(n for n in describe_location(ctx, "tarp-row")["npcs"] if n["id"] == "clerk-vasil")
-    assert "her name is Mira" not in vasil["knows_about_you"]["facts"]
+    assert "her name is Mira" not in vasil["journal"]["knows_about_you"]["facts"]
 
 
 def test_a_fact_already_known_is_kept_once(conn: sqlite3.Connection, content: Content) -> None:

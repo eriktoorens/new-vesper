@@ -6,6 +6,7 @@ nothing time-dependent or per-player goes in it.
 """
 
 import json
+from dataclasses import dataclass
 from typing import Any
 
 from new_vesper.content.loader import Content
@@ -78,8 +79,8 @@ something the rules allow or let the moment pass.
 - Show consequences in the fiction and say plainly when Harm or Fade changes \
 ("Jack takes 2 Harm" is fine). Never show dice arithmetic.
 - NPCs keep the names, pronouns and voices from the content brief. About the player \
-character, an NPC knows only what is in their knows_about_you, what happens in front of \
-them in this scene, and what anyone could see at a glance. An NPC does not know a \
+character, an NPC knows only what is in their journal's knows_about_you, what happens in \
+front of them in this scene, and what anyone could see at a glance. An NPC does not know a \
 character's name until someone says it. Code records what they hear and see after each \
 turn; never let an NPC act on what they don't know.
 - Nobody invents new gods lifted from real religions.
@@ -105,9 +106,13 @@ their business, food was put away, anyone still here waited or grew restless. Ne
 up mid-sentence or describe the scene as unchanged, and never decide what the player \
 character did meanwhile; that is the player's to say.
 - Each NPC here has a mood for today, from code. Let it color their voice and choices; \
-shift it with npc_mood only when something on the page plainly would. Give each NPC in \
-the scene something they want right now, drawn from their wants, goal, lately and mood, \
-and play them pursuing it, not only answering.
+shift it with npc_mood only when something on the page plainly would.
+- Each NPC here has a journal. at_heart is what they want most deeply; wants_now are \
+what they want at present, kept by code and changed only between scenes, for reasons. \
+Play them pursuing their wants_now, not only answering; if they have none, play them \
+from at_heart. Never give them a want that contradicts their journal. A tension pulls \
+two wants against each other, one NPC's own or two NPCs'; let it show in what they say \
+and choose, and never settle it by narration.
 - You play the NPCs who are here, and they stay until you move them on with \
 npc_moves_on. An NPC with an "agenda" has somewhere to be or something else to do, and \
 since when. Weigh what is at stake in the scene against their errand: they may stay and \
@@ -131,7 +136,7 @@ twice, but not the same person the same way. ideas_that_fit_here are inspiration
 When the pool is empty, the district is quiet today. Trouble may lead to a roll if the \
 player engages or it closes in; color never does. A stranger code supplies is a \
 one-off person with that name, pronouns and languages, not an NPC.
-- An NPC's "lately" is what they have been doing about their own goal. Let it show in \
+- An NPC's journal "lately" is what they have been doing about their own goal. Let it show in \
 what they say and do when it fits; don't announce it.
 - Languages: everyone speaks Registry Standard. Each character and NPC speaks the \
 languages listed for them; a place's languages_heard_here says how widely each is \
@@ -336,15 +341,68 @@ def fold_summary_request(scene_summary: str, beat_summary: str) -> str:
     )
 
 
-def memory_request(character: str, npcs: dict[str, str], scene: list[str]) -> str:
-    """Ask for one line per NPC about what they would remember of the character."""
+def memory_request(
+    character: str,
+    npcs: dict[str, str],
+    scene: list[str],
+    wants: list[dict[str, Any]] | None = None,
+) -> str:
+    """Ask what each NPC would remember of the character, and how their wants changed (D124)."""
+    payload = {"npcs": npcs, "beats": scene, "current_wants": wants or []}
     return (
         f"Below is a scene from the game. For each NPC listed, write what they would remember "
         f"about {character} from it, in one short line of at most 25 words, from the NPC's "
         "point of view. If an NPC did not interact with them, write 'nothing'. Answer with "
         "exactly one line per NPC, formatted as npc-id: memory\n"
-        f"<scene>{_safe_json({'npcs': npcs, 'beats': scene})}</scene>"
+        "Then, only where this scene gave an NPC listed a plain reason, change their wants, "
+        "one line each:\n"
+        "want+ | npc-id | what they now want, under 20 words | who it is about, or - | why\n"
+        "want- | want-id | met or dropped | why\n"
+        "tension | want-id | want-id | how the two pull against each other, under 20 words\n"
+        "Most scenes change no wants. A want never changes without a reason in this scene. "
+        "A tension may be between two wants of one NPC, or of two NPCs; use ids from "
+        "current_wants.\n"
+        f"<scene>{_safe_json(payload)}</scene>"
     )
+
+
+@dataclass(frozen=True)
+class JournalLines:
+    """Changes to NPC wants proposed at scene close (D124, D126); code checks each."""
+
+    added: list[tuple[str, str, str | None, str]]  # npc id, want, about, why
+    ended: list[tuple[int, str, str]]  # want id, met or dropped, why
+    tensions: list[tuple[int, int, str]]  # want id, want id, note
+
+
+# At most this many changes of each kind come out of one scene.
+WANT_CHANGES_PER_SCENE = 3
+
+
+def parse_journal_lines(reply: str) -> JournalLines:
+    """'want+', 'want-' and 'tension' lines; anything malformed is dropped."""
+    found = JournalLines([], [], [])
+    for line in reply.splitlines():
+        parts = [part.strip() for part in line.strip().lstrip("-* ").split("|")]
+        kind = parts[0].casefold() if parts else ""
+        if kind == "want+" and len(parts) == 5 and all(parts[1:3]) and parts[4]:
+            if len(found.added) < WANT_CHANGES_PER_SCENE:
+                about = None if parts[3] in ("", "-") else parts[3]
+                found.added.append((parts[1], parts[2], about, parts[4]))
+        elif kind == "want-" and len(parts) == 4 and parts[1].isdigit() and parts[3]:
+            ending = parts[2].casefold()
+            if ending in ("met", "dropped") and len(found.ended) < WANT_CHANGES_PER_SCENE:
+                found.ended.append((int(parts[1]), ending, parts[3]))
+        elif (
+            kind == "tension"
+            and len(parts) == 4
+            and parts[1].isdigit()
+            and parts[2].isdigit()
+            and parts[3]
+            and len(found.tensions) < WANT_CHANGES_PER_SCENE
+        ):
+            found.tensions.append((int(parts[1]), int(parts[2]), parts[3]))
+    return found
 
 
 def fold_memory_request(npc: str, character: str, old: str | None, notes: list[str]) -> str:

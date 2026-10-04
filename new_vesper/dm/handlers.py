@@ -57,6 +57,7 @@ from new_vesper.state import (
     favors,
     held_facts,
     items,
+    npc_journal,
     npc_minds,
     rolls,
     scenes,
@@ -398,6 +399,37 @@ def _agenda(ctx: TurnContext, w: Whereabouts) -> dict[str, Any]:
     }
 
 
+def journal(ctx: TurnContext, npc: Any) -> dict[str, Any]:
+    """Everything the Narrator needs to play an NPC truly, in one place (D125).
+
+    at_heart is authored; wants_now and their tensions are kept by code and change only
+    at scene close (D124, D126); lately, memories and knowledge are as before.
+    """
+    wants = npc_journal.active_wants(ctx.conn, npc.id)
+    mine = {w.id for w in wants}
+    everyone = {w.id: w for w in npc_journal.active_wants(ctx.conn)}
+
+    def said(want_id: int) -> str:
+        w = everyone[want_id]
+        whose = "" if w.npc_id == npc.id else f"{ctx.content.npcs[w.npc_id].name}: "
+        return f"{whose}{w.want}"
+
+    return {
+        "at_heart": npc.wants,
+        "wants_now": [
+            {"id": w.id, "want": w.want, "about": w.about, "why": w.reason} for w in wants
+        ],
+        "tensions": [
+            {"between": [said(t.want_a), said(t.want_b)], "how": t.note}
+            for t in npc_journal.tensions_with(ctx.conn, mine)
+        ],
+        "lately": npc_lately(ctx.conn, npc),
+        "remembers_about_you": remembered(ctx, npc),
+        # What they know about the character, and nothing else (D121).
+        "knows_about_you": _known(ctx, npc.id),
+    }
+
+
 def _known(ctx: TurnContext, npc_id: str) -> dict[str, Any]:
     found = held_facts.known(ctx.conn, npc_id, ctx.character_id)
     return {"long_ago": found.summary, "facts": list(found.facts)}
@@ -482,12 +514,10 @@ def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
                 **({} if w.on_agenda else {"agenda": _agenda(ctx, w)}),
                 # Today's mood, rolled by code (D119).
                 "mood": mood_now(ctx.conn, ctx.content, w.npc, ctx.now).mood,
-                "lately": npc_lately(ctx.conn, w.npc),
                 "personality": personality(w.npc),
                 "feels_about_you": feelings(ctx, w.npc, TargetKind.CHARACTER, ctx.character_id),
-                "remembers_about_you": remembered(ctx, w.npc),
-                # What they know about the character, and nothing else (D121).
-                "knows_about_you": _known(ctx, w.npc.id),
+                # One picture of them: wants, tensions, goal, memories and knowledge (D125).
+                "journal": journal(ctx, w.npc),
                 "feels_about_others_here": {
                     other.npc.name: feelings(ctx, w.npc, TargetKind.NPC, other.npc.id)
                     for other in present
@@ -559,15 +589,13 @@ def look(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
                 "role": npc.role,
                 "description": npc.description,
                 "goal": npc.goal.text,
-                "lately": npc_lately(ctx.conn, npc),
                 "personality": personality(npc),
                 "feels_about_you": feelings(ctx, npc, TargetKind.CHARACTER, ctx.character_id),
-                "remembers_about_you": remembered(ctx, npc),
+                "journal": journal(ctx, npc),
                 "feels_about_others": {
                     ctx.content.npcs[other].name: feelings(ctx, npc, TargetKind.NPC, other)
                     for other in _npc_relations(ctx, npc.id)
                 },
-                "wants": npc.wants,
                 "voice": npc.voice,
             }
         }

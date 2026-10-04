@@ -49,7 +49,7 @@ from new_vesper.rules.leveling import LevelUpRequest, level_up
 from new_vesper.rules.needs import Need
 from new_vesper.rules.sky import moon
 from new_vesper.rules.tracks import must_fall_or_endure
-from new_vesper.state import attitudes, characters, held_facts, scenes, world
+from new_vesper.state import attitudes, characters, held_facts, npc_journal, scenes, world
 from new_vesper.state import needs as stored_needs
 from new_vesper.state.characters import Character
 from new_vesper.state.errors import StateError
@@ -294,15 +294,73 @@ class PlaySession:
         ).fetchall()
         scene = [scenes.get_scene(self.conn, scene_id).summary] + [b[0] for b in beats]
         names = {n: self.content.npcs[n].name for n in sorted(npcs)}
+        wants = [
+            {"id": w.id, "npc": w.npc_id, "want": w.want, "about": w.about}
+            for w in npc_journal.active_wants(self.conn)
+        ]
         reply = self._summarize(
-            CallType.NPC_MEMORY, prompt.memory_request(me.name, names, [s for s in scene if s])
+            CallType.NPC_MEMORY,
+            prompt.memory_request(me.name, names, [s for s in scene if s], wants),
         )
         cause = Cause(Actor.SYSTEM, self.player_id, scene_id)
         for npc_id, note in prompt.parse_memory_lines(reply, set(names)).items():
             attitudes.add_memory(self.conn, npc_id, me.id, note, cause)
             self._fold_memories(npc_id, me)
+        self._update_wants(prompt.parse_journal_lines(reply), set(names), scene_id, cause)
         for npc_id in names:
             self._fold_facts(npc_id, me)
+
+    def _update_wants(
+        self, lines: prompt.JournalLines, there: set[str], scene_id: int, cause: Cause
+    ) -> None:
+        """Changes to wants from a scene, each checked by code (D124, D126).
+
+        Only NPCs who were in the scene gain or end wants; a tension needs one of its
+        wants to belong to someone who was there. Anything code won't keep is dropped.
+        """
+        for npc_id, want, about, why in lines.added:
+            if npc_id not in there:
+                continue
+            try:
+                added = npc_journal.add_want(self.conn, npc_id, want, about, why, scene_id)
+            except StateError:
+                continue
+            append_event(
+                self.conn,
+                "npc_want_added",
+                cause,
+                {"npc_id": npc_id, "want_id": added.id, "want": added.want, "why": added.reason},
+            )
+        for want_id, ending, why in lines.ended:
+            try:
+                if npc_journal.get_active(self.conn, want_id).npc_id not in there:
+                    continue
+                ended = npc_journal.end_want(self.conn, want_id, ending, why, scene_id)
+            except StateError:
+                continue
+            append_event(
+                self.conn,
+                "npc_want_ended",
+                cause,
+                {"npc_id": ended.npc_id, "want_id": want_id, "ending": ending, "why": why},
+            )
+        for first, second, note in lines.tensions:
+            try:
+                owners = {
+                    npc_journal.get_active(self.conn, first).npc_id,
+                    npc_journal.get_active(self.conn, second).npc_id,
+                }
+                if not owners & there:
+                    continue
+                npc_journal.add_tension(self.conn, first, second, note, scene_id)
+            except StateError:
+                continue
+            append_event(
+                self.conn,
+                "npc_wants_in_tension",
+                cause,
+                {"wants": sorted((first, second)), "note": note},
+            )
 
     def _fold_memories(self, npc_id: str, me: Character) -> None:
         old = attitudes.notes_to_fold(self.conn, npc_id, me.id, keep=MEMORIES_KEPT)
