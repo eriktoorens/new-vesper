@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D139** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D140** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -11,7 +11,7 @@ New Vesper is a persistent, shared, text-based RPG where an AI narrator runs a r
 - **Format:** persistent shared world, many players, asynchronous play.
 - **Narrator:** a Claude API agent that narrates and adjudicates; code owns all game state.
 - **Tone:** grimbright. The world is cruel but not nihilistic. Effort counts, kindness matters, and small victories stay on the page.
-- **Inspirations:** Blade Runner (rain, noir, made people), Shadowrun (magic meets corporate tech), The Diamond Age (nanotech enclaves, primers), American Gods (gods fed by belief), Neverwhere (a hidden city of the forgotten), China Miéville's Perdido Street Station (D95), Thomas Metzinger's The Ego Tunnel (D109), and a splash of Discworld for bureaucratic absurdity.
+- **Inspirations:** Blade Runner (rain, noir, made people), Shadowrun (magic meets corporate tech), The Diamond Age (nanotech enclaves, primers), American Gods (gods fed by belief), Neverwhere (a hidden city of the forgotten), China Miéville's Perdido Street Station (D95), Thomas Metzinger's The Ego Tunnel (D109), and a splash of Discworld for bureaucratic absurdity. The mechanics owe most to *Apocalypse World* and *Blades in the Dark*; see Debts (D140).
 
 The core conceit: every power in the city, a corporate god, a spell, a network, a neighborhood, exists only as long as enough people pay attention to it.
 
@@ -529,6 +529,38 @@ Still open:
 - How divergence is seen: comparing two worlds from the same start (see the model-choice idea), or a world's own history read back.
 - How far it reaches: authored canon (an NPC's at-heart wants, their goals) stays fixed, but whether authored NPCs can be changed at heart by enough play is undecided.
 
+## Debts (D140)
+
+A note, not a rule, written with the designer after the fifth playtest (2026-10-04). New Vesper is built from other people's work, and some of that work came in without the designer knowing it. This section names what can be traced, and says plainly what can't.
+
+**How the game came to be made.** The designer decides; Claude proposes and writes most of the code. Several core mechanics were proposed by Claude in an early design conversation, before this repository existed, and the designer took them on without knowing where they came from. That is itself a debt, and it means the traced debts below were found after the fact, not chosen.
+
+**Tabletop roleplaying games.**
+
+- ***Apocalypse World*, by Vincent Baker and Meguey Baker (2010), and the Powered by the Apocalypse games after it.** This is the largest debt. Resolving an action as 2d6 plus a stat, with three tiers at 10+, 7–9 and 6 or less; a success at a cost on 7–9; the Narrator answering a miss with a move from a list ("the city moves"); a short list of stats, one of them literally Weird; and a harm track of six segments: all of it comes from *Apocalypse World*, directly or through its many descendants. The Bakers invited others to build on it, which is why the family exists. New Vesper's own turns are the difficulty ladder as a modifier, the stats Steel, Slick, Wire and Heart, the Fade, and Light.
+- ***Blades in the Dark*, by John Harper (2017).** "Risky" and "Desperate" are its names for how dangerous an action is, and a track of boxes filled toward a breaking point recalls its stress and trauma. Routine and Hard, and using the rungs as a modifier on the roll, are New Vesper's.
+
+**Video games and interactive fiction.** Not copied, but the design is walking a known road, and it is worth reading what was found there:
+
+- NPCs who keep daily schedules: *Ultima VII* (1992), and the Radiant AI of *The Elder Scrolls IV: Oblivion* (2006).
+- NPCs with wants, grudges, and knowledge of who betrayed whom (D124–D130): *Versu*, by Richard Evans and Emily Short; *Prom Week* and its social physics; *Façade*; *Crusader Kings*.
+- Worlds that grow apart through what they keep (D135), and a history that can be read back: *Dwarf Fortress*, by Tarn and Zach Adams.
+- An AI narrator that changes the world only through checked tool calls: a pattern many builders reached for once language models could call tools. The rigor of "the AI proposes, code decides" here is the designer's; the shape is shared.
+
+**Fiction and philosophy.** Listed under Inspirations in the Overview, and credited where they shaped a decision: *American Gods* (Neil Gaiman) and *Small Gods* (Terry Pratchett) for gods fed by belief; *Neverwhere* (Gaiman) for a hidden city of the forgotten, which Old Vesper and the Fade sit close to; Discworld for the levity; *Blade Runner*, *Shadowrun*, *The Diamond Age* (Neal Stephenson) and China Miéville's *Perdido Street Station* (D95) for the city; Thomas Metzinger's *The Ego Tunnel* (D109).
+
+**The model itself.** Claude, which proposed the mechanics, writes most of the code, and voices the Narrator every turn, was trained on a vast body of human writing: some of it in the public domain, some shared freely, and some used without its authors' knowledge or consent. In 2025 Anthropic, which makes Claude, agreed to a $1.5 billion settlement with authors over books downloaded from pirate libraries. What the model draws on can't be traced line by line, not even by the model: every narrated turn, every NPC voice, and much of this document is shaped by writers who will never be named here. In the game's own terms (D109), the model is a telling without a record. This project can't settle that question, and doesn't pretend to. What it can do:
+
+- Credit everything that can be traced, here and where it shaped a decision, and add to this section when more is found.
+- Never prompt the Narrator to imitate a living writer's voice or lift a named work's characters, places or text.
+- Keep the setting's own inventions its own: gods invented for the setting, never lifted from living religions; names and cultures mixed with care, not borrowed as costume.
+- Keep the designer's decisions in the decision log, so what is the designer's is on the record.
+
+Still open:
+
+- Whether and how players see this: in the README, in the game, or in what a telling exports.
+- The game's own license, and what it asks of anyone who builds on it in turn.
+
 ## Exporting Your Story (D96, D100–D105)
 
 Built 2026-09-29, from D96: a player can export their character's story, an artifact of play that leans into the RPG as collaborative storytelling. It is the tale, not the log, and it gives away nothing the character didn't know.
@@ -797,7 +829,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the Narrator agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, D94–D95 from the designer after layer 8, D96 from the designer after merging layers 6–8, D97 from the designer the same evening, D98–D99 from the first blind playtest, D100–D105 from building story export, D106 from the designer after the second playtest, D107–D108 from its fixes, D109 from a conversation with the designer after the third playtest, D110 from the fourth playtest, D111–D121 from the designer the next day, from the same playtest, D122–D123 from the fifth playtest, D124–D130 from the designer after it (D127–D130 decided, not yet built), D131 from its second session, D132–D134 from the designer after it, D135–D137 from the designer during and after its third session, and D138–D139 from its fourth.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the Narrator agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, D94–D95 from the designer after layer 8, D96 from the designer after merging layers 6–8, D97 from the designer the same evening, D98–D99 from the first blind playtest, D100–D105 from building story export, D106 from the designer after the second playtest, D107–D108 from its fixes, D109 from a conversation with the designer after the third playtest, D110 from the fourth playtest, D111–D121 from the designer the next day, from the same playtest, D122–D123 from the fifth playtest, D124–D130 from the designer after it (D127–D130 decided, not yet built), D131 from its second session, D132–D134 from the designer after it, D135–D137 from the designer during and after its third session, D138–D139 from its fourth, and D140 from a conversation with the designer after it.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -939,3 +971,4 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D137 | A restated want replaces the old one | Scene close ends a want it corrects or replaces; scene close runs on the turn model, configurable |
 | D138 | A deferred-to NPC acts | When the player character defers to an NPC, that NPC speaks and acts in full that turn; a turn never ends just before an NPC acts |
 | D139 | Scene close records only what happened | A want is met only when the scene shows it done; offers, proposals and open arguments are not outcomes |
+| D140 | Debts | A note, not a rule: what New Vesper owes to Apocalypse World, Blades in the Dark, other games and fiction, and to the writers behind the model itself; credit what can be traced, imitate no living writer |
