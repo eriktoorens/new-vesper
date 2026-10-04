@@ -5,6 +5,7 @@ import sqlite3
 from datetime import timedelta
 from typing import Any
 
+from new_vesper.city.npcs import settle
 from new_vesper.content.loader import Content
 from new_vesper.dm.handlers import dispatch
 from new_vesper.dm.session import PlaySession
@@ -65,8 +66,9 @@ def test_knack_days_turn_over_at_city_midnight(conn: sqlite3.Connection, ctx_fac
 def test_recap_keeps_npc_secrets(conn: sqlite3.Connection, content: Content) -> None:
     char = make_character(conn, online=False)
     characters.set_online(conn, char.id, True, SYSTEM)
+    settle(conn, content, NOON_TUESDAY)  # everyone in their noon places
     characters.set_online(conn, char.id, False, SYSTEM)
-    later = NOON_TUESDAY + timedelta(days=30)
+    later = NOON_TUESDAY + timedelta(days=30, hours=7)  # an evening: they've all moved
     client = StubClient(say("Back."))
     play = PlaySession(conn, content, client, DESIGN_TEXT, SeqRng(), char.id, now=lambda: later)
     play.start()
@@ -78,6 +80,8 @@ def test_recap_keeps_npc_secrets(conn: sqlite3.Connection, content: Content) -> 
     assert recap_calls, "the neglect of the Market should be in a recap"
     sent = recap_calls[0]["messages"][0]["content"]
     assert "npc_goal_advanced" not in sent and "Registry reply" not in sent
+    # Fifth playtest: NPCs' routine moves reached the recap as news (D113).
+    assert "npc_moved" not in sent
     assert "light_changed" in sent
 
 

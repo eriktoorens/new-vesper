@@ -74,6 +74,15 @@ PRIVATE_EVENTS = frozenset(
         "details_set",
         "speaking_changed",
         "needs_relieved",
+        # NPCs' routines and inner lives show in play, through what the Narrator sees
+        # (D113, D119, D121, D124, D126), never in a recap.
+        "npc_moved",
+        "npc_moved_on",
+        "npc_mood_shifted",
+        "npc_learned",
+        "npc_want_added",
+        "npc_want_ended",
+        "npc_wants_in_tension",
     }
 )
 # Memory lines each NPC keeps per character before older ones fold into a summary.
