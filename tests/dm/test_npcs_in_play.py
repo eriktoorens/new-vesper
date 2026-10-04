@@ -131,6 +131,8 @@ def test_a_lost_connection_does_not_keep_an_npc_waiting(
         "nana-priya | went | umbrella-shrine | not the form",
         "Mira | goes to | umbrella-shrine | the player character never",
         "nana-priya | goes to | umbrella-shrine; tomas-haddad | x",
+        "nana-priya | goes to | umbrella-shrine | why",  # the template, copied
+        "nana-priya | goes to | umbrella-shrine | their reason, in a few words",
     ],
 )
 def test_moves_code_will_not_make(conn: sqlite3.Connection, content: Content, line: str) -> None:

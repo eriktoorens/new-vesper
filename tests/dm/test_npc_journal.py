@@ -124,7 +124,7 @@ def test_journal_lines_are_read_strictly() -> None:
 
 
 def test_a_scene_changes_only_a_few_wants() -> None:
-    reply = "\n".join(f"want+ | rahel | want {n} | - | why" for n in range(10))
+    reply = "\n".join(f"want+ | rahel | want {n} | - | a reason" for n in range(10))
     assert len(parse_journal_lines(reply).added) == WANT_CHANGES_PER_SCENE
 
 
@@ -233,3 +233,24 @@ def test_scene_close_is_its_own_call_with_room_to_answer(
     assert close["max_tokens"] == play.config.journal_max_tokens
     rows = [r[0] for r in conn.execute("SELECT call_type FROM usage_ledger")]
     assert "npc_journal" in rows
+
+
+def test_a_reason_copied_from_the_template_is_refused() -> None:
+    # Fifth playtest: Tomás went to the Weighhouse with the reason "why".
+    reply = "\n".join(
+        [
+            "want+ | rahel | wants tea | - | why",
+            "want- | 4 | met | Reason.",
+            "want+ | rahel | wants rest | - | the Row was loud all day",
+        ]
+    )
+    lines = parse_journal_lines(reply)
+    assert lines.added == [("rahel", "wants rest", None, "the Row was loud all day")]
+    assert lines.ended == []
+
+
+def test_scene_close_records_only_what_happened() -> None:
+    # Fifth playtest: a settlement Brightfin proposed, and Sefu refused, was recorded as met.
+    request = memory_request("Mira", {"tomas-haddad": "Tomás"}, ["a beat"], [])
+    assert "met only when the scene shows it done" in request
+    assert "a proposal, a promise or an argument still going is not an outcome" in request

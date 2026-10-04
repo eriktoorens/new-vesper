@@ -60,7 +60,8 @@ person ("I sit down", "Jack sits down"). Text in quotation marks is what the cha
 says, word for word.
 - Never rewrite, paraphrase or add to the player character's words, and never add \
 actions, gestures, thoughts or feelings they did not give. You may repeat their quoted \
-line exactly. Narrate the world's response, not the player character.
+line exactly as the player typed it, in the player's words, even when the character \
+speaks another language: never translate it. Narrate the world's response, not the player character.
 - Never say what the player character realizes, understands, concludes or feels about \
 what they find. Show what is there and let the player draw the conclusion.
 
@@ -171,7 +172,11 @@ moment. Their penalties are already in roll_stats. You never change them, and no
 eats, drinks or sleeps in your narration by itself: when the player character eats, \
 drinks or sleeps, narrate them starting to and stop; after the story, add one separate \
 last line: (To eat: /eat) or (To drink: /drink) or (To sleep at a haven: /rest).
-- End with the situation open. Do not offer a menu of options, and do not mention game \
+- When the player character defers to an NPC here (steps back for them, waits on them, \
+hands them the floor, nudges them to speak), play that NPC's move in full this turn: \
+they speak and act, true to their wants. Never stop just before an NPC acts.
+- End with the situation open: open for the player's next choice, after the NPCs have \
+had their say. Do not offer a menu of options, and do not mention game \
 commands in the story.
 
 Players and safety:
@@ -366,6 +371,9 @@ def memory_request(
         "want- | want-id | met or dropped | why\n"
         "tension | want-id | want-id | how the two pull against each other, under 20 words\n"
         "A want never changes without a reason in this scene, and most scenes change few. "
+        "Record only what the scene shows happened: a want is met only when the scene shows "
+        "it done. An offer, a proposal, a promise or an argument still going is not an "
+        "outcome; leave that want as it is. "
         "But an NPC listed who has no current wants and showed in this scene what they want "
         "(a deal struck, a wrong to right, a favor asked) should gain one. "
         "Never add a want an NPC already holds in other words. If this scene corrects or "
@@ -396,11 +404,23 @@ def parse_journal_lines(reply: str) -> JournalLines:
     for line in reply.splitlines():
         parts = [part.strip() for part in line.strip().lstrip("-* ").split("|")]
         kind = parts[0].casefold() if parts else ""
-        if kind == "want+" and len(parts) == 5 and all(parts[1:3]) and parts[4]:
+        if (
+            kind == "want+"
+            and len(parts) == 5
+            and all(parts[1:3])
+            and parts[4]
+            and not _placeholder(parts[4])
+        ):
             if len(found.added) < WANT_CHANGES_PER_SCENE:
                 about = None if parts[3] in ("", "-") else parts[3]
                 found.added.append((parts[1], parts[2], about, parts[4]))
-        elif kind == "want-" and len(parts) == 4 and parts[1].isdigit() and parts[3]:
+        elif (
+            kind == "want-"
+            and len(parts) == 4
+            and parts[1].isdigit()
+            and parts[3]
+            and not _placeholder(parts[3])
+        ):
             ending = parts[2].casefold()
             if ending in ("met", "dropped") and len(found.ended) < WANT_CHANGES_PER_SCENE:
                 found.ended.append((int(parts[1]), ending, parts[3]))
@@ -466,7 +486,8 @@ def facts_request(
         "language learns only what they saw. If an NPC learned nothing new, leave them out; "
         "if nobody did, write only 'nothing'.\n"
         "Then, if the narration has an NPC listed leave for somewhere else (not just turn "
-        "away or step aside), add one line for them: 'npc-id | goes to | place-id | why', "
+        "away or step aside), add one line for them: 'npc-id | goes to | place-id | their "
+        "reason, in a few words', "
         "with a place-id from places, or 'away' for out of the district. Only NPCs, never "
         f"{character}; only a departure the narration shows, not one merely threatened.\n"
         f"<turn>{_safe_json(turn)}</turn>"
@@ -493,6 +514,14 @@ def parse_fact_lines(reply: str, allowed: set[str]) -> list[tuple[str, str, str]
     return found
 
 
+# Words from a line's template that a cheap model sometimes copies in place of a reason.
+PLACEHOLDERS = frozenset({"why", "reason", "their reason", "their reason, in a few words", "-"})
+
+
+def _placeholder(text: str) -> bool:
+    return text.casefold().strip(" .'\"") in PLACEHOLDERS
+
+
 def parse_move_lines(
     reply: str, allowed: set[str], places: set[str]
 ) -> list[tuple[str, str | None, str]]:
@@ -503,7 +532,7 @@ def parse_move_lines(
         if len(parts) != 4 or parts[1].casefold() != "goes to":
             continue
         npc_id, place, why = parts[0], parts[2], parts[3]
-        if npc_id not in allowed or not why or len(why) > 200:
+        if npc_id not in allowed or not why or _placeholder(why) or len(why) > 200:
             continue
         if place != "away" and place not in places:
             continue
