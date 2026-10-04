@@ -94,12 +94,15 @@ def parse_need(value: object) -> Need:
 class NeedState:
     level: int = 0
     accrued: int = 0  # seconds counted toward the next step
+    easing: bool = False  # whether that step eases the need rather than climbs it
 
     def __post_init__(self) -> None:
         require_range(self.level, "need level", 0, NEED_MAX)
         require_int(self.accrued, "accrued seconds")
         if self.accrued < 0:
             raise ValueError("accrued seconds cannot be negative")
+        if not isinstance(self.easing, bool):
+            raise ValueError("easing must be true or false")
 
 
 @dataclass(frozen=True)
@@ -123,9 +126,10 @@ def advance(need: Need, state: NeedState, seconds: int, exposure: Exposure) -> N
     elapsed = require_int(seconds, "seconds")
     if elapsed < 0:
         raise ValueError("time does not run backwards")
+    # Time counted toward a step one way never carries over into the other.
     if rising(need, exposure):
         step = STEP_SECONDS[need]
-        total = state.accrued + elapsed
+        total = (0 if state.easing else state.accrued) + elapsed
         level, owed = state.level, 0
         for _ in range(total // step):
             level = min(NEED_MAX, level + 1)
@@ -134,9 +138,11 @@ def advance(need: Need, state: NeedState, seconds: int, exposure: Exposure) -> N
         return NeedChange(state, NeedState(level, total % step), owed)
     if state.level == 0:
         return NeedChange(state, NeedState(), 0)
-    total = state.accrued + elapsed
+    total = (state.accrued if state.easing else 0) + elapsed
     level = max(0, state.level - total // RECOVER_SECONDS)
-    return NeedChange(state, NeedState(level, 0 if level == 0 else total % RECOVER_SECONDS), 0)
+    if level == 0:
+        return NeedChange(state, NeedState(), 0)
+    return NeedChange(state, NeedState(level, total % RECOVER_SECONDS, easing=True), 0)
 
 
 def penalty(stat: Stat, levels: Mapping[Need, int]) -> int:

@@ -32,7 +32,7 @@ def get_needs(
         if row is None:
             found[need] = (NeedState(), None)
         else:
-            state = NeedState(row["level"], row["accrued"])
+            state = NeedState(row["level"], row["accrued"], bool(row["easing"]))
             found[need] = (state, _parse_time(row["updated_at"]))
     return found
 
@@ -42,10 +42,14 @@ def save_needs(
 ) -> None:
     cid = row_id(character_id, "character id")
     conn.executemany(
-        "INSERT INTO character_needs (character_id, need, level, accrued, updated_at)"
-        " VALUES (?, ?, ?, ?, ?) ON CONFLICT (character_id, need) DO UPDATE SET"
-        " level = excluded.level, accrued = excluded.accrued, updated_at = excluded.updated_at",
-        [(cid, need.value, s.level, s.accrued, stamp(now)) for need, s in states.items()],
+        "INSERT INTO character_needs (character_id, need, level, accrued, easing, updated_at)"
+        " VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (character_id, need) DO UPDATE SET"
+        " level = excluded.level, accrued = excluded.accrued, easing = excluded.easing,"
+        " updated_at = excluded.updated_at",
+        [
+            (cid, need.value, s.level, s.accrued, int(s.easing), stamp(now))
+            for need, s in states.items()
+        ],
     )
 
 
