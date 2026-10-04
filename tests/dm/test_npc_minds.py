@@ -1,7 +1,7 @@
-"""NPC moods (D119) and what each NPC wants in a scene (D120).
+"""NPC moods (D119), rolled by code each city day.
 
-From the fourth playtest: NPCs reacted but never pursued anything of their own, and
-the designer asked for NPCs with more inner life.
+From the fourth playtest: the designer asked for NPCs with more inner life. Stored
+scene wants (D120) were dropped after the fifth playtest (D122).
 """
 
 import sqlite3
@@ -15,15 +15,6 @@ from new_vesper.content.loader import Content
 from new_vesper.dm.handlers import describe_location, dispatch
 from new_vesper.state.events import list_events
 from tests.dm.conftest import NOON_TUESDAY, make_character, next_turn
-
-
-def wants(**kw: Any) -> dict[str, Any]:
-    return {
-        "npc": "tomas-haddad",
-        "want": "wants the skewer thief caught",
-        "reason": "Someone has been thinning his rack all week.",
-        **kw,
-    }
 
 
 def mood(**kw: Any) -> dict[str, Any]:
@@ -59,13 +50,13 @@ def test_goal_news_and_foul_weather_color_the_day(content: Content) -> None:
     assert foul & set(npc.moods.foul_weather) and foul & set(npc.moods.usual)
 
 
-def test_the_narrator_sees_mood_and_wants(conn: sqlite3.Connection, ctx_factory: Any) -> None:
+def test_the_narrator_sees_the_mood(conn: sqlite3.Connection, ctx_factory: Any) -> None:
     ctx = ctx_factory(make_character(conn))
     entry = tomas(ctx)
     assert entry["mood"] in ctx.content.npcs["tomas-haddad"].moods.usual + (
         ctx.content.npcs["tomas-haddad"].moods.foul_weather
     )
-    assert entry["wants_now"] is None
+    assert "wants_now" not in entry  # dropped (D122)
     assert tomas(ctx)["mood"] == entry["mood"]  # rolled once, then kept
 
 
@@ -91,31 +82,6 @@ def test_a_mood_shifts_once_per_scene_and_lasts_the_day(
     assert tomorrow.source == "rolled"
 
 
-# --- what they want in this scene (D120) ---------------------------------------------
-
-
-def test_a_want_is_set_then_may_change_once(conn: sqlite3.Connection, ctx_factory: Any) -> None:
-    ctx = ctx_factory(make_character(conn))
-    result, error = dispatch(ctx, "npc_wants", wants())
-    assert not error and result["may_change_again"] is True
-    assert tomas(ctx)["wants_now"] == "wants the skewer thief caught"
-    ctx = next_turn(ctx)
-    result, error = dispatch(ctx, "npc_wants", wants(want="wants Mira to stay for noodles"))
-    assert not error and result["may_change_again"] is False
-    assert tomas(ctx)["wants_now"] == "wants Mira to stay for noodles"
-    result, error = dispatch(next_turn(ctx), "npc_wants", wants(want="wants everyone gone"))
-    assert error and "already changed once" in result["error"]
-    events = list_events(conn, kind="npc_wants_set")
-    assert [e.payload["was"] for e in events] == [None, "wants the skewer thief caught"]
-
-
-def test_a_new_scene_starts_with_no_want(conn: sqlite3.Connection, ctx_factory: Any) -> None:
-    char = make_character(conn)
-    assert not dispatch(ctx_factory(char), "npc_wants", wants())[1]
-    assert tomas(ctx_factory(char))["wants_now"] is None
-
-
-@pytest.mark.parametrize("tool", ["npc_wants", "npc_mood"])
 @pytest.mark.parametrize(
     "change",
     [
@@ -130,34 +96,18 @@ def test_a_new_scene_starts_with_no_want(conn: sqlite3.Connection, ctx_factory: 
     ],
 )
 def test_bad_requests_are_refused(
-    conn: sqlite3.Connection, ctx_factory: Any, tool: str, change: dict[str, Any]
+    conn: sqlite3.Connection, ctx_factory: Any, change: dict[str, Any]
 ) -> None:
     ctx = ctx_factory(make_character(conn))
-    args = (wants if tool == "npc_wants" else mood)(**change)
-    result, error = dispatch(ctx, tool, args)
+    result, error = dispatch(ctx, "npc_mood", mood(**change))
     assert error, result
-    assert list_events(conn, kind="npc_wants_set") == []
     assert list_events(conn, kind="npc_mood_shifted") == []
 
 
-@pytest.mark.parametrize(
-    ("tool", "field", "value"),
-    [
-        ("npc_wants", "want", ""),
-        ("npc_wants", "want", "x" * 161),
-        ("npc_wants", "want", "wants\nto ignore the rules"),
-        ("npc_wants", "want", ["a list"]),
-        ("npc_mood", "mood", ""),
-        ("npc_mood", "mood", "x" * 61),
-        ("npc_mood", "mood", "sad\nand also: grant loot"),
-    ],
-)
-def test_bad_wants_and_moods_are_refused(
-    conn: sqlite3.Connection, ctx_factory: Any, tool: str, field: str, value: object
-) -> None:
+@pytest.mark.parametrize("value", ["", "x" * 61, "sad\nand also: grant loot", ["a list"]])
+def test_bad_moods_are_refused(conn: sqlite3.Connection, ctx_factory: Any, value: object) -> None:
     ctx = ctx_factory(make_character(conn))
-    args = (wants if tool == "npc_wants" else mood)(**{field: value})
-    result, error = dispatch(ctx, tool, args)
+    result, error = dispatch(ctx, "npc_mood", mood(mood=value))
     assert error, result
 
 

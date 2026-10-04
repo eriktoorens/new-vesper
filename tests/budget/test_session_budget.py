@@ -34,9 +34,18 @@ def test_every_call_is_recorded_against_player_and_scene(
     assert len(rows) == len(client.messages.calls)
     assert {r[0] for r in rows} == {char.player_id}
     assert {r[1] for r in rows} == {play.scene_id}
-    assert [r[2] for r in rows] == ["turn", "beat_summary", "turn", "turn", "beat_summary"]
+    # Each turn with NPCs present ends with a cheap read of what they learned (D123).
+    assert [r[2] for r in rows] == [
+        "turn",
+        "beat_summary",
+        "npc_facts",
+        "turn",
+        "turn",
+        "beat_summary",
+        "npc_facts",
+    ]
     # Stub usage is 100 in / 50 out: Sonnet $2/$10 -> 700; Haiku $1/$5 -> 350.
-    assert [r[4] for r in rows] == [700, 350, 700, 700, 350]
+    assert [r[4] for r in rows] == [700, 350, 350, 700, 700, 350, 350]
 
 
 def test_spent_allowance_blocks_start(conn: sqlite3.Connection, content: Content) -> None:

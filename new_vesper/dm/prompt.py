@@ -80,9 +80,8 @@ something the rules allow or let the moment pass.
 - NPCs keep the names, pronouns and voices from the content brief. About the player \
 character, an NPC knows only what is in their knows_about_you, what happens in front of \
 them in this scene, and what anyone could see at a glance. An NPC does not know a \
-character's name until someone says it. When an NPC hears or sees something about the \
-character worth keeping, record it with npc_learns; never let an NPC act on what they \
-don't know.
+character's name until someone says it. Code records what they hear and see after each \
+turn; never let an NPC act on what they don't know.
 - Nobody invents new gods lifted from real religions.
 - Time, weather, season, moon and tide come from code, in <scene_state> and the \
 location's sky. Let them color the scene (light, crowds, what's open, how wet everyone \
@@ -105,12 +104,10 @@ nothing on the page. Show it first: the light and weather moved on, people went 
 their business, food was put away, anyone still here waited or grew restless. Never pick \
 up mid-sentence or describe the scene as unchanged, and never decide what the player \
 character did meanwhile; that is the player's to say.
-- Each NPC here has a mood for today, from code, and wants_now: what they want in this \
-scene. When an NPC here has wants_now null and the scene involves them, decide what they \
-want right now from their wants, goal, lately and mood, set it with npc_wants, and play \
-them pursuing it, not only answering. Change it at most once, when the scene gives them \
-reason. Let their mood color their voice and choices; shift it with npc_mood only when \
-something on the page plainly would.
+- Each NPC here has a mood for today, from code. Let it color their voice and choices; \
+shift it with npc_mood only when something on the page plainly would. Give each NPC in \
+the scene something they want right now, drawn from their wants, goal, lately and mood, \
+and play them pursuing it, not only answering.
 - You play the NPCs who are here, and they stay until you move them on with \
 npc_moves_on. An NPC with an "agenda" has somewhere to be or something else to do, and \
 since when. Weigh what is at stake in the scene against their errand: they may stay and \
@@ -364,6 +361,46 @@ def fold_facts_request(npc: str, character: str, old: str | None, facts: list[st
         "every fact; add nothing, and keep it as what they know, not what they feel.\n"
         f"<facts>{_safe_json({'earlier': old, 'facts': facts})}</facts>"
     )
+
+
+# Facts one NPC may learn about the character in one turn (D123).
+FACTS_PER_NPC = 3
+MAX_FACT = 160
+
+
+def facts_request(
+    character: str, intent: str | None, narration: str, npcs: dict[str, dict[str, Any]]
+) -> str:
+    """Ask the cheap model what each NPC present learned about the character this turn."""
+    turn = {"character": character, "player_line": intent, "narration": narration, "npcs": npcs}
+    return (
+        f"Read one turn of a text RPG. For each NPC listed, write what they newly learned "
+        f"about {character} on the page: something said in their hearing that they "
+        "understood, or something they saw. One line per fact, as 'npc-id | heard | fact' or "
+        "'npc-id | saw | fact', the fact in under 20 words, as the NPC would put it. At most "
+        "three per NPC. Only plain facts on the page: nothing guessed, nothing they already "
+        "know, nothing about anyone else. An NPC who did not understand the character's "
+        "language learns only what they saw. If nothing was learned, write 'nothing'.\n"
+        f"<turn>{_safe_json(turn)}</turn>"
+    )
+
+
+def parse_fact_lines(reply: str, allowed: set[str]) -> list[tuple[str, str, str]]:
+    """'npc-id | heard|saw | fact' lines for NPCs who were there; anything else dropped."""
+    found: list[tuple[str, str, str]] = []
+    counts: dict[str, int] = {}
+    for line in reply.splitlines():
+        parts = [part.strip() for part in line.strip().lstrip("-* ").split("|")]
+        if len(parts) != 3:
+            continue
+        npc_id, how, fact = parts
+        if npc_id not in allowed or how not in ("heard", "saw"):
+            continue
+        if not fact or len(fact) > MAX_FACT or counts.get(npc_id, 0) >= FACTS_PER_NPC:
+            continue
+        counts[npc_id] = counts.get(npc_id, 0) + 1
+        found.append((npc_id, how, fact))
+    return found
 
 
 def parse_memory_lines(reply: str, allowed: set[str]) -> dict[str, str]:

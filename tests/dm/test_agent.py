@@ -104,8 +104,6 @@ def test_tool_definitions_are_cached_and_closed() -> None:
         "create_encounter",
         "npc_moves_on",
         "npc_mood",
-        "npc_wants",
-        "npc_learns",
     }
     assert all(t["input_schema"]["additionalProperties"] is False for t in TOOLS)
 

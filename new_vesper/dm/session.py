@@ -316,6 +316,44 @@ class PlaySession:
         ) or " ".join(filter(None, [earlier, *(n for _, n in old)]))
         attitudes.fold_memories(self.conn, npc_id, me.id, [i for i, _ in old], merged[:600])
 
+    def _learn_facts(self, ctx: TurnContext, intent: str | None, narration: str) -> None:
+        """A cheap pass reads the turn for what each NPC there learned (D123).
+
+        Code keeps only lines for NPCs who were there, at most three each, one line each.
+        """
+        me = self.character
+        there = {
+            w.npc.id for w in present_at(self.conn, self.content, me.location_id or "", ctx.now)
+        }
+        there |= set(ctx.moved_on)
+        if not there or not narration.strip():
+            return
+        npcs = {
+            npc_id: {
+                "name": self.content.npcs[npc_id].name,
+                "understood_the_character": ctx.spoken is None
+                or ctx.spoken in self.content.npcs[npc_id].languages,
+                "already_knows": list(held_facts.known(self.conn, npc_id, me.id).facts),
+            }
+            for npc_id in sorted(there)
+        }
+        reply = self._summarize(
+            CallType.NPC_FACTS, prompt.facts_request(me.name, intent, narration, npcs)
+        )
+        cause = Cause(Actor.DM, self.player_id, ctx.scene_id)
+        for npc_id, how, fact in prompt.parse_fact_lines(reply, there):
+            try:
+                if held_facts.learn(self.conn, npc_id, me.id, fact, how, ctx.scene_id):
+                    append_event(
+                        self.conn,
+                        "npc_learned",
+                        cause,
+                        {"npc_id": npc_id, "fact": fact, "how": how},
+                        character_id=me.id,
+                    )
+            except StateError:
+                continue  # a line code won't keep, such as one with a line break
+
     def _fold_facts(self, npc_id: str, me: Character) -> None:
         """Too many facts to show: the oldest fold into one line (D121)."""
         old = held_facts.facts_to_fold(self.conn, npc_id, me.id, keep=FACTS_KEPT)
@@ -388,6 +426,8 @@ class PlaySession:
             self.conn, beat.id, result.narration, summary[:2000], self._cause(Actor.DM)
         )
         self._fold(beat.number)
+        if not quiet:
+            self._learn_facts(ctx, intent, result.narration)
         self.last_turn_at = ctx.now
         me = self.character
         return TurnOutcome(

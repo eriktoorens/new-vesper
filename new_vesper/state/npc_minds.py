@@ -1,4 +1,4 @@
-"""NPC moods (D119) and what each NPC wants in a scene (D120)."""
+"""NPC moods (D119)."""
 
 import sqlite3
 from dataclasses import dataclass
@@ -12,13 +12,6 @@ class Mood:
     mood: str
     source: str  # "rolled" or "narrator"
     reason: str | None
-
-
-@dataclass(frozen=True)
-class Want:
-    want: str
-    reason: str
-    changes: int
 
 
 def _one_line(value: object, name: str, max_length: int) -> str:
@@ -63,27 +56,3 @@ def shifted_in_scene(conn: sqlite3.Connection, npc_id: str, scene_id: int) -> bo
         (npc_id, scene_id),
     ).fetchone()
     return row is not None
-
-
-def want_in_scene(conn: sqlite3.Connection, scene_id: int, npc_id: str) -> Want | None:
-    row = conn.execute(
-        "SELECT want, reason, changes FROM scene_wants WHERE scene_id = ? AND npc_id = ?",
-        (scene_id, npc_id),
-    ).fetchone()
-    return None if row is None else Want(row["want"], row["reason"], row["changes"])
-
-
-def set_want(conn: sqlite3.Connection, scene_id: int, npc_id: str, want: str, reason: str) -> Want:
-    """Set what an NPC wants in this scene; it may change once (D120)."""
-    clean = _one_line(want, "want", 160)
-    why = _one_line(reason, "reason", 300)
-    before = want_in_scene(conn, scene_id, npc_id)
-    if before is not None and before.changes >= 1:
-        raise StateError("what they want has already changed once this scene")
-    conn.execute(
-        "INSERT INTO scene_wants (scene_id, npc_id, want, reason) VALUES (?, ?, ?, ?)"
-        " ON CONFLICT (scene_id, npc_id) DO UPDATE SET want = excluded.want,"
-        " reason = excluded.reason, changes = scene_wants.changes + 1",
-        (scene_id, npc_id, clean, why),
-    )
-    return Want(clean, why, 0 if before is None else before.changes + 1)

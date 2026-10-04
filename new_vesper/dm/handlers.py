@@ -147,7 +147,6 @@ class TurnContext:
     encounters: int = 0  # created this turn
     moved_on: list[str] = field(default_factory=list)  # NPCs who left this turn (D112)
     spoken: str | None = None  # the language the character spoke aloud this turn (D115)
-    learned: list[str] = field(default_factory=list)  # an NPC id per fact learned (D121)
 
     @property
     def cause(self) -> Cause:
@@ -404,11 +403,6 @@ def _known(ctx: TurnContext, npc_id: str) -> dict[str, Any]:
     return {"long_ago": found.summary, "facts": list(found.facts)}
 
 
-def _wants_now(ctx: TurnContext, npc_id: str) -> str | None:
-    found = npc_minds.want_in_scene(ctx.conn, ctx.scene_id, npc_id)
-    return None if found is None else found.want
-
-
 def _npcs_here(ctx: TurnContext, me: Character) -> set[str]:
     """NPCs where the character is, and any who moved on this turn (still in its telling)."""
     here = {w.npc.id for w in present_at(ctx.conn, ctx.content, me.location_id or "", ctx.now)}
@@ -486,9 +480,8 @@ def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
                 "doing": w.activity,
                 # Only when their day calls them elsewhere or to something else (D112).
                 **({} if w.on_agenda else {"agenda": _agenda(ctx, w)}),
-                # Today's mood, and what they want in this scene (D119, D120).
+                # Today's mood, rolled by code (D119).
                 "mood": mood_now(ctx.conn, ctx.content, w.npc, ctx.now).mood,
-                "wants_now": _wants_now(ctx, w.npc.id),
                 "lately": npc_lately(ctx.conn, w.npc),
                 "personality": personality(w.npc),
                 "feels_about_you": feelings(ctx, w.npc, TargetKind.CHARACTER, ctx.character_id),
@@ -1133,7 +1126,6 @@ def npc_moves_on(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
 
 
 MAX_MOOD = 60
-MAX_WANT = 160
 
 
 def _npc_here(ctx: TurnContext, raw_id: object) -> Any:
@@ -1185,68 +1177,6 @@ def npc_mood(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
     return {"npc": npc.id, "mood": mood, "was": before.mood}
 
 
-def npc_wants(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
-    """What an NPC who is here wants in this scene: set once, changed at most once (D120)."""
-    args = _args(raw, {"npc", "want", "reason"})
-    npc = _npc_here(ctx, args["npc"])
-    want = _one_line(args["want"], "want", MAX_WANT)
-    reason = _one_line(args["reason"], "reason", MAX_REASON)
-    before = npc_minds.want_in_scene(ctx.conn, ctx.scene_id, npc.id)
-    try:
-        after = npc_minds.set_want(ctx.conn, ctx.scene_id, npc.id, want, reason)
-    except StateError as exc:
-        raise ToolError(f"{npc.name}: {exc}") from exc
-    append_event(
-        ctx.conn,
-        "npc_wants_set",
-        ctx.cause,
-        {
-            "npc_id": npc.id,
-            "want": want,
-            "was": None if before is None else before.want,
-            "reason": reason,
-        },
-        character_id=ctx.character_id,
-    )
-    return {"npc": npc.id, "wants_now": after.want, "may_change_again": after.changes == 0}
-
-
-FACTS_PER_TURN = 3  # per NPC
-
-
-def npc_learns(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
-    """An NPC hears or sees something about the character worth keeping (D121).
-
-    Up to three facts per NPC per turn; a fact they already knew changes nothing.
-    """
-    args = _args(raw, {"npc", "fact", "how"})
-    me = _me(ctx)
-    here = _npcs_here(ctx, me)
-    npc_id = args["npc"]
-    if not isinstance(npc_id, str) or npc_id not in ctx.content.npcs:
-        raise ToolError(f"unknown npc; here now: {sorted(here) or 'nobody'}")
-    npc = ctx.content.npcs[npc_id]
-    if npc_id not in here:
-        raise ToolError(f"{npc.name} is not here, so they learn nothing")
-    fact = _one_line(args["fact"], "fact", held_facts.MAX_FACT)
-    how = args["how"]
-    if how not in held_facts.LEARNED:
-        raise ToolError(f"how must be one of {sorted(held_facts.LEARNED)}")
-    if ctx.learned.count(npc_id) >= FACTS_PER_TURN:
-        raise ToolError(f"{npc.name} has learned enough for one turn")
-    new = held_facts.learn(ctx.conn, npc_id, ctx.character_id, fact, how, ctx.scene_id)
-    if new:
-        ctx.learned.append(npc_id)
-        append_event(
-            ctx.conn,
-            "npc_learned",
-            ctx.cause,
-            {"npc_id": npc_id, "fact": fact, "how": how},
-            character_id=ctx.character_id,
-        )
-    return {"npc": npc_id, "fact": fact, "already_knew": not new}
-
-
 HANDLERS: dict[str, Handler] = {
     "look": look,
     "call_for_roll": call_for_roll,
@@ -1258,8 +1188,6 @@ HANDLERS: dict[str, Handler] = {
     "create_encounter": create_encounter,
     "npc_moves_on": npc_moves_on,
     "npc_mood": npc_mood,
-    "npc_wants": npc_wants,
-    "npc_learns": npc_learns,
 }
 
 
@@ -1275,7 +1203,6 @@ def dispatch(ctx: TurnContext, name: str, raw: object) -> tuple[dict[str, Any], 
         len(ctx.roll_ids),
         ctx.encounters,
         len(ctx.moved_on),
-        len(ctx.learned),
     )
     try:
         with atomic(ctx.conn):
@@ -1287,7 +1214,6 @@ def dispatch(ctx: TurnContext, name: str, raw: object) -> tuple[dict[str, Any], 
         del ctx.roll_ids[flags[3] :]
         ctx.encounters = flags[4]
         del ctx.moved_on[flags[5] :]
-        del ctx.learned[flags[6] :]
         return {"error": str(exc)}, True
 
 

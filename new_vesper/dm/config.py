@@ -15,6 +15,7 @@ class CallType(StrEnum):
     SCENE_SUMMARY = "scene_summary"
     RECAP = "recap"
     NPC_MEMORY = "npc_memory"
+    NPC_FACTS = "npc_facts"  # what NPCs learned in a turn, read by a cheap pass (D123)
     STORY = "story"  # retelling a character's story for export (D100)
 
 
