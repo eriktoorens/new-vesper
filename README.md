@@ -113,7 +113,7 @@ Check spending from outside the game with `new-vesper budget`.
   - bodily needs: hunger, thirst, tiredness, cold and heat wear down stats and, at their worst, cost Harm or Fade; `/eat`, `/drink` and `/rest` ease them
   - setting-native kinds: play a Hearsay (a story walking), a Castoff (a dead brand's mascot) or a Mislaid (a lost thing become someone)
 - Exporting your story: `/export` saves it as your character would tell it, `/export record` exactly as you saw it, and `new-vesper export` saves any character's, even one who has fallen. Files go in `stories/`.
-- Decisions D1–D130 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
+- Decisions D1–D131 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
 
 **Next:**
 1. **Playtest layers 6–8: languages, bodily needs and the new kinds (D76–D93).** Watch whether the Narrator tags every line and keeps translations out of plain narration, whether the needs' rates feel right, and how the Narrator plays a hearsay, a castoff or a mislaid.

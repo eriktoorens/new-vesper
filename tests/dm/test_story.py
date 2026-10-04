@@ -260,3 +260,20 @@ def test_the_telling_is_not_handed_a_moral(content: Content) -> None:
     request = story.telling_request(char, content, [chapter])
     assert "kindness" not in request.lower()
     assert "never state a moral" in request
+
+
+def test_the_telling_ends_where_the_record_ends(content: Content) -> None:
+    """Fifth playtest: the record stopped mid-walk; the telling finished the scene."""
+    beats = (
+        story.Beat("Brightfin talks to Tomás", "Tomás sets down his pin."),
+        story.Beat("Brightfin walks with him", "Ahead, green canvas sags with rain."),
+    )
+    chapter = story.Chapter(1, "tarp-row", "Tarp Row", "Sunday", "", beats)
+    char = characters.Character(
+        id=1, player_id=1, name="Brightfin", origin_id="castoff", bond="x", pronouns="he/him",
+        age=None, appearance=None, languages=(), sheet=_sheet(), tags=frozenset(),
+        currency=0, online=False, location_id=None, version=1,
+    )  # fmt: skip
+    request = story.telling_request(char, content, [chapter])
+    assert "The story ends where the record ends" in request
+    assert '"the_record_ends_with": "Ahead, green canvas sags with rain."' in request

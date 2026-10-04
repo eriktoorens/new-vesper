@@ -160,7 +160,12 @@ def telling_request(character: Character, content: Content, story: list[Chapter]
         "fell": character.sheet.fallen,
         "slipped_into_old_vesper": character.sheet.slipped,
     }
-    payload = json.dumps({"character": who, "record": parts}, ensure_ascii=False)
+    # Where the story stops: the last thing they saw, so the telling stops there too (D131).
+    last = next((b.narration for c in reversed(story) for b in reversed(c.beats)), "")
+    payload = json.dumps(
+        {"character": who, "record": parts, "the_record_ends_with": last[-400:]},
+        ensure_ascii=False,
+    )
     payload = payload.replace("<", "\\u003c").replace(">", "\\u003e")
     return (
         f"Retell {character.name}'s story as {character.name} would tell it: first person, "
@@ -169,7 +174,10 @@ def telling_request(character: Character, content: Content, story: list[Chapter]
         "shade it with their feelings, leave gaps, and be unfair to people they didn't "
         "like. But invent nothing: no places, people, names, objects or events that are "
         "not in the record, and explain nothing the record leaves unexplained. What they "
-        "didn't understand stays not understood. Let the tone come through what happened "
+        "didn't understand stays not understood. The story ends where the record ends: if "
+        "the record stops in the middle of something (the_record_ends_with), the telling "
+        "stops there too, with what happens next untold. Let the tone come through what "
+        "happened "
         "and how they tell it; never state a moral or sum up what it all meant, and end "
         "on a detail, not a lesson. No sexual content, no torture in "
         "detail, no harm to children. 300 to 900 words of plain prose in paragraphs, no "
