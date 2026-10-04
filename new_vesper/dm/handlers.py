@@ -6,6 +6,7 @@ model or raises ToolError. A handler runs inside one transaction, so a
 rejected request never partially applies.
 """
 
+import json
 import sqlite3
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
@@ -14,7 +15,8 @@ from typing import Any
 
 from new_vesper.budget.policy import stamp
 from new_vesper.city.encounters import NoSuchEncounter, spend
-from new_vesper.city.npcs import present_at, regulars_elsewhere, whereabouts
+from new_vesper.city.moods import mood_now
+from new_vesper.city.npcs import Whereabouts, present_at, regulars_elsewhere, where_is
 from new_vesper.city.sky import describe_sky, harder, minimum_rung
 from new_vesper.content.loader import Content
 from new_vesper.content.loot import roll_loot
@@ -22,7 +24,7 @@ from new_vesper.dm import needs as bodily
 from new_vesper.dm.speech import SpeechError, check_gist_roll
 from new_vesper.rules.attitudes import Attitude, parse_axis
 from new_vesper.rules.character import Sheet, apply_track
-from new_vesper.rules.clock import day_start_utc
+from new_vesper.rules.clock import city_day, day_start_utc
 from new_vesper.rules.consequences import (
     ConsequenceType,
     allowed,
@@ -48,7 +50,18 @@ from new_vesper.rules.tracks import (
     must_fall_or_endure,
 )
 from new_vesper.rules.xp import XP_PER_TRIGGER, parse_trigger
-from new_vesper.state import characters, clocks, favors, items, rolls, scenes, world
+from new_vesper.state import (
+    characters,
+    clocks,
+    favors,
+    held_facts,
+    items,
+    npc_journal,
+    npc_minds,
+    rolls,
+    scenes,
+    world,
+)
 from new_vesper.state.attitudes import (
     TargetKind,
     change_attitude,
@@ -132,6 +145,7 @@ class TurnContext:
     changes: list[str] = field(default_factory=list)
     roll_ids: list[int] = field(default_factory=list)
     encounters: int = 0  # created this turn
+    spoken: str | None = None  # the language the character spoke aloud this turn (D115)
 
     @property
     def cause(self) -> Cause:
@@ -367,11 +381,113 @@ def _languages_here(ctx: TurnContext, location_id: str) -> dict[str, str]:
     return {ctx.content.languages[lang].name: level.value for lang, level in spread.items()}
 
 
+def _clock_time(minutes: int) -> str:
+    """'5:00 pm' from minutes after city midnight."""
+    hour, minute = divmod(minutes, 60)
+    return f"{(hour - 1) % 12 + 1}:{minute:02d} {'am' if hour < 12 else 'pm'}"
+
+
+def _agenda(ctx: TurnContext, w: Whereabouts) -> dict[str, Any]:
+    """What an NPC's day calls for now, when it isn't what they're doing (D112)."""
+    plan = w.agenda
+    return {
+        "where": ctx.content.locations[plan.location].name if plan.location else "away",
+        "doing": plan.activity,
+        "since": _clock_time(plan.starts),
+    }
+
+
+def journal(ctx: TurnContext, npc: Any) -> dict[str, Any]:
+    """Everything the Narrator needs to play an NPC truly, in one place (D125).
+
+    at_heart is authored; wants_now and their tensions are kept by code and change only
+    at scene close (D124, D126); lately, memories and knowledge are as before.
+    """
+    wants = npc_journal.active_wants(ctx.conn, npc.id)
+    mine = {w.id for w in wants}
+    everyone = {w.id: w for w in npc_journal.active_wants(ctx.conn)}
+
+    def said(want_id: int) -> str:
+        w = everyone[want_id]
+        whose = "" if w.npc_id == npc.id else f"{ctx.content.npcs[w.npc_id].name}: "
+        return f"{whose}{w.want}"
+
+    return {
+        "at_heart": npc.wants,
+        "wants_now": [
+            {"id": w.id, "want": w.want, "about": w.about, "why": w.reason} for w in wants
+        ],
+        "tensions": [
+            {"between": [said(t.want_a), said(t.want_b)], "how": t.note}
+            for t in npc_journal.tensions_with(ctx.conn, mine)
+        ],
+        "lately": npc_lately(ctx.conn, npc),
+        "remembers_about_you": remembered(ctx, npc),
+        # What they know about the character, and nothing else (D121).
+        "knows_about_you": _known(ctx, npc.id),
+    }
+
+
+def _known(ctx: TurnContext, npc_id: str) -> dict[str, Any]:
+    found = held_facts.known(ctx.conn, npc_id, ctx.character_id)
+    return {"long_ago": found.summary, "facts": list(found.facts)}
+
+
+def _npcs_here(ctx: TurnContext, me: Character) -> set[str]:
+    """NPCs where the character is; anyone leaving goes only after the turn (D132)."""
+    return {w.npc.id for w in present_at(ctx.conn, ctx.content, me.location_id or "", ctx.now)}
+
+
+def identity(
+    ctx: TurnContext, me: Character, came_with: frozenset[str] = frozenset()
+) -> dict[str, Any]:
+    """Who and what is here, short, every turn: facts narration must not contradict (D117).
+
+    ``came_with`` are NPCs who left the character's last scene for this place, so arrived
+    with them: they know the character is here.
+    """
+    origin = ctx.content.origins.get(me.origin_id)
+    others: list[dict[str, Any]] = [
+        {
+            "name": w.npc.name,
+            "is": w.npc.role,
+            "pronouns": w.npc.pronouns,
+            "looks": w.npc.appearance,
+            **({"came_with_you": True} if w.npc.id in came_with else {}),
+        }
+        for w in present_at(ctx.conn, ctx.content, me.location_id or "", ctx.now)
+    ]
+    for (raw,) in ctx.conn.execute(
+        "SELECT stranger FROM encounters WHERE scene_id = ? AND stranger IS NOT NULL ORDER BY id",
+        (ctx.scene_id,),
+    ):
+        stranger = json.loads(raw)
+        others.append(
+            {"name": stranger["name"], "is": stranger["role"], "pronouns": stranger["pronouns"]}
+        )
+    lying = ctx.conn.execute(
+        "SELECT name FROM items WHERE location_id = ? AND destroyed = 0 ORDER BY id",
+        (me.location_id,),
+    ).fetchall()
+    return {
+        "player_character": {
+            "name": me.name,
+            "is": origin.name if origin else me.origin_id,
+            "pronouns": me.pronouns,
+            "body": me.body,
+            "looks": me.appearance,
+        },
+        "others_here": others,
+        "items_held": [i.name for i in items.items_held(ctx.conn, me.id)],
+        "items_here": [row[0] for row in lying],
+    }
+
+
 def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
     place = ctx.content.locations[location_id]
     region = world.get_region(ctx.conn, place.region_id)
     god = ctx.content.shrine_god(place.id)
-    present = present_at(ctx.content, place.id, ctx.now)
+    present = present_at(ctx.conn, ctx.content, place.id, ctx.now)
     speaking = _me(ctx).speaking
     lying = ctx.conn.execute(
         "SELECT id, name FROM items WHERE location_id = ? AND destroyed = 0 ORDER BY id",
@@ -398,10 +514,14 @@ def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
                 # Whether they understand what the character speaks aloud (D80).
                 "understands_you": speaking in w.npc.languages,
                 "doing": w.activity,
-                "lately": npc_lately(ctx.conn, w.npc),
+                # Only when their day calls them elsewhere or to something else (D112).
+                **({} if w.on_agenda else {"agenda": _agenda(ctx, w)}),
+                # Today's mood, rolled by code (D119).
+                "mood": mood_now(ctx.conn, ctx.content, w.npc, ctx.now).mood,
                 "personality": personality(w.npc),
                 "feels_about_you": feelings(ctx, w.npc, TargetKind.CHARACTER, ctx.character_id),
-                "remembers_about_you": remembered(ctx, w.npc),
+                # One picture of them: wants, tensions, goal, memories and knowledge (D125).
+                "journal": journal(ctx, w.npc),
                 "feels_about_others_here": {
                     other.npc.name: feelings(ctx, w.npc, TargetKind.NPC, other.npc.id)
                     for other in present
@@ -417,7 +537,7 @@ def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
                 "where": ctx.content.locations[w.location].name if w.location else "away",
                 "doing": w.activity,
             }
-            for w in regulars_elsewhere(ctx.content, place.id, ctx.now)
+            for w in regulars_elsewhere(ctx.conn, ctx.content, place.id, ctx.now)
         ],
         "shrine_of": god.id if god else None,
         "sky": describe_sky(ctx.content, place.id, ctx.now),
@@ -459,6 +579,7 @@ def look(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
         }
     if entity in content.npcs:
         npc = content.npcs[entity]
+        now_at = where_is(ctx.conn, content, npc.id, ctx.now)
         return {
             "npc": {
                 "id": npc.id,
@@ -466,21 +587,19 @@ def look(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
                 "pronouns": npc.pronouns,
                 "home": npc.location,
                 "right_now": {
-                    "where": whereabouts(npc, ctx.now).location or "away",
-                    "doing": whereabouts(npc, ctx.now).activity,
+                    "where": now_at.location or "away",
+                    "doing": now_at.activity,
                 },
                 "role": npc.role,
                 "description": npc.description,
                 "goal": npc.goal.text,
-                "lately": npc_lately(ctx.conn, npc),
                 "personality": personality(npc),
                 "feels_about_you": feelings(ctx, npc, TargetKind.CHARACTER, ctx.character_id),
-                "remembers_about_you": remembered(ctx, npc),
+                "journal": journal(ctx, npc),
                 "feels_about_others": {
                     ctx.content.npcs[other].name: feelings(ctx, npc, TargetKind.NPC, other)
                     for other in _npc_relations(ctx, npc.id)
                 },
-                "wants": npc.wants,
                 "voice": npc.voice,
             }
         }
@@ -901,7 +1020,7 @@ def adjust_attitude(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
         raise ToolError(str(exc)) from exc
     reason = _text(args["reason"], "reason", MAX_REASON)
     me = _me(ctx)
-    here = {w.npc.id for w in present_at(ctx.content, me.location_id or "", ctx.now)}
+    here = _npcs_here(ctx, me)
     npc_id = args["npc"]
     if not isinstance(npc_id, str) or npc_id not in ctx.content.npcs:
         raise ToolError(f"unknown npc; here now: {sorted(here) or 'nobody'}")
@@ -1002,6 +1121,58 @@ def apply_needs(ctx: TurnContext) -> None:
                 _change_track(ctx, track, boxes, "bodily needs at their worst", cause)
 
 
+MAX_MOOD = 60
+
+
+def _npc_here(ctx: TurnContext, raw_id: object) -> Any:
+    """An NPC id the Narrator gave, checked: real, and where the character is."""
+    here = _npcs_here(ctx, _me(ctx))
+    if not isinstance(raw_id, str) or raw_id not in ctx.content.npcs:
+        raise ToolError(f"unknown npc; here now: {sorted(here) or 'nobody'}")
+    npc = ctx.content.npcs[raw_id]
+    if raw_id not in here:
+        raise ToolError(f"{npc.name} is not here")
+    return npc
+
+
+def _one_line(value: object, name: str, max_length: int) -> str:
+    clean = _text(value, name, max_length)
+    if "\n" in clean or "\r" in clean:
+        raise ToolError(f"{name} must be one line")
+    return clean
+
+
+def npc_mood(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
+    """Something on the page shifts an NPC's mood for the rest of the day (D119).
+
+    Once per NPC per scene.
+    """
+    args = _args(raw, {"npc", "mood", "reason"})
+    npc = _npc_here(ctx, args["npc"])
+    mood = _one_line(args["mood"], "mood", MAX_MOOD)
+    reason = _one_line(args["reason"], "reason", MAX_REASON)
+    if npc_minds.shifted_in_scene(ctx.conn, npc.id, ctx.scene_id):
+        raise ToolError(f"{npc.name}'s mood has already shifted this scene")
+    before = mood_now(ctx.conn, ctx.content, npc, ctx.now)
+    npc_minds.add_mood(
+        ctx.conn,
+        npc.id,
+        city_day(ctx.now),
+        mood,
+        "narrator",
+        reason=reason,
+        scene_id=ctx.scene_id,
+    )
+    append_event(
+        ctx.conn,
+        "npc_mood_shifted",
+        ctx.cause,
+        {"npc_id": npc.id, "from": before.mood, "to": mood, "reason": reason},
+        character_id=ctx.character_id,
+    )
+    return {"npc": npc.id, "mood": mood, "was": before.mood}
+
+
 HANDLERS: dict[str, Handler] = {
     "look": look,
     "call_for_roll": call_for_roll,
@@ -1011,6 +1182,7 @@ HANDLERS: dict[str, Handler] = {
     "adjust_light": adjust_light,
     "adjust_attitude": adjust_attitude,
     "create_encounter": create_encounter,
+    "npc_mood": npc_mood,
 }
 
 

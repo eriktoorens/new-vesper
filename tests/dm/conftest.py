@@ -169,4 +169,5 @@ def next_turn(ctx: TurnContext) -> TurnContext:
     ctx.roll_ids.clear()
     ctx.changes.clear()
     ctx.encounters = 0
+    ctx.spoken = None
     return ctx

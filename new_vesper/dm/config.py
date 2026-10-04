@@ -1,4 +1,4 @@
-"""Model routing (D20): Sonnet runs turns; Haiku writes summaries and recaps.
+"""Model routing (D20): Sonnet runs turns and scene close; Haiku writes summaries and recaps.
 
 Every call type's model is configurable, from code or environment variables.
 """
@@ -14,7 +14,9 @@ class CallType(StrEnum):
     BEAT_SUMMARY = "beat_summary"
     SCENE_SUMMARY = "scene_summary"
     RECAP = "recap"
-    NPC_MEMORY = "npc_memory"
+    NPC_MEMORY = "npc_memory"  # folding old memories and facts
+    NPC_JOURNAL = "npc_journal"  # scene close: memories, wants and tensions (D124, D126)
+    NPC_FACTS = "npc_facts"  # what NPCs learned in a turn, read by a cheap pass (D123)
     STORY = "story"  # retelling a character's story for export (D100)
 
 
@@ -23,6 +25,10 @@ class DMConfig:
     turn_model: str = "claude-sonnet-5"
     summary_model: str = "claude-haiku-4-5"
     recap_model: str = "claude-haiku-4-5"
+    # Scene close judges wants and tensions, and will carry the social graph (D127):
+    # once a scene, and Haiku misread and duplicated wants in the fifth playtest.
+    journal_model: str = "claude-sonnet-5"
+    journal_max_tokens: int = 1200
     # Thinking counts against max_tokens on Sonnet 5, so leave room beyond the prose.
     turn_max_tokens: int = 8000
     turn_effort: str | None = "medium"
@@ -38,14 +44,20 @@ class DMConfig:
             return self.turn_model
         if call is CallType.RECAP:
             return self.recap_model
+        if call is CallType.NPC_JOURNAL:
+            return self.journal_model
         return self.summary_model
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] = os.environ) -> "DMConfig":
-        """Override models with NEW_VESPER_TURN_MODEL, _SUMMARY_MODEL, _RECAP_MODEL."""
+        """Override models from the environment.
+
+        NEW_VESPER_TURN_MODEL, _SUMMARY_MODEL, _RECAP_MODEL and _JOURNAL_MODEL.
+        """
         base = cls()
         return cls(
             turn_model=env.get("NEW_VESPER_TURN_MODEL", base.turn_model),
             summary_model=env.get("NEW_VESPER_SUMMARY_MODEL", base.summary_model),
             recap_model=env.get("NEW_VESPER_RECAP_MODEL", base.recap_model),
+            journal_model=env.get("NEW_VESPER_JOURNAL_MODEL", base.journal_model),
         )

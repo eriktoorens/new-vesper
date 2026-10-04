@@ -11,7 +11,15 @@ from new_vesper.budget.policy import BudgetConfig, stamp
 from new_vesper.content.loader import Content
 from new_vesper.dm.session import PlaySession, SessionError
 from new_vesper.state import characters, scenes
-from tests.dm.conftest import DESIGN_TEXT, SeqRng, StubClient, make_character, say, use
+from tests.dm.conftest import (
+    DESIGN_TEXT,
+    NOON_TUESDAY,
+    SeqRng,
+    StubClient,
+    make_character,
+    say,
+    use,
+)
 
 TINY = BudgetConfig(monthly_cap_micro=50_000_000, player_allowance_micro=5_000)
 
@@ -27,16 +35,29 @@ def test_every_call_is_recorded_against_player_and_scene(
 ) -> None:
     char = make_character(conn, online=False)
     client = StubClient(say("Open."), use(("look", {"entity": "me"})), say("Done."))
-    play = PlaySession(conn, content, client, DESIGN_TEXT, SeqRng(), char.id)
+    # Noon on a Tuesday, so Tomás and Vasil are on Tarp Row: not the real clock, which
+    # empties the Row on a Sunday afternoon.
+    play = PlaySession(
+        conn, content, client, DESIGN_TEXT, SeqRng(), char.id, now=lambda: NOON_TUESDAY
+    )
     play.start()
     play.turn("I look myself over")
     rows = ledger(conn)
     assert len(rows) == len(client.messages.calls)
     assert {r[0] for r in rows} == {char.player_id}
     assert {r[1] for r in rows} == {play.scene_id}
-    assert [r[2] for r in rows] == ["turn", "beat_summary", "turn", "turn", "beat_summary"]
+    # Each turn with NPCs present ends with a cheap read of what they learned (D123).
+    assert [r[2] for r in rows] == [
+        "turn",
+        "beat_summary",
+        "npc_facts",
+        "turn",
+        "turn",
+        "beat_summary",
+        "npc_facts",
+    ]
     # Stub usage is 100 in / 50 out: Sonnet $2/$10 -> 700; Haiku $1/$5 -> 350.
-    assert [r[4] for r in rows] == [700, 350, 700, 700, 350]
+    assert [r[4] for r in rows] == [700, 350, 350, 700, 700, 350, 350]
 
 
 def test_spent_allowance_blocks_start(conn: sqlite3.Connection, content: Content) -> None:

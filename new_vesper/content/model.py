@@ -276,6 +276,15 @@ class GodDef:
 
 
 @dataclass(frozen=True)
+class NpcMoods:
+    """Moods an NPC's day can start in (D119): code rolls one each city day."""
+
+    usual: tuple[str, ...]
+    foul_weather: tuple[str, ...]  # likelier when the weather is cold or hot
+    goal_news: tuple[str, ...]  # the day their own goal moves on
+
+
+@dataclass(frozen=True)
 class NpcDef:
     id: str
     name: str
@@ -298,6 +307,7 @@ class NpcDef:
     sample_line: str
     attitude_to_strangers: AuthoredAttitude
     attitudes: Mapping[str, AuthoredAttitude]  # toward other NPCs, with why
+    moods: NpcMoods
 
 
 @dataclass(frozen=True)
@@ -844,6 +854,7 @@ def parse_npc(raw: object) -> NpcDef:
         "sample_line",
         "attitude_to_strangers",
         "attitudes",
+        "moods",
     }
     r = Reader(raw, "npc", fields | extra)
     languages = r.raw["languages"]
@@ -872,7 +883,20 @@ def parse_npc(raw: object) -> NpcDef:
             r.raw["attitude_to_strangers"], f"npc {r.raw['id']!r} strangers", why=False
         ),
         attitudes=_parse_web(r.raw["attitudes"], f"npc {r.raw['id']!r} attitudes"),
+        moods=_parse_moods(r.raw["moods"], f"npc {r.raw['id']!r} moods"),
     )
+
+
+def _parse_moods(raw: object, where: str) -> NpcMoods:
+    r = Reader(raw, where, {"usual", "foul_weather", "goal_news"})
+
+    def moods(key: str, low: int, high: int) -> tuple[str, ...]:
+        values = r.texts(key)
+        if not low <= len(values) <= high or any(not 1 <= len(v) <= 60 for v in values):
+            raise ContentError(f"{where}.{key}: {low}-{high} moods of at most 60 characters")
+        return values
+
+    return NpcMoods(moods("usual", 2, 6), moods("foul_weather", 1, 4), moods("goal_news", 1, 4))
 
 
 def parse_loot_table(raw: object) -> LootTable:

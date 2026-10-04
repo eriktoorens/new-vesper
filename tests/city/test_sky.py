@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from new_vesper.city.npcs import whereabouts
+from new_vesper.city.npcs import agenda
 from new_vesper.city.sky import describe_sky, minimum_rung, season, tide_at
 from new_vesper.content.loader import Content, load_content
 from new_vesper.rules.resolver import Difficulty
@@ -109,9 +109,9 @@ def test_new_moon_schedule_wins(content: Content) -> None:
     whisker = content.npcs["ferryman-whisker"]
     new_moon_evening = utc(2026, 10, 10, 23)  # 7 pm city time, hours after the new moon
     assert moon(new_moon_evening).phase == "new moon"
-    assert whereabouts(whisker, new_moon_evening).activity.startswith("running the ferry")
+    assert agenda(whisker, new_moon_evening).activity.startswith("running the ferry")
     ordinary_evening = utc(2026, 10, 3, 23)
-    assert whereabouts(whisker, ordinary_evening).activity.startswith("poling")
+    assert agenda(whisker, ordinary_evening).activity.startswith("poling")
 
 
 def test_the_dm_sees_the_sky(content: Content) -> None:

@@ -19,8 +19,9 @@ from typing import Any
 from new_vesper.budget.ledger import record_call
 from new_vesper.budget.policy import BudgetConfig, BudgetExhausted, BudgetStatus, budget_status
 from new_vesper.budget.pricing import PRICES, ModelPrice, price_of
+from new_vesper.city import npcs as npc_places
 from new_vesper.city.encounters import ideas_here, left_today, recent_in_district
-from new_vesper.city.npcs import present_at
+from new_vesper.city.npcs import present_at, settle, where_is
 from new_vesper.city.sky import season, tide_at
 from new_vesper.city.tick import run_due_ticks
 from new_vesper.city.weather import current_weather
@@ -35,6 +36,7 @@ from new_vesper.dm.handlers import (
     describe_character,
     describe_location,
     dispatch,
+    identity,
     owed_reminder,
 )
 from new_vesper.dm.tools import TOOLS
@@ -43,11 +45,12 @@ from new_vesper.rules.character import resolve_full_harm
 from new_vesper.rules.currency import format_glitter
 from new_vesper.rules.dice import Rng
 from new_vesper.rules.errors import RulesError
+from new_vesper.rules.languages import COMMON_TONGUE
 from new_vesper.rules.leveling import LevelUpRequest, level_up
 from new_vesper.rules.needs import Need
 from new_vesper.rules.sky import moon
 from new_vesper.rules.tracks import must_fall_or_endure
-from new_vesper.state import attitudes, characters, scenes, world
+from new_vesper.state import attitudes, characters, held_facts, npc_journal, scenes, world
 from new_vesper.state import needs as stored_needs
 from new_vesper.state.characters import Character
 from new_vesper.state.errors import StateError
@@ -58,6 +61,10 @@ ARRIVAL = (
     "place, who is around, one thing that invites action. No roll."
 )
 SECONDS_PER_DAY = 86_400
+# How much of the last scene's final narration the next scene's arrival sees.
+CLOSING_MOMENTS = 1200
+# A gap between turns this long or longer is shown to the Narrator (D114).
+TIME_PASSED_SHOWN = 15 * 60
 # Events the recap leaves out: bookkeeping, or things the character couldn't know
 # (an NPC's private progress surfaces in play through what the DM sees instead).
 PRIVATE_EVENTS = frozenset(
@@ -70,10 +77,22 @@ PRIVATE_EVENTS = frozenset(
         "details_set",
         "speaking_changed",
         "needs_relieved",
+        # NPCs' routines and inner lives show in play, through what the Narrator sees
+        # (D113, D119, D121, D124, D126), never in a recap.
+        "npc_moved",
+        "npc_moved_on",
+        "npc_went",
+        "npc_mood_shifted",
+        "npc_learned",
+        "npc_want_added",
+        "npc_want_ended",
+        "npc_wants_in_tension",
     }
 )
 # Memory lines each NPC keeps per character before older ones fold into a summary.
 MEMORIES_KEPT = 8
+# Facts an NPC keeps about a character before the oldest fold into one line (D121).
+FACTS_KEPT = 16
 # One action per prompt (D99): refused whole, so nothing of it reaches the DM.
 ONE_LINE = "One action at a time, on one line. None of that was sent; try again."
 # Where exported stories go, next to the world's database by default (D104).
@@ -143,6 +162,12 @@ class PlaySession:
         self.scene_id: int | None = None
         # NPCs who were present at some point in the current scene.
         self.scene_npcs: set[str] = set()
+        # Carried across /go: the last scene's closing moments, for the first turn of the
+        # next, and the NPCs who came along.
+        self.just_before: dict[str, Any] | None = None
+        self.came_with: frozenset[str] = frozenset()
+        # When the last turn in the current scene was told, on the city clock (D114).
+        self.last_turn_at: datetime | None = None
 
     # --- budget ------------------------------------------------------------
 
@@ -169,10 +194,18 @@ class PlaySession:
         if self.observer is not None:
             self.observer(call, model, usage)
 
-    def _summarize(self, call: CallType, request: str) -> str:
-        """A cheap summary call; empty if the budget is spent, so callers fall back."""
+    def _summarize(self, call: CallType, request: str, max_tokens: int | None = None) -> str:
+        """A no-tools call; empty if the budget is spent, so callers fall back."""
         try:
-            return summarize(self.client, self.config, call, request, self.on_usage, self._guard)
+            return summarize(
+                self.client,
+                self.config,
+                call,
+                request,
+                self.on_usage,
+                self._guard,
+                max_tokens=max_tokens,
+            )
         except BudgetExhausted:
             return ""
 
@@ -210,6 +243,8 @@ class PlaySession:
         sky = current_weather(self.conn, self.content, scene.region_id, ctx.now)
         return {
             "time": clock.describe(ctx.now),
+            **self._time_passed(ctx.now),
+            **({"just_before": self.just_before} if self.just_before else {}),
             "weather": {"now": sky.name, "description": sky.description},
             "encounters": {
                 "left_today_in_district": left_today(self.conn, scene.region_id, ctx.now),
@@ -230,6 +265,20 @@ class PlaySession:
             },
         }
 
+    def _time_passed(self, now: datetime) -> dict[str, Any]:
+        """A long gap since the last turn in this scene, for the Narrator to show (D114)."""
+        if self.last_turn_at is None:
+            return {}
+        gap = int((now - self.last_turn_at).total_seconds())
+        if gap < TIME_PASSED_SHOWN:
+            return {}
+        return {
+            "time_passed": {
+                "since_last_turn": clock.describe_span(gap),
+                "last_turn_was": clock.describe(self.last_turn_at),
+            }
+        }
+
     def _open_scene(self) -> None:
         me = self.character
         if me.location_id is None:
@@ -239,6 +288,8 @@ class PlaySession:
             self.conn, region, self._cause(Actor.SYSTEM), location_id=me.location_id
         )
         self.scene_id = scene.id
+        self.last_turn_at = None
+        self.just_before, self.came_with = None, frozenset()
         scenes.join_scene(self.conn, scene.id, me.id, self._cause(Actor.SYSTEM))
 
     def _close_scene(self) -> None:
@@ -270,13 +321,74 @@ class PlaySession:
         ).fetchall()
         scene = [scenes.get_scene(self.conn, scene_id).summary] + [b[0] for b in beats]
         names = {n: self.content.npcs[n].name for n in sorted(npcs)}
+        wants = [
+            {"id": w.id, "npc": w.npc_id, "want": w.want, "about": w.about}
+            for w in npc_journal.active_wants(self.conn)
+        ]
         reply = self._summarize(
-            CallType.NPC_MEMORY, prompt.memory_request(me.name, names, [s for s in scene if s])
+            CallType.NPC_JOURNAL,
+            prompt.memory_request(me.name, names, [s for s in scene if s], wants),
+            self.config.journal_max_tokens,
         )
         cause = Cause(Actor.SYSTEM, self.player_id, scene_id)
         for npc_id, note in prompt.parse_memory_lines(reply, set(names)).items():
             attitudes.add_memory(self.conn, npc_id, me.id, note, cause)
             self._fold_memories(npc_id, me)
+        self._update_wants(prompt.parse_journal_lines(reply), set(names), scene_id, cause)
+        for npc_id in names:
+            self._fold_facts(npc_id, me)
+
+    def _update_wants(
+        self, lines: prompt.JournalLines, there: set[str], scene_id: int, cause: Cause
+    ) -> None:
+        """Changes to wants from a scene, each checked by code (D124, D126).
+
+        Only NPCs who were in the scene gain or end wants; a tension needs one of its
+        wants to belong to someone who was there. Anything code won't keep is dropped.
+        """
+        for npc_id, want, about, why in lines.added:
+            if npc_id not in there:
+                continue
+            try:
+                added = npc_journal.add_want(self.conn, npc_id, want, about, why, scene_id)
+            except StateError:
+                continue
+            append_event(
+                self.conn,
+                "npc_want_added",
+                cause,
+                {"npc_id": npc_id, "want_id": added.id, "want": added.want, "why": added.reason},
+            )
+        for want_id, ending, why in lines.ended:
+            try:
+                if npc_journal.get_active(self.conn, want_id).npc_id not in there:
+                    continue
+                ended = npc_journal.end_want(self.conn, want_id, ending, why, scene_id)
+            except StateError:
+                continue
+            append_event(
+                self.conn,
+                "npc_want_ended",
+                cause,
+                {"npc_id": ended.npc_id, "want_id": want_id, "ending": ending, "why": why},
+            )
+        for first, second, note in lines.tensions:
+            try:
+                owners = {
+                    npc_journal.get_active(self.conn, first).npc_id,
+                    npc_journal.get_active(self.conn, second).npc_id,
+                }
+                if not owners & there:
+                    continue
+                npc_journal.add_tension(self.conn, first, second, note, scene_id)
+            except StateError:
+                continue
+            append_event(
+                self.conn,
+                "npc_wants_in_tension",
+                cause,
+                {"wants": sorted((first, second)), "note": note},
+            )
 
     def _fold_memories(self, npc_id: str, me: Character) -> None:
         old = attitudes.notes_to_fold(self.conn, npc_id, me.id, keep=MEMORIES_KEPT)
@@ -290,6 +402,84 @@ class PlaySession:
         ) or " ".join(filter(None, [earlier, *(n for _, n in old)]))
         attitudes.fold_memories(self.conn, npc_id, me.id, [i for i, _ in old], merged[:600])
 
+    def _learn_facts(self, ctx: TurnContext, intent: str | None, narration: str) -> None:
+        """A cheap pass reads the turn: what each NPC there learned, and who left (D123, D132).
+
+        Code keeps only lines for NPCs who were there, at most three facts each, and only
+        moves it may make (D134).
+        """
+        me = self.character
+        there = {
+            w.npc.id for w in present_at(self.conn, self.content, me.location_id or "", ctx.now)
+        }
+        if not there or not narration.strip() or me.location_id is None:
+            return
+        region = self.content.locations[me.location_id].region_id
+        places = {
+            loc.id: loc.name
+            for loc in self.content.locations.values()
+            if loc.region_id == region and loc.id != me.location_id
+        }
+        npcs = {
+            npc_id: {
+                "name": self.content.npcs[npc_id].name,
+                "understood_the_character": ctx.spoken is None
+                or ctx.spoken in self.content.npcs[npc_id].languages,
+                "already_knows": list(held_facts.known(self.conn, npc_id, me.id).facts),
+            }
+            for npc_id in sorted(there)
+        }
+        reply = self._summarize(
+            CallType.NPC_FACTS, prompt.facts_request(me.name, intent, narration, npcs, places)
+        )
+        cause = Cause(Actor.DM, self.player_id, ctx.scene_id)
+        for npc_id, how, fact in prompt.parse_fact_lines(reply, there):
+            try:
+                if held_facts.learn(self.conn, npc_id, me.id, fact, how, ctx.scene_id):
+                    append_event(
+                        self.conn,
+                        "npc_learned",
+                        cause,
+                        {"npc_id": npc_id, "fact": fact, "how": how},
+                        character_id=me.id,
+                    )
+            except StateError:
+                continue  # a line code won't keep, such as one with a line break
+        for npc_id, to, why in prompt.parse_move_lines(reply, there, set(places)):
+            self._npc_goes(ctx, npc_id, to, why, cause)
+
+    def _npc_goes(
+        self, ctx: TurnContext, npc_id: str, to: str | None, why: str, cause: Cause
+    ) -> None:
+        """Carry out a move the narration showed, if code allows it (D132-D134).
+
+        The place must be real, in this district and above water; 'away' only when the
+        NPC's day takes them out of the district.
+        """
+        before = where_is(self.conn, self.content, npc_id, ctx.now)
+        if to is None and before.agenda.location is not None:
+            return
+        if to is not None:
+            flooded = tide_at(self.content.locations[to].tide, ctx.now)
+            if flooded is not None and flooded.closed:
+                return
+        npc_places.go(self.conn, self.content, npc_id, to, ctx.now, cause, why)
+        # Where they went isn't the character's to see (D53).
+        ctx.changes.append(f"{self.content.npcs[npc_id].name} leaves")
+
+    def _fold_facts(self, npc_id: str, me: Character) -> None:
+        """Too many facts to show: the oldest fold into one line (D121)."""
+        old = held_facts.facts_to_fold(self.conn, npc_id, me.id, keep=FACTS_KEPT)
+        if not old:
+            return
+        earlier = held_facts.known(self.conn, npc_id, me.id).summary
+        name = self.content.npcs[npc_id].name
+        merged = self._summarize(
+            CallType.NPC_MEMORY,
+            prompt.fold_facts_request(name, me.name, earlier, [f for _, f in old]),
+        ) or "; ".join(filter(None, [earlier, *(f for _, f in old)]))
+        held_facts.fold(self.conn, npc_id, me.id, [i for i, _ in old], merged[:600])
+
     def _run(self, intent: str | None, direction: str | None) -> TurnOutcome:
         """One beat: record the intent, run the agent, resolve the beat."""
         assert self.scene_id is not None
@@ -300,9 +490,17 @@ class PlaySession:
         # The time since the last turn counts against the character's needs (D85).
         apply_needs(ctx)
         self.scene_npcs |= {
-            w.npc.id for w in present_at(self.content, self.character.location_id or "", ctx.now)
+            w.npc.id
+            for w in present_at(self.conn, self.content, self.character.location_id or "", ctx.now)
         }
-        message = prompt.turn_message(self._state(ctx), intent, direction)
+        told = intent
+        if intent is not None and speech.speaks_aloud(intent):
+            # Code says which language the character's words were in (D115).
+            ctx.spoken = self.character.speaking
+            if ctx.spoken != COMMON_TONGUE:
+                told = speech.label_spoken(intent, self.content.languages[ctx.spoken].name)
+        who = identity(ctx, self.character, self.came_with)
+        message = prompt.turn_message(self._state(ctx), told, direction, who)
         quiet = False
         try:
             result: TurnResult = run_turn(
@@ -341,6 +539,9 @@ class PlaySession:
             self.conn, beat.id, result.narration, summary[:2000], self._cause(Actor.DM)
         )
         self._fold(beat.number)
+        if not quiet:
+            self._learn_facts(ctx, intent, result.narration)
+        self.last_turn_at = ctx.now
         me = self.character
         return TurnOutcome(
             status=self.status_line(),
@@ -393,7 +594,7 @@ class PlaySession:
             e.payload.get("npc_id")
             for e in list_events(self.conn, character_id=me.id, kind="npc_met", limit=100_000)
         }
-        for npc in (w.npc for w in present_at(self.content, place.id, self.now())):
+        for npc in (w.npc for w in present_at(self.conn, self.content, place.id, self.now())):
             if npc.id not in met:
                 blocks.append(art_block(npc.name, npc.portrait))
                 append_event(
@@ -435,7 +636,7 @@ class PlaySession:
     def who(self) -> list[str]:
         """Who is here right now and what they're visibly doing."""
         me = self.character
-        present = present_at(self.content, me.location_id or "", self.now())
+        present = present_at(self.conn, self.content, me.location_id or "", self.now())
         return [f"{w.npc.name}: {w.activity}" for w in present]
 
     def location_art(self) -> str | None:
@@ -492,6 +693,8 @@ class PlaySession:
         self._require_budget()
         run_due_ticks(self.conn, self.content, self.now())
         logoff = self._last_logoff()
+        # NPCs went about their day while nobody was here (D113).
+        settle(self.conn, self.content, self.now(), arriving=me.id)
         characters.set_online(self.conn, me.id, True, self._cause())
         # Needs pick up where they were at logoff: offline time never counts (D88).
         stored_needs.resume(self.conn, me.id, sorted(bodily.needs_of(self.content, me)), self.now())
@@ -564,6 +767,15 @@ class PlaySession:
             raise SessionError("give the pronouns after /pronouns, e.g. /pronouns it/its")
         try:
             return characters.set_pronouns(self.conn, self.character_id, pronouns, self._cause())
+        except StateError as exc:
+            raise SessionError(str(exc)) from exc
+
+    def set_body(self, body: str) -> Character:
+        """Change how the character is built and moves (D116)."""
+        if not body:
+            raise SessionError("say how they're built after /body, e.g. /body fins for hands")
+        try:
+            return characters.set_body(self.conn, self.character_id, body, self._cause())
         except StateError as exc:
             raise SessionError(str(exc)) from exc
 
@@ -706,11 +918,42 @@ class PlaySession:
             nxt = clock.describe(flooded.tide.next_low)
             raise SessionError(f"{target.name} is under water right now; low water is {nxt}")
         self._require_budget()
+        just_before, came_with = self._closing_moments(target.id)
         self._close_scene()
+        # Whoever is at the new place is there as of now, before the character watches it.
+        settle(self.conn, self.content, self.now())
         characters.move_character(self.conn, me.id, target.id, self._cause())
         art = self._arrival_art()
         self._open_scene()
-        return self._with_art(self._run(None, ARRIVAL), art)
+        here_now = {w.npc.id for w in present_at(self.conn, self.content, target.id, self.now())}
+        if just_before is not None:
+            just_before["came_with_you"] = [
+                self.content.npcs[n].name for n in sorted(came_with & here_now)
+            ]
+        self.just_before, self.came_with = just_before, came_with & here_now
+        try:
+            return self._with_art(self._run(None, ARRIVAL), art)
+        finally:
+            self.just_before = None  # the arrival only; who came along stays all scene
+
+    def _closing_moments(self, to: str) -> tuple[dict[str, Any] | None, frozenset[str]]:
+        """How the scene being left ended, and which NPCs left it for ``to`` (D132).
+
+        From the fifth playtest: Tomás walked to the Weighhouse with Brightfin, then
+        startled at his arrival, because the new scene began knowing nothing of the last.
+        """
+        if self.scene_id is None:
+            return None, frozenset()
+        went = list_events(self.conn, scene_id=self.scene_id, kind="npc_went", limit=500)
+        came_with = frozenset(e.payload["npc_id"] for e in went if e.payload.get("to") == to)
+        last = scenes.recent_beats(self.conn, self.scene_id, limit=1)
+        if not last or not last[0].narration:
+            return None, came_with
+        place = self.content.locations.get(self.character.location_id or "")
+        return {
+            "where": place.name if place else None,
+            "last_narration": last[0].narration[-CLOSING_MOMENTS:],
+        }, came_with
 
     def end(self) -> None:
         """Log off: close the scene and go offline (safe at a haven, lying low elsewhere).

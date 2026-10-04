@@ -73,3 +73,16 @@ def describe(moment: datetime) -> str:
     local = city_time(moment)
     clock = local.strftime("%I:%M %p").lstrip("0").lower()
     return f"{weekday(moment).title()} {clock}, {part_of_day(moment)}"
+
+
+def describe_span(seconds: int) -> str:
+    """'3 hours 9 minutes', '1 day 2 hours', '40 minutes': how long, in words, to the minute."""
+    if isinstance(seconds, bool) or not isinstance(seconds, int) or seconds < 0:
+        raise ValueError("a span is a whole, non-negative number of seconds")
+    minutes = seconds // 60
+    days, rest = divmod(minutes, 24 * 60)
+    hours, minutes = divmod(rest, 60)
+    units = [(days, "day"), (hours, "hour"), (minutes, "minute")]
+    words = [f"{n} {unit}{'' if n == 1 else 's'}" for n, unit in units if n]
+    # Days and hours are enough once a day has gone by.
+    return " ".join(words[:2]) if words else "less than a minute"

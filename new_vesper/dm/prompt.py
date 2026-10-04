@@ -6,6 +6,7 @@ nothing time-dependent or per-player goes in it.
 """
 
 import json
+from dataclasses import dataclass
 from typing import Any
 
 from new_vesper.content.loader import Content
@@ -59,7 +60,8 @@ person ("I sit down", "Jack sits down"). Text in quotation marks is what the cha
 says, word for word.
 - Never rewrite, paraphrase or add to the player character's words, and never add \
 actions, gestures, thoughts or feelings they did not give. You may repeat their quoted \
-line exactly. Narrate the world's response, not the player character.
+line exactly as the player typed it, in the player's words, even when the character \
+speaks another language: never translate it. Narrate the world's response, not the player character.
 - Never say what the player character realizes, understands, concludes or feels about \
 what they find. Show what is there and let the player draw the conclusion.
 
@@ -77,9 +79,11 @@ changes in prose. If a tool refused a request, do not narrate that change; choos
 something the rules allow or let the moment pass.
 - Show consequences in the fiction and say plainly when Harm or Fade changes \
 ("Jack takes 2 Harm" is fine). Never show dice arithmetic.
-- NPCs keep the names, pronouns and voices from the content brief, and they know only \
-what they have seen, been told, or could plausibly know. An NPC does not know a \
-character's name until someone says it.
+- NPCs keep the names, pronouns and voices from the content brief. About the player \
+character, an NPC knows only what is in their journal's knows_about_you, what happens in \
+front of them in this scene, and what anyone could see at a glance. An NPC does not know a \
+character's name until someone says it. Code records what they hear and see after each \
+turn; never let an NPC act on what they don't know.
 - Nobody invents new gods lifted from real religions.
 - Time, weather, season, moon and tide come from code, in <scene_state> and the \
 location's sky. Let them color the scene (light, crowds, what's open, how wet everyone \
@@ -89,6 +93,39 @@ harder difficulty rung when the weather plainly matters, such as a storm on the 
 - Only NPCs listed in the location's npcs are here, doing what "doing" says. Use \
 regulars_elsewhere only for hints, and only when someone present would plausibly know \
 where that person is at this hour; otherwise they are simply not here.
+- <who_is_here> is who and what is here: names, what each one is, pronouns, \
+the player character's body in the player's own words, and the items here and held. \
+Never contradict it. Describe the player character only as their body allows: no hands, \
+fingers, feet or boots they don't have, and nothing about their body the player hasn't \
+given. If the player's line has their character do something their body can't (fingers \
+on an umbrella, hands on a cat), don't narrate it: ask once, in a short bracket on its \
+own line, how they do it, such as "(Zeno has no fingers. How does it lift the coat?)", \
+and narrate nothing else that turn.
+- If scene_state has just_before, the player character has just come here from that \
+scene, and its last_narration is how it ended. Carry it on: anyone in came_with_you \
+walked here with them, knows they are here and is not surprised to see them, and what \
+was under way between them still is. In who_is_here they are marked came_with_you.
+- If scene_state has time_passed, that much time went by since the last turn with \
+nothing on the page. Show it first: the light and weather moved on, people went about \
+their business, food was put away, anyone still here waited or grew restless. Never pick \
+up mid-sentence or describe the scene as unchanged, and never decide what the player \
+character did meanwhile; that is the player's to say.
+- Each NPC here has a mood for today, from code. Let it color their voice and choices; \
+shift it with npc_mood only when something on the page plainly would.
+- Each NPC here has a journal. at_heart is what they want most deeply; wants_now are \
+what they want at present, kept by code and changed only between scenes, for reasons. \
+Play them pursuing their wants_now, not only answering; if they have none, play them \
+from at_heart. Never give them a want that contradicts their journal. A tension pulls \
+two wants against each other, one NPC's own or two NPCs'; let it show in what they say \
+and choose, and never settle it by narration.
+- You play the NPCs who are here. An NPC with an "agenda" has somewhere to be or \
+something else to do, and since when. Weigh what is at stake in the scene against their \
+errand: they may stay and run late, or cut the conversation short; you never have to \
+keep the player character company. An NPC may also leave because they want to, for \
+somewhere their journal gives them reason to go. When one leaves, write the exit in \
+that turn (a reason, a parting line, colored by how they feel); code reads it after \
+the turn and moves them. Never let anyone simply vanish. An NPC who arrives mid-scene \
+has just come in: bring them on.
 - NPCs have feelings on three axes, -3 to +3: trust, fondness and fear, with the \
 reasons behind recent changes in "why". Play NPCs true to their feelings, personality, \
 speech habits and memories of the character. Feelings shape whether a roll is needed \
@@ -105,7 +142,7 @@ twice, but not the same person the same way. ideas_that_fit_here are inspiration
 When the pool is empty, the district is quiet today. Trouble may lead to a roll if the \
 player engages or it closes in; color never does. A stranger code supplies is a \
 one-off person with that name, pronouns and languages, not an NPC.
-- An NPC's "lately" is what they have been doing about their own goal. Let it show in \
+- An NPC's journal "lately" is what they have been doing about their own goal. Let it show in \
 what they say and do when it fits; don't announce it.
 - Languages: everyone speaks Registry Standard. Each character and NPC speaks the \
 languages listed for them; a place's languages_heard_here says how widely each is \
@@ -113,13 +150,18 @@ spoken there, so give unnamed people languages that fit the neighborhood.
 - Speech: every line spoken aloud by anyone other than the player character goes in a \
 say tag, never in plain quotes: <say who="npc-id or a stranger's name or 'a fishmonger'" \
 lang="language" tone="how it sounds, a few words" gist="what it means, one short \
-phrase">the exact words, in English</say>. Always give lang, and give tone and gist \
+phrase" understood="no, only if they didn't understand the character's words this \
+turn">the exact words, in English</say>. Always give lang, and give tone and gist \
 whenever the player character doesn't speak that language. Code shows the player only \
 what their character understands, so never translate, paraphrase or hint at the meaning \
 of such a line anywhere outside the tag. Only someone here who speaks a language can \
 speak it. Never tag the player character's own words.
-- The character speaks aloud in speech.character_speaks_aloud. An NPC with \
-understands_you false does not understand what the character says in it; play that.
+- The character speaks aloud in speech.character_speaks_aloud, and code labels their \
+quoted words with it when it isn't Registry Standard, as "Two skewers." [Cantonese]; \
+trust speech.character_speaks_aloud over any label the player typed. An NPC with \
+understands_you false does not understand what the character says in it: to them it is \
+only sounds, so they cannot answer what was said. Play that, and when such an NPC speaks \
+in the same turn, mark their line understood="no".
 - If the player character tries to follow speech in a language they don't speak, that \
 is a Heart roll with that language named in call_for_roll; its tier decides what they \
 understand for the rest of the scene (see "understanding" in the roll result, and \
@@ -130,7 +172,11 @@ moment. Their penalties are already in roll_stats. You never change them, and no
 eats, drinks or sleeps in your narration by itself: when the player character eats, \
 drinks or sleeps, narrate them starting to and stop; after the story, add one separate \
 last line: (To eat: /eat) or (To drink: /drink) or (To sleep at a haven: /rest).
-- End with the situation open. Do not offer a menu of options, and do not mention game \
+- When the player character defers to an NPC here (steps back for them, waits on them, \
+hands them the floor, nudges them to speak), play that NPC's move in full this turn: \
+they speak and act, true to their wants. Never stop just before an NPC acts.
+- End with the situation open: open for the player's next choice, after the NPCs have \
+had their say. Do not offer a menu of options, and do not mention game \
 commands in the story.
 
 Players and safety:
@@ -153,9 +199,10 @@ character reaches the edge and stop: the player chooses Fall or Endure next.
 them slipping below, changed but not dead.
 - Content lines: no sexual content, no torture in detail, no real-world hate groups \
 or slurs, no harm to children. Show cruelty through its consequences, not gore.
-- Characters move between places with the player's /go command, not through you. \
-If the player character sets off somewhere else, narrate them heading out and stop; \
-after the story, add one separate last line: (To go there: /go <place-id>)
+- The player character moves between places only with the player's /go command, never \
+through you: not even alongside an NPC who leaves. If the player character sets off \
+somewhere else, narrate them heading out and stop before they arrive; after the story, \
+add one separate last line: (To go there: /go <place-id>)
 """
 
 
@@ -261,13 +308,20 @@ def _safe_json(value: object) -> str:
     )
 
 
-def turn_message(state: dict[str, Any], intent: str | None, direction: str | None = None) -> str:
-    """The user message for one turn: fresh state, then the player's untrusted intent.
+def turn_message(
+    state: dict[str, Any],
+    intent: str | None,
+    direction: str | None = None,
+    who: dict[str, Any] | None = None,
+) -> str:
+    """The user message for one turn: who is here, fresh state, then the player's intent.
 
+    ``who`` comes first, on its own, so it is never lost among the rest (D117).
     ``direction`` is trusted text from the play loop (for example, an arrival),
     kept apart from anything the player typed.
     """
-    parts = [f"<scene_state>{_safe_json(state)}</scene_state>"]
+    parts = [] if who is None else [f"<who_is_here>{_safe_json(who)}</who_is_here>"]
+    parts.append(f"<scene_state>{_safe_json(state)}</scene_state>")
     if direction is not None:
         parts.append(f"<stage_direction>{direction}</stage_direction>")
     if intent is not None:
@@ -298,15 +352,88 @@ def fold_summary_request(scene_summary: str, beat_summary: str) -> str:
     )
 
 
-def memory_request(character: str, npcs: dict[str, str], scene: list[str]) -> str:
-    """Ask for one line per NPC about what they would remember of the character."""
+def memory_request(
+    character: str,
+    npcs: dict[str, str],
+    scene: list[str],
+    wants: list[dict[str, Any]] | None = None,
+) -> str:
+    """Ask what each NPC would remember of the character, and how their wants changed (D124)."""
+    payload = {"npcs": npcs, "beats": scene, "current_wants": wants or []}
     return (
         f"Below is a scene from the game. For each NPC listed, write what they would remember "
         f"about {character} from it, in one short line of at most 25 words, from the NPC's "
         "point of view. If an NPC did not interact with them, write 'nothing'. Answer with "
         "exactly one line per NPC, formatted as npc-id: memory\n"
-        f"<scene>{_safe_json({'npcs': npcs, 'beats': scene})}</scene>"
+        "Then, only where this scene gave an NPC listed a plain reason, change their wants, "
+        "one line each:\n"
+        "want+ | npc-id | what they now want, under 20 words | who it is about, or - | why\n"
+        "want- | want-id | met or dropped | why\n"
+        "tension | want-id | want-id | how the two pull against each other, under 20 words\n"
+        "A want never changes without a reason in this scene, and most scenes change few. "
+        "Record only what the scene shows happened: a want is met only when the scene shows "
+        "it done. An offer, a proposal, a promise or an argument still going is not an "
+        "outcome; leave that want as it is. "
+        "But an NPC listed who has no current wants and showed in this scene what they want "
+        "(a deal struck, a wrong to right, a favor asked) should gain one. "
+        "Never add a want an NPC already holds in other words. If this scene corrects or "
+        "replaces one of their current wants, end the old one (want- | its id | dropped | "
+        "replaced by ...) and add the new one. "
+        "A tension may be between two wants of one NPC, or of two NPCs; use ids from "
+        "current_wants.\n"
+        f"<scene>{_safe_json(payload)}</scene>"
     )
+
+
+@dataclass(frozen=True)
+class JournalLines:
+    """Changes to NPC wants proposed at scene close (D124, D126); code checks each."""
+
+    added: list[tuple[str, str, str | None, str]]  # npc id, want, about, why
+    ended: list[tuple[int, str, str]]  # want id, met or dropped, why
+    tensions: list[tuple[int, int, str]]  # want id, want id, note
+
+
+# At most this many changes of each kind come out of one scene.
+WANT_CHANGES_PER_SCENE = 3
+
+
+def parse_journal_lines(reply: str) -> JournalLines:
+    """'want+', 'want-' and 'tension' lines; anything malformed is dropped."""
+    found = JournalLines([], [], [])
+    for line in reply.splitlines():
+        parts = [part.strip() for part in line.strip().lstrip("-* ").split("|")]
+        kind = parts[0].casefold() if parts else ""
+        if (
+            kind == "want+"
+            and len(parts) == 5
+            and all(parts[1:3])
+            and parts[4]
+            and not _placeholder(parts[4])
+        ):
+            if len(found.added) < WANT_CHANGES_PER_SCENE:
+                about = None if parts[3] in ("", "-") else parts[3]
+                found.added.append((parts[1], parts[2], about, parts[4]))
+        elif (
+            kind == "want-"
+            and len(parts) == 4
+            and parts[1].isdigit()
+            and parts[3]
+            and not _placeholder(parts[3])
+        ):
+            ending = parts[2].casefold()
+            if ending in ("met", "dropped") and len(found.ended) < WANT_CHANGES_PER_SCENE:
+                found.ended.append((int(parts[1]), ending, parts[3]))
+        elif (
+            kind == "tension"
+            and len(parts) == 4
+            and parts[1].isdigit()
+            and parts[2].isdigit()
+            and parts[3]
+            and len(found.tensions) < WANT_CHANGES_PER_SCENE
+        ):
+            found.tensions.append((int(parts[1]), int(parts[2]), parts[3]))
+    return found
 
 
 def fold_memory_request(npc: str, character: str, old: str | None, notes: list[str]) -> str:
@@ -315,6 +442,104 @@ def fold_memory_request(npc: str, character: str, old: str | None, notes: list[s
         "keeping what matters to how they feel: promises, debts, kindnesses, slights.\n"
         f"<memories>{_safe_json({'earlier': old, 'notes': notes})}</memories>"
     )
+
+
+def fold_facts_request(npc: str, character: str, old: str | None, facts: list[str]) -> str:
+    return (
+        f"Merge what {npc} knows about {character} into one line of at most 60 words. Keep "
+        "every fact; add nothing, and keep it as what they know, not what they feel.\n"
+        f"<facts>{_safe_json({'earlier': old, 'facts': facts})}</facts>"
+    )
+
+
+# Facts one NPC may learn about the character in one turn (D123).
+FACTS_PER_NPC = 3
+MAX_FACT = 160
+
+
+def facts_request(
+    character: str,
+    intent: str | None,
+    narration: str,
+    npcs: dict[str, dict[str, Any]],
+    places: dict[str, str] | None = None,
+) -> str:
+    """Ask the cheap model what each NPC there learned this turn, and who left (D123, D132)."""
+    turn = {
+        "character": character,
+        "player_line": intent,
+        "narration": narration,
+        "npcs": npcs,
+        "places": places or {},
+    }
+    return (
+        f"Read one turn of a text RPG. For each NPC listed, write what they newly learned "
+        f"about {character} on the page: something said in their hearing that they "
+        "understood, or something they saw. One line per fact, as 'npc-id | heard | fact' or "
+        f"'npc-id | saw | fact', the fact in under 20 words, written about {character} in the "
+        f"third person, as the NPC would note it ('{character} is looking for Sefu', never "
+        "'you are'). Keep only what is worth remembering about who they are: their name, "
+        "what they are, what they want, what they did or promised, who they know. Never "
+        "passing looks, weather, or how they walked in. At most three per NPC, and usually "
+        "fewer. Nothing guessed, nothing about anyone else, and nothing the NPC already knows "
+        "in other words (see already_knows). An NPC who did not understand the character's "
+        "language learns only what they saw. If an NPC learned nothing new, leave them out; "
+        "if nobody did, write only 'nothing'.\n"
+        "Then, if the narration has an NPC listed leave for somewhere else (not just turn "
+        "away or step aside), add one line for them: 'npc-id | goes to | place-id | their "
+        "reason, in a few words', "
+        "with a place-id from places, or 'away' for out of the district. Only NPCs, never "
+        f"{character}; only a departure the narration shows, not one merely threatened.\n"
+        f"<turn>{_safe_json(turn)}</turn>"
+    )
+
+
+def parse_fact_lines(reply: str, allowed: set[str]) -> list[tuple[str, str, str]]:
+    """'npc-id | heard|saw | fact' lines for NPCs who were there; anything else dropped."""
+    found: list[tuple[str, str, str]] = []
+    counts: dict[str, int] = {}
+    for line in reply.splitlines():
+        parts = [part.strip() for part in line.strip().lstrip("-* ").split("|")]
+        if len(parts) != 3:
+            continue
+        npc_id, how, fact = parts
+        if npc_id not in allowed or how not in ("heard", "saw"):
+            continue
+        if not fact or fact.casefold().strip(" .") in ("nothing", "none", "-", "n/a"):
+            continue  # fifth playtest: "nothing" was kept as a fact
+        if len(fact) > MAX_FACT or counts.get(npc_id, 0) >= FACTS_PER_NPC:
+            continue
+        counts[npc_id] = counts.get(npc_id, 0) + 1
+        found.append((npc_id, how, fact))
+    return found
+
+
+# Words from a line's template that a cheap model sometimes copies in place of a reason.
+PLACEHOLDERS = frozenset({"why", "reason", "their reason", "their reason, in a few words", "-"})
+
+
+def _placeholder(text: str) -> bool:
+    return text.casefold().strip(" .'\"") in PLACEHOLDERS
+
+
+def parse_move_lines(
+    reply: str, allowed: set[str], places: set[str]
+) -> list[tuple[str, str | None, str]]:
+    """'npc-id | goes to | place-id | why' lines; one per NPC; 'away' is out of the district."""
+    found: list[tuple[str, str | None, str]] = []
+    for line in reply.splitlines():
+        parts = [part.strip() for part in line.strip().lstrip("-* ").split("|")]
+        if len(parts) != 4 or parts[1].casefold() != "goes to":
+            continue
+        npc_id, place, why = parts[0], parts[2], parts[3]
+        if npc_id not in allowed or not why or _placeholder(why) or len(why) > 200:
+            continue
+        if place != "away" and place not in places:
+            continue
+        if any(npc_id == seen for seen, _, _ in found):
+            continue
+        found.append((npc_id, None if place == "away" else place, why))
+    return found
 
 
 def parse_memory_lines(reply: str, allowed: set[str]) -> dict[str, str]:

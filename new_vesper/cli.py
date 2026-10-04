@@ -56,6 +56,7 @@ HELP = """Type what your character does, or a command:
   /speak <language>  choose the language your character speaks aloud
   /rename <name>     change your character's name
   /pronouns <p>      change your character's pronouns (e.g. /pronouns it/its)
+  /body <line>       change how your character is built and moves
   /eat, /drink   buy food or drink where it's sold
   /export        save your story, as your character would tell it
   /export record save your story exactly as you saw it
@@ -207,6 +208,7 @@ def create_character(conn, content: Content, player_id: int, ask: Ask, say: Say)
             ask, say, "Pronouns (e.g. she/her, he/him, they/them): ", validate_pronouns
         )
         age, appearance = ask_age_and_looks(ask)
+        body = ask_body(ask)
         bond = _ask(
             ask,
             "Bond, in a line: someone your character matters to "
@@ -227,6 +229,7 @@ def create_character(conn, content: Content, player_id: int, ask: Ask, say: Say)
                 age=age,
                 appearance=appearance,
                 languages=languages,
+                body=body,
             )
         except (RulesError, StateError) as exc:
             say(f"That didn't work: {exc}")
@@ -265,6 +268,17 @@ def ask_valid(ask: Ask, say: Say, question: str, check: Callable[[str], str]) ->
             say(f"  ({exc})")
 
 
+BODY_QUESTION = (
+    "Body, in a line: how they're built and how they move "
+    "(e.g. fins for hands, waddles on a tail fin): "
+)
+
+
+def ask_body(ask: Ask) -> str:
+    """How the character is built and moves, in the player's words (D116)."""
+    return _ask(ask, BODY_QUESTION)
+
+
 def ask_age_and_looks(ask: Ask) -> tuple[str, str]:
     age = _ask(ask, "Age, in a few words (e.g. mid-twenties, built three winters ago): ")
     looks = _ask(ask, "Appearance, in a line (what people notice first): ")
@@ -289,6 +303,8 @@ def show_sheet(character: Character, content: Content, say: Say) -> None:
         say(f"  Age: {character.age}")
     if character.appearance:
         say(wrap(f"  Looks: {character.appearance}"))
+    if character.body:
+        say(wrap(f"  Body: {character.body}"))
     if character.languages:
         spoken = [content.languages[lang].name for lang in character.languages]
         aloud = content.languages[character.speaking].name
@@ -477,6 +493,12 @@ def play(
             )
         except StateError as exc:
             say(f"That didn't work: {exc}")
+    while me.body is None:
+        say(f"The city wants to know how {me.name} is built.")
+        try:
+            me = characters.set_body(conn, me.id, ask_body(ask), Cause(Actor.PLAYER, player.id))
+        except StateError as exc:
+            say(f"That didn't work: {exc}")
     session = PlaySession(
         conn,
         content,
@@ -556,6 +578,9 @@ def play(
                 elif line.startswith("/pronouns"):
                     me = session.set_pronouns(line[len("/pronouns") :].strip())
                     say(f"  [{me.name}'s pronouns are now {me.pronouns}.]")
+                elif line.startswith("/body"):
+                    me = session.set_body(line[len("/body") :].strip())
+                    say(wrap(f"  [{me.name}: {me.body}]"))
                 elif line.startswith("/speak"):
                     choice = line[len("/speak") :].strip()
                     me = session.character

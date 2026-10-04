@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from new_vesper.dm import prompt
 from new_vesper.dm.agent import REFUSAL_NARRATION, run_turn, summarize
 from new_vesper.dm.config import CallType, DMConfig
 from new_vesper.dm.tools import TOOLS
@@ -102,6 +103,7 @@ def test_tool_definitions_are_cached_and_closed() -> None:
         "adjust_light",
         "adjust_attitude",
         "create_encounter",
+        "npc_mood",
     }
     assert all(t["input_schema"]["additionalProperties"] is False for t in TOOLS)
 
@@ -110,3 +112,27 @@ def test_config_from_env() -> None:
     config = DMConfig.from_env({"NEW_VESPER_TURN_MODEL": "claude-opus-5"})
     assert config.model_for(CallType.TURN) == "claude-opus-5"
     assert config.model_for(CallType.RECAP) == "claude-haiku-4-5"
+
+
+def test_scene_close_runs_on_its_own_model() -> None:
+    # Wants and tensions are judged once a scene; Haiku misread them (fifth playtest).
+    config = DMConfig()
+    assert config.model_for(CallType.NPC_JOURNAL) == config.turn_model
+    assert config.model_for(CallType.NPC_MEMORY) == config.summary_model
+    env = DMConfig.from_env({"NEW_VESPER_JOURNAL_MODEL": "claude-haiku-4-5"})
+    assert env.model_for(CallType.NPC_JOURNAL) == "claude-haiku-4-5"
+
+
+def test_the_narrator_gives_a_deferred_to_npc_their_move() -> None:
+    # Fifth playtest: Brightfin stepped back for Tomás four turns running, and each turn
+    # ended just before Tomás spoke.
+    text = prompt.DM_INSTRUCTIONS
+    assert "defers to an NPC here" in text and "Never stop just before an NPC acts" in text
+    assert "after the NPCs have had their say" in text
+
+
+def test_the_narrator_never_translates_the_players_words() -> None:
+    # Fifth playtest: Brightfin's English line came back in Portuguese.
+    assert "even when the character speaks another language: never translate it" in (
+        prompt.DM_INSTRUCTIONS.replace("\n", " ")
+    )
