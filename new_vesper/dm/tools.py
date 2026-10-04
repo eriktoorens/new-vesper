@@ -161,6 +161,43 @@ TOOLS: list[dict[str, Any]] = [
         },
     },
     {
+        "name": "npc_wants",
+        "description": (
+            "What an NPC who is here wants right now, in this scene: drawn from their wants, "
+            'goal, lately and mood, and specific to what is happening ("wants the skewer '
+            'thief caught"). Set it when an NPC here has wants_now null, then play them '
+            "pursuing it. It may change once per scene, when the scene gives them reason."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "npc": {"type": "string"},
+                "want": {"type": "string", "description": "One short line."},
+                "reason": {"type": "string", "description": "Why, in one sentence."},
+            },
+            "required": ["npc", "want", "reason"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "npc_mood",
+        "description": (
+            "Something on the page shifts the mood of an NPC who is here, for the rest of "
+            "the day. Their mood comes from code each morning; change it only when what "
+            "happens would plainly change it. Once per NPC per scene."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "npc": {"type": "string"},
+                "mood": {"type": "string", "description": "A few words, like their mood now."},
+                "reason": {"type": "string", "description": "What happened, in one sentence."},
+            },
+            "required": ["npc", "mood", "reason"],
+            "additionalProperties": False,
+        },
+    },
+    {
         "name": "create_encounter",
         "description": (
             "Something happens to the acting character that nobody planned: you write it, "

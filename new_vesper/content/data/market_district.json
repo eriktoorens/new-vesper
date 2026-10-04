@@ -770,6 +770,22 @@
           "fear": 1,
           "why": "She leaves him a crust on the Weighhouse stairs; she won't say why."
         }
+      },
+      "moods": {
+        "usual": [
+          "brisk and busy, counting heads",
+          "patient, humming over her mending",
+          "tired in the bones but smiling",
+          "nostalgic, lingering over old names"
+        ],
+        "foul_weather": [
+          "fussing over wet coats and muddy floors",
+          "worried about lodgers still out in it"
+        ],
+        "goal_news": [
+          "distracted, turning a half-faded name over in her mind",
+          "quietly hopeful about the boy's coat"
+        ]
       }
     },
     {
@@ -897,6 +913,22 @@
           "fear": 0,
           "why": "Loud, pricey, but she paid for the Row's new tarps without being asked."
         }
+      },
+      "moods": {
+        "usual": [
+          "expansive, feeding anyone who looks hungry",
+          "short-fused, arguing with suppliers",
+          "cheerful and loud",
+          "brooding about rent and corporate offers"
+        ],
+        "foul_weather": [
+          "cursing the tarps and the wind",
+          "grimly determined to keep the Row open"
+        ],
+        "goal_news": [
+          "fired up, ready to fight for the Row",
+          "suspicious of every stranger in a good coat"
+        ]
       }
     },
     {
@@ -1007,6 +1039,22 @@
           "fear": 0,
           "why": "His noodles, his noise, his Row: she'd never admit how much she likes all three."
         }
+      },
+      "moods": {
+        "usual": [
+          "smooth and selling hard",
+          "watchful, pricing everyone who passes",
+          "secretly soft, slipping a charm to a child",
+          "bored and fishing for gossip"
+        ],
+        "foul_weather": [
+          "irritable about damp charms",
+          "unusually generous, since nobody is buying"
+        ],
+        "goal_news": [
+          "jittery about the audit, checking her papers twice",
+          "triumphant and showing off a little"
+        ]
       }
     },
     {
@@ -1123,6 +1171,22 @@
           "fear": 0,
           "why": "Her ledger is the only record in the Market kept better than his own."
         }
+      },
+      "moods": {
+        "usual": [
+          "meticulous, pencil behind his ear",
+          "lonely and talkative to anyone who will listen",
+          "officious and by the book",
+          "quietly pleased with a well-filed form"
+        ],
+        "foul_weather": [
+          "protecting his clipboard from the rain like a child",
+          "glum, as the ink runs on everything"
+        ],
+        "goal_news": [
+          "flustered, having lost a form again",
+          "proud, with a subsection finally in order"
+        ]
       }
     },
     {
@@ -1245,6 +1309,22 @@
           "fear": 2,
           "why": "The Registry decides who counts as a person. Vasil is the Registry, here."
         }
+      },
+      "moods": {
+        "usual": [
+          "focused and soft-spoken over a board",
+          "anxious, glitching into old sales lines",
+          "curious about everyone's memories",
+          "content, humming a firmware tune"
+        ],
+        "foul_weather": [
+          "worried about rain in their joints",
+          "hushed, watching the water run"
+        ],
+        "goal_news": [
+          "hopeful, writing names down to keep them",
+          "shaken, checking that people still know them"
+        ]
       }
     },
     {
@@ -1356,6 +1436,22 @@
           "fear": 0,
           "why": "Someone leaves a crust on the Weighhouse stairs; he suspects the landlady."
         }
+      },
+      "moods": {
+        "usual": [
+          "courtly and patient",
+          "drowsy, waiting for a fare",
+          "wistful, talking of the old lines",
+          "sharp-eyed and bargaining"
+        ],
+        "foul_weather": [
+          "pleased by high water",
+          "wary of what the storm brings down"
+        ],
+        "goal_news": [
+          "warm, as if someone above remembered him",
+          "restless and eager to be called by name"
+        ]
       }
     }
   ],

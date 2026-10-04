@@ -16,6 +16,7 @@ from typing import Any
 from new_vesper.budget.policy import stamp
 from new_vesper.city import npcs as npc_places
 from new_vesper.city.encounters import NoSuchEncounter, spend
+from new_vesper.city.moods import mood_now
 from new_vesper.city.npcs import Whereabouts, present_at, regulars_elsewhere, where_is
 from new_vesper.city.sky import describe_sky, harder, minimum_rung
 from new_vesper.content.loader import Content
@@ -24,7 +25,7 @@ from new_vesper.dm import needs as bodily
 from new_vesper.dm.speech import SpeechError, check_gist_roll
 from new_vesper.rules.attitudes import Attitude, parse_axis
 from new_vesper.rules.character import Sheet, apply_track
-from new_vesper.rules.clock import day_start_utc
+from new_vesper.rules.clock import city_day, day_start_utc
 from new_vesper.rules.consequences import (
     ConsequenceType,
     allowed,
@@ -50,7 +51,7 @@ from new_vesper.rules.tracks import (
     must_fall_or_endure,
 )
 from new_vesper.rules.xp import XP_PER_TRIGGER, parse_trigger
-from new_vesper.state import characters, clocks, favors, items, rolls, scenes, world
+from new_vesper.state import characters, clocks, favors, items, npc_minds, rolls, scenes, world
 from new_vesper.state.attitudes import (
     TargetKind,
     change_attitude,
@@ -387,6 +388,11 @@ def _agenda(ctx: TurnContext, w: Whereabouts) -> dict[str, Any]:
     }
 
 
+def _wants_now(ctx: TurnContext, npc_id: str) -> str | None:
+    found = npc_minds.want_in_scene(ctx.conn, ctx.scene_id, npc_id)
+    return None if found is None else found.want
+
+
 def _npcs_here(ctx: TurnContext, me: Character) -> set[str]:
     """NPCs where the character is, and any who moved on this turn (still in its telling)."""
     here = {w.npc.id for w in present_at(ctx.conn, ctx.content, me.location_id or "", ctx.now)}
@@ -464,6 +470,9 @@ def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
                 "doing": w.activity,
                 # Only when their day calls them elsewhere or to something else (D112).
                 **({} if w.on_agenda else {"agenda": _agenda(ctx, w)}),
+                # Today's mood, and what they want in this scene (D119, D120).
+                "mood": mood_now(ctx.conn, ctx.content, w.npc, ctx.now).mood,
+                "wants_now": _wants_now(ctx, w.npc.id),
                 "lately": npc_lately(ctx.conn, w.npc),
                 "personality": personality(w.npc),
                 "feels_about_you": feelings(ctx, w.npc, TargetKind.CHARACTER, ctx.character_id),
@@ -1105,6 +1114,85 @@ def npc_moves_on(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+MAX_MOOD = 60
+MAX_WANT = 160
+
+
+def _npc_here(ctx: TurnContext, raw_id: object) -> Any:
+    """An NPC id the Narrator gave, checked: real, and where the character is."""
+    here = _npcs_here(ctx, _me(ctx)) - set(ctx.moved_on)
+    if not isinstance(raw_id, str) or raw_id not in ctx.content.npcs:
+        raise ToolError(f"unknown npc; here now: {sorted(here) or 'nobody'}")
+    npc = ctx.content.npcs[raw_id]
+    if raw_id not in here:
+        raise ToolError(f"{npc.name} is not here")
+    return npc
+
+
+def _one_line(value: object, name: str, max_length: int) -> str:
+    clean = _text(value, name, max_length)
+    if "\n" in clean or "\r" in clean:
+        raise ToolError(f"{name} must be one line")
+    return clean
+
+
+def npc_mood(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
+    """Something on the page shifts an NPC's mood for the rest of the day (D119).
+
+    Once per NPC per scene.
+    """
+    args = _args(raw, {"npc", "mood", "reason"})
+    npc = _npc_here(ctx, args["npc"])
+    mood = _one_line(args["mood"], "mood", MAX_MOOD)
+    reason = _one_line(args["reason"], "reason", MAX_REASON)
+    if npc_minds.shifted_in_scene(ctx.conn, npc.id, ctx.scene_id):
+        raise ToolError(f"{npc.name}'s mood has already shifted this scene")
+    before = mood_now(ctx.conn, ctx.content, npc, ctx.now)
+    npc_minds.add_mood(
+        ctx.conn,
+        npc.id,
+        city_day(ctx.now),
+        mood,
+        "narrator",
+        reason=reason,
+        scene_id=ctx.scene_id,
+    )
+    append_event(
+        ctx.conn,
+        "npc_mood_shifted",
+        ctx.cause,
+        {"npc_id": npc.id, "from": before.mood, "to": mood, "reason": reason},
+        character_id=ctx.character_id,
+    )
+    return {"npc": npc.id, "mood": mood, "was": before.mood}
+
+
+def npc_wants(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
+    """What an NPC who is here wants in this scene: set once, changed at most once (D120)."""
+    args = _args(raw, {"npc", "want", "reason"})
+    npc = _npc_here(ctx, args["npc"])
+    want = _one_line(args["want"], "want", MAX_WANT)
+    reason = _one_line(args["reason"], "reason", MAX_REASON)
+    before = npc_minds.want_in_scene(ctx.conn, ctx.scene_id, npc.id)
+    try:
+        after = npc_minds.set_want(ctx.conn, ctx.scene_id, npc.id, want, reason)
+    except StateError as exc:
+        raise ToolError(f"{npc.name}: {exc}") from exc
+    append_event(
+        ctx.conn,
+        "npc_wants_set",
+        ctx.cause,
+        {
+            "npc_id": npc.id,
+            "want": want,
+            "was": None if before is None else before.want,
+            "reason": reason,
+        },
+        character_id=ctx.character_id,
+    )
+    return {"npc": npc.id, "wants_now": after.want, "may_change_again": after.changes == 0}
+
+
 HANDLERS: dict[str, Handler] = {
     "look": look,
     "call_for_roll": call_for_roll,
@@ -1115,6 +1203,8 @@ HANDLERS: dict[str, Handler] = {
     "adjust_attitude": adjust_attitude,
     "create_encounter": create_encounter,
     "npc_moves_on": npc_moves_on,
+    "npc_mood": npc_mood,
+    "npc_wants": npc_wants,
 }
 
 

@@ -94,6 +94,7 @@ REGION_DOC: dict[str, Any] = {
             "sample_line": "l",
             "attitude_to_strangers": {"trust": 0, "fondness": 0, "fear": 0},
             "attitudes": {},
+            "moods": {"usual": ["calm", "busy"], "foul_weather": ["damp"], "goal_news": ["glad"]},
         }
     ],
 }
@@ -164,6 +165,12 @@ def test_bad_knacks_rejected(knack: dict[str, Any]) -> None:
         _region(npcs__0__attitudes={"ghost": {"trust": 0, "fondness": 0, "fear": 0, "why": "w"}}),
         _region(npcs__0__attitude_to_strangers={"trust": 4, "fondness": 0, "fear": 0}),
         _region(npcs__0__traits=[]),
+        _region(npcs__0__moods={"usual": ["calm"], "foul_weather": ["damp"], "goal_news": ["g"]}),
+        _region(npcs__0__moods={"usual": ["a", "b"], "foul_weather": [], "goal_news": ["g"]}),
+        _region(
+            npcs__0__moods={"usual": ["a", "x" * 61], "foul_weather": ["d"], "goal_news": ["g"]}
+        ),
+        _region(npcs__0__moods={"usual": ["a", "b"], "foul_weather": ["d"]}),
         _region(
             region__x__weather={
                 "states": [{"id": "rain", "name": "R", "description": "d"}],
