@@ -134,6 +134,7 @@ class TurnContext:
     roll_ids: list[int] = field(default_factory=list)
     encounters: int = 0  # created this turn
     moved_on: list[str] = field(default_factory=list)  # NPCs who left this turn (D112)
+    spoken: str | None = None  # the language the character spoke aloud this turn (D115)
 
     @property
     def cause(self) -> Cause:

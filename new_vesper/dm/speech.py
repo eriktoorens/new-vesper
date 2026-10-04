@@ -12,6 +12,7 @@ the character has no right to. The DM is sent back to fix it first (D76).
 
 import json
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -31,7 +32,9 @@ ATTR = re.compile(r'([a-z]+)\s*=\s*"([^"]*)"', re.IGNORECASE)
 # An opening tag left without its closing tag, and whatever follows it in the paragraph.
 UNCLOSED = re.compile(r"<say\b.*?(?=\n\s*\n|\Z)", re.DOTALL | re.IGNORECASE)
 STRAY_CLOSE = re.compile(r"</say\s*>", re.IGNORECASE)
-ATTRIBUTES = frozenset({"who", "lang", "tone", "gist"})
+ATTRIBUTES = frozenset({"who", "lang", "tone", "gist", "understood"})
+# The player character's own quoted words, straight or curly (D115).
+PLAYER_QUOTED = re.compile(r'"[^"\n]+"|\u201c[^\u201d\n]+\u201d')
 # Quote marks a narrator may wrap around speech; code adds its own.
 QUOTES = '"\u201c\u201d'
 QUOTE_MARKS = frozenset(QUOTES)
@@ -163,7 +166,9 @@ def _check(
 
     unknown = set(tag.attrs) - ATTRIBUTES
     if unknown:
-        return bad(f"unknown attributes {sorted(unknown)}; use who, lang, tone and gist")
+        return bad(
+            f"unknown attributes {sorted(unknown)}; use who, lang, tone, gist and understood"
+        )
     if not who:
         return bad("give who: an NPC id, a stranger's name, or a short description")
     key = who.casefold()
@@ -197,7 +202,39 @@ def _check(
     stranger = strangers.get(key)
     if stranger is not None and lang not in stranger:
         return bad(f"{who} doesn't speak {ctx.content.languages[lang].name}", speaker)
+    listener = set(npc.languages) if npc is not None else stranger
+    problem = _understood_problem(ctx, tag, me, speaker, listener)
+    if problem:
+        return bad(problem, speaker, npc.id if npc else None)
     return Line(tag, speaker, npc.id if npc else None, lang, heard(lang, me.speaks, gains), None)
+
+
+def _understood_problem(
+    ctx: "TurnContext", tag: Tag, me: Character, speaker: str, listener: Iterable[str] | None
+) -> str | None:
+    """A line from someone who didn't understand what the character just said (D115)."""
+    understood = tag.attrs.get("understood")
+    if understood is not None and understood not in ("yes", "no"):
+        return 'understood is "yes" or "no"'
+    if ctx.spoken is None or listener is None or ctx.spoken in set(listener):
+        return None
+    if understood == "no":
+        return None
+    name = ctx.content.languages[ctx.spoken].name
+    return (
+        f"{speaker} doesn't understand {name}, which {me.name} just spoke: to them it was "
+        f'only sounds. Play that, and mark their line understood="no"'
+    )
+
+
+def label_spoken(intent: str, language: str) -> str:
+    """The player's line with each quoted span labeled by language: '"..." [Cantonese]' (D115)."""
+    return PLAYER_QUOTED.sub(lambda m: f"{m.group(0)} [{language}]", intent)
+
+
+def speaks_aloud(intent: str) -> bool:
+    """Whether the player's line has the character say something, in quotes."""
+    return PLAYER_QUOTED.search(intent) is not None
 
 
 def check_speech(ctx: "TurnContext", narration: str) -> list[Line]:

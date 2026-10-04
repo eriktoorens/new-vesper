@@ -14,7 +14,7 @@ import pytest
 from new_vesper.content.loader import Content
 from new_vesper.dm.handlers import TurnContext, describe_location, dispatch
 from new_vesper.dm.session import PlaySession, SessionError
-from new_vesper.dm.speech import check_speech, finish_speech, render, speech_reminder
+from new_vesper.dm.speech import check_speech, finish_speech, label_spoken, render, speech_reminder
 from new_vesper.rules.character import create_character as new_sheet
 from new_vesper.state import characters, speech
 from new_vesper.state.errors import StateError
@@ -489,3 +489,85 @@ def test_quotes_around_a_line_not_understood_go_too(ctx_factory: Any, mira: Any)
     ctx = ctx_factory(mira)
     text = '"<say who="tomas-haddad" lang="arabic">Two skewers.</say>"'
     assert shown(ctx, text) == "[something in Arabic]"
+
+
+# --- what an NPC understood of the character's words (D115) --------------------------
+# From the fourth playtest: a character spoke Cantonese, and Tomás, who doesn't speak
+# it, answered every word.
+
+
+def test_quoted_words_are_labeled_with_their_language() -> None:
+    assert label_spoken('Mira says "Two skewers."', "Wolof") == 'Mira says "Two skewers." [Wolof]'
+    curly = 'Mira asks “How much?” and then "Too much."'
+    assert label_spoken(curly, "Wolof") == (
+        'Mira asks “How much?” [Wolof] and then "Too much." [Wolof]'
+    )
+    assert label_spoken("Mira waits by the cart", "Wolof") == "Mira waits by the cart"
+    assert label_spoken('Mira mutters "unfinished', "Wolof") == 'Mira mutters "unfinished'
+
+
+def speaking(conn: sqlite3.Connection, content: Content, language: str, *replies: Any) -> Any:
+    char = polyglot(conn)
+    characters.set_online(conn, char.id, False, SYSTEM)
+    client = StubClient(say("Noon on the Row."), *replies)
+    play = PlaySession(
+        conn, content, client, DESIGN_TEXT, SeqRng(), char.id, now=lambda: NOON_TUESDAY
+    )
+    play.start()
+    play.speak(language)
+    return play, client
+
+
+def player_intent(client: StubClient) -> str:
+    message = client.messages.turn_calls[-1]["messages"][0]["content"]
+    return json.loads(message.split("<player_intent>")[1].split("</player_intent>")[0])["intent"]
+
+
+def test_the_narrator_sees_which_language_the_words_were_in(
+    conn: sqlite3.Connection, content: Content
+) -> None:
+    understood = tag("tomas-haddad", "registry-standard", "Sorry, friend?", understood="no")
+    play, client = speaking(conn, content, "wolof", say(f"Tomás squints. {understood}"))
+    play.turn('Mira asks "Two skewers, please."')
+    assert player_intent(client) == 'Mira asks "Two skewers, please." [Wolof]'
+    stored = conn.execute("SELECT intent FROM beat_intents ORDER BY beat_id DESC").fetchone()[0]
+    assert stored == 'Mira asks "Two skewers, please."'  # the record keeps what was typed
+
+
+def test_registry_standard_words_carry_no_label(conn: sqlite3.Connection, content: Content) -> None:
+    play, client = speaking(conn, content, "registry-standard", say("Tomás nods."))
+    play.turn('Mira asks "Two skewers, please."')
+    assert player_intent(client) == 'Mira asks "Two skewers, please."'
+
+
+def test_an_npc_who_did_not_understand_must_say_so(ctx_factory: Any, mira: Any) -> None:
+    ctx = ctx_factory(mira)
+    ctx.spoken = "wolof"
+    line = tag("tomas-haddad", "registry-standard", "Two skewers, coming up!")
+    problem = speech_reminder(ctx, f"Tomás grins. {line}")
+    assert problem and "doesn't understand Wolof" in problem and 'understood="no"' in problem
+    shrug = tag("tomas-haddad", "registry-standard", "Sorry, friend?", understood="no")
+    assert speech_reminder(ctx, f"Tomás squints. {shrug}") is None
+    maybe = tag("tomas-haddad", "registry-standard", "Hm?", understood="maybe")
+    assert "understood is" in (speech_reminder(ctx, maybe) or "")
+
+
+def test_an_npc_who_understood_needs_no_mark(ctx_factory: Any, mira: Any) -> None:
+    ctx = ctx_factory(mira)
+    ctx.spoken = "arabic"
+    assert speech_reminder(ctx, tag("tomas-haddad", "registry-standard", "Coming up!")) is None
+    ctx.spoken = None  # the character said nothing aloud this turn
+    assert speech_reminder(ctx, tag("tomas-haddad", "registry-standard", "Coming up!")) is None
+
+
+def test_the_narrator_is_sent_back_when_an_npc_answers_words_they_did_not_understand(
+    conn: sqlite3.Connection, content: Content
+) -> None:
+    answered = tag("tomas-haddad", "registry-standard", "Two skewers, coming up!")
+    puzzled = tag("tomas-haddad", "registry-standard", "Sorry, friend?", understood="no")
+    play, _ = speaking(
+        conn, content, "wolof", say(f"Tomás grins. {answered}"), say(f"Tomás squints. {puzzled}")
+    )
+    outcome = play.turn('Mira asks "Two skewers, please."')
+    assert outcome.narration == 'Tomás squints. "Sorry, friend?"'
+    assert "understood" not in outcome.narration

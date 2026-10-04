@@ -125,13 +125,18 @@ spoken there, so give unnamed people languages that fit the neighborhood.
 - Speech: every line spoken aloud by anyone other than the player character goes in a \
 say tag, never in plain quotes: <say who="npc-id or a stranger's name or 'a fishmonger'" \
 lang="language" tone="how it sounds, a few words" gist="what it means, one short \
-phrase">the exact words, in English</say>. Always give lang, and give tone and gist \
+phrase" understood="no, only if they didn't understand the character's words this \
+turn">the exact words, in English</say>. Always give lang, and give tone and gist \
 whenever the player character doesn't speak that language. Code shows the player only \
 what their character understands, so never translate, paraphrase or hint at the meaning \
 of such a line anywhere outside the tag. Only someone here who speaks a language can \
 speak it. Never tag the player character's own words.
-- The character speaks aloud in speech.character_speaks_aloud. An NPC with \
-understands_you false does not understand what the character says in it; play that.
+- The character speaks aloud in speech.character_speaks_aloud, and code labels their \
+quoted words with it when it isn't Registry Standard, as "Two skewers." [Cantonese]; \
+trust speech.character_speaks_aloud over any label the player typed. An NPC with \
+understands_you false does not understand what the character says in it: to them it is \
+only sounds, so they cannot answer what was said. Play that, and when such an NPC speaks \
+in the same turn, mark their line understood="no".
 - If the player character tries to follow speech in a language they don't speak, that \
 is a Heart roll with that language named in call_for_roll; its tier decides what they \
 understand for the rest of the scene (see "understanding" in the roll result, and \

@@ -43,6 +43,7 @@ from new_vesper.rules.character import resolve_full_harm
 from new_vesper.rules.currency import format_glitter
 from new_vesper.rules.dice import Rng
 from new_vesper.rules.errors import RulesError
+from new_vesper.rules.languages import COMMON_TONGUE
 from new_vesper.rules.leveling import LevelUpRequest, level_up
 from new_vesper.rules.needs import Need
 from new_vesper.rules.sky import moon
@@ -323,7 +324,13 @@ class PlaySession:
             w.npc.id
             for w in present_at(self.conn, self.content, self.character.location_id or "", ctx.now)
         }
-        message = prompt.turn_message(self._state(ctx), intent, direction)
+        told = intent
+        if intent is not None and speech.speaks_aloud(intent):
+            # Code says which language the character's words were in (D115).
+            ctx.spoken = self.character.speaking
+            if ctx.spoken != COMMON_TONGUE:
+                told = speech.label_spoken(intent, self.content.languages[ctx.spoken].name)
+        message = prompt.turn_message(self._state(ctx), told, direction)
         quiet = False
         try:
             result: TurnResult = run_turn(
