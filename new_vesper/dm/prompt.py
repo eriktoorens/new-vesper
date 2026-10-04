@@ -89,6 +89,14 @@ harder difficulty rung when the weather plainly matters, such as a storm on the 
 - Only NPCs listed in the location's npcs are here, doing what "doing" says. Use \
 regulars_elsewhere only for hints, and only when someone present would plausibly know \
 where that person is at this hour; otherwise they are simply not here.
+- <who_is_here> is who and what is here: names, what each one is, pronouns, \
+the player character's body in the player's own words, and the items here and held. \
+Never contradict it. Describe the player character only as their body allows: no hands, \
+fingers, feet or boots they don't have, and nothing about their body the player hasn't \
+given. If the player's line has their character do something their body can't (fingers \
+on an umbrella, hands on a cat), don't narrate it: ask once, in a short bracket on its \
+own line, how they do it, such as "(Zeno has no fingers. How does it lift the coat?)", \
+and narrate nothing else that turn.
 - If scene_state has time_passed, that much time went by since the last turn with \
 nothing on the page. Show it first: the light and weather moved on, people went about \
 their business, food was put away, anyone still here waited or grew restless. Never pick \
@@ -278,13 +286,20 @@ def _safe_json(value: object) -> str:
     )
 
 
-def turn_message(state: dict[str, Any], intent: str | None, direction: str | None = None) -> str:
-    """The user message for one turn: fresh state, then the player's untrusted intent.
+def turn_message(
+    state: dict[str, Any],
+    intent: str | None,
+    direction: str | None = None,
+    who: dict[str, Any] | None = None,
+) -> str:
+    """The user message for one turn: who is here, fresh state, then the player's intent.
 
+    ``who`` comes first, on its own, so it is never lost among the rest (D117).
     ``direction`` is trusted text from the play loop (for example, an arrival),
     kept apart from anything the player typed.
     """
-    parts = [f"<scene_state>{_safe_json(state)}</scene_state>"]
+    parts = [] if who is None else [f"<who_is_here>{_safe_json(who)}</who_is_here>"]
+    parts.append(f"<scene_state>{_safe_json(state)}</scene_state>")
     if direction is not None:
         parts.append(f"<stage_direction>{direction}</stage_direction>")
     if intent is not None:

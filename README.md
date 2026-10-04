@@ -60,7 +60,7 @@ $env:ANTHROPIC_API_KEY = "sk-ant-..."        # Windows PowerShell
 new-vesper play --handle yourname
 ```
 
-The first time you play, you make a character: origin, stats, two knacks, languages, name, pronouns, and a few details. After that, write what your character does in third person ("Mara ducks under the awning and…") and put their spoken words in quotes. The Narrator tells the story and calls for rolls.
+The first time you play, you make a character: origin, stats, two knacks, languages, name, pronouns, and a few details, including how they're built and move. After that, write what your character does in third person ("Mara ducks under the awning and…") and put their spoken words in quotes. The Narrator tells the story and calls for rolls.
 
 In-game commands:
 
@@ -74,6 +74,7 @@ In-game commands:
 | `/speak <language>` | Choose which of your languages your character speaks aloud |
 | `/rename <name>` | Change your character's name |
 | `/pronouns <pronouns>` | Change your character's pronouns, e.g. `/pronouns it/its` |
+| `/body <line>` | Change how your character is built and moves, e.g. `/body fins for hands, waddles` |
 | `/eat`, `/drink` | Buy food or drink where it's sold |
 | `/rest` | Sleep at a haven |
 | `/export` | Save your story as your character would tell it (a small model cost) |
@@ -112,7 +113,7 @@ Check spending from outside the game with `new-vesper budget`.
   - bodily needs: hunger, thirst, tiredness, cold and heat wear down stats and, at their worst, cost Harm or Fade; `/eat`, `/drink` and `/rest` ease them
   - setting-native kinds: play a Hearsay (a story walking), a Castoff (a dead brand's mascot) or a Mislaid (a lost thing become someone)
 - Exporting your story: `/export` saves it as your character would tell it, `/export record` exactly as you saw it, and `new-vesper export` saves any character's, even one who has fallen. Files go in `stories/`.
-- Decisions D1–D115 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
+- Decisions D1–D118 are recorded in [docs/design.md](docs/design.md), with a decision log at the end.
 
 **Next:**
 1. **Playtest layers 6–8: languages, bodily needs and the new kinds (D76–D93).** Watch whether the Narrator tags every line and keeps translations out of plain narration, whether the needs' rates feel right, and how the Narrator plays a hearsay, a castoff or a mislaid.

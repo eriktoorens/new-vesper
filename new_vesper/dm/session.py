@@ -35,6 +35,7 @@ from new_vesper.dm.handlers import (
     describe_character,
     describe_location,
     dispatch,
+    identity,
     owed_reminder,
 )
 from new_vesper.dm.tools import TOOLS
@@ -330,7 +331,8 @@ class PlaySession:
             ctx.spoken = self.character.speaking
             if ctx.spoken != COMMON_TONGUE:
                 told = speech.label_spoken(intent, self.content.languages[ctx.spoken].name)
-        message = prompt.turn_message(self._state(ctx), told, direction)
+        who = identity(ctx, self.character)
+        message = prompt.turn_message(self._state(ctx), told, direction, who)
         quiet = False
         try:
             result: TurnResult = run_turn(
@@ -595,6 +597,15 @@ class PlaySession:
             raise SessionError("give the pronouns after /pronouns, e.g. /pronouns it/its")
         try:
             return characters.set_pronouns(self.conn, self.character_id, pronouns, self._cause())
+        except StateError as exc:
+            raise SessionError(str(exc)) from exc
+
+    def set_body(self, body: str) -> Character:
+        """Change how the character is built and moves (D116)."""
+        if not body:
+            raise SessionError("say how they're built after /body, e.g. /body fins for hands")
+        try:
+            return characters.set_body(self.conn, self.character_id, body, self._cause())
         except StateError as exc:
             raise SessionError(str(exc)) from exc
 

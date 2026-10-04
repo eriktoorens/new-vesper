@@ -43,6 +43,8 @@ class Character:
     version: int
     # The language they speak aloud (D80).
     speaking: str = COMMON_TONGUE
+    # How they're built and how they move, in the player's words (D116).
+    body: str | None = None
 
     @property
     def speaks(self) -> frozenset[str]:
@@ -146,6 +148,7 @@ def create_character(
     age: str | None = None,
     appearance: str | None = None,
     languages: tuple[str, ...] = (),
+    body: str | None = None,
 ) -> Character:
     """Store a new character. Build ``sheet`` with ``rules.character.create_character``."""
     player = get_player(conn, player_id)
@@ -156,6 +159,7 @@ def create_character(
     clean_bond = text(bond, "bond", 200).strip()
     clean_age = None if age is None else text(age, "age", 60).strip()
     clean_look = None if appearance is None else text(appearance, "appearance", 300).strip()
+    clean_body = None if body is None else text(body, "body", 200).strip()
     spoken = _check_languages(conn, languages)
     if location_id is not None:
         location_id = get_location(conn, location_id).id
@@ -168,6 +172,7 @@ def create_character(
         "pronouns": clean_pronouns,
         "age": clean_age,
         "appearance": clean_look,
+        "body": clean_body,
         "location_id": location_id,
         "currency": STARTING_GLITTER,
         **_sheet_columns(sheet),
@@ -236,6 +241,7 @@ def get_character(conn: sqlite3.Connection, character_id: int) -> Character:
         pronouns=row["pronouns"],
         age=row["age"],
         appearance=row["appearance"],
+        body=row["body"],
         languages=_ids(
             conn,
             "SELECT language_id FROM character_languages WHERE character_id = ? ORDER BY rowid",
@@ -417,6 +423,13 @@ def set_pronouns(
     return _update_field(
         conn, character, "pronouns", value, "pronouns_set", cause, {"pronouns": value}
     )
+
+
+def set_body(conn: sqlite3.Connection, character_id: int, body: str, cause: Cause) -> Character:
+    """Set or change how a character is built and moves, in the player's words (D116)."""
+    character = get_character(conn, character_id)
+    value = text(body, "body", 200).strip()
+    return _update_field(conn, character, "body", value, "body_set", cause, {"body": value})
 
 
 def rename_character(

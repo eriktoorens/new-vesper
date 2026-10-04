@@ -46,6 +46,7 @@ def test_create_play_and_quit(tmp_path: Path) -> None:
             "they/them",
             "three, which is middle-aged for a cat",
             "A ginger tom with one torn ear",
+            "Two legs, two hands",
             "The noodle man",
             "/look",
             "/places",
@@ -86,6 +87,7 @@ def test_returning_player_skips_creation(tmp_path: Path) -> None:
             "she/her",
             "thirties",
             "Tall, rain-soaked",
+            "Two legs, two hands",
             "Jun",
             "/quit",
         ],
@@ -116,6 +118,7 @@ def test_budget_command_and_operator_report(tmp_path: Path) -> None:
             "she/her",
             "thirties",
             "Tall, rain-soaked",
+            "Two legs, two hands",
             "Jun",
             "/budget",
             "/quit",
@@ -162,6 +165,7 @@ def test_ask_and_wrapping(tmp_path: Path, monkeypatch) -> None:
             "she/her",
             "thirties",
             "Tall",
+            "Two legs, two hands",
             "Jun",
             "/ask what do I know about the Registry?",
             "/quit",
@@ -192,11 +196,16 @@ def test_existing_character_is_asked_for_pronouns(tmp_path: Path) -> None:
         conn, player.id, "Jack", "street-born", "Emily", sheet, SYSTEM, location_id="hundred-hooks"
     )
     conn.close()
-    run(tmp_path, ["", "he/him", "1", "1", "twenties", "Lean, quick hands", "/quit"], StubClient())
+    run(
+        tmp_path,
+        ["", "he/him", "1", "1", "twenties", "Lean, quick hands", "Two legs, two hands", "/quit"],
+        StubClient(),
+    )
     conn = open_database(tmp_path / "v.db")
     [jack] = characters.characters_of(conn, player.id)
     assert jack.pronouns == "he/him"
     assert (jack.age, jack.appearance) == ("twenties", "Lean, quick hands")
+    assert jack.body == "Two legs, two hands"  # asked once, like pronouns (D116)
     assert jack.languages == ("registry-standard", "arabic", "wolof")
 
 
@@ -219,6 +228,7 @@ def test_map_art_and_languages(tmp_path: Path) -> None:
             "she/her",
             "thirties",
             "Tall",
+            "Two legs, two hands",
             "Jun",
             "/map",
             "/look",
@@ -261,6 +271,7 @@ def test_speak_chooses_the_language_spoken_aloud(tmp_path: Path) -> None:
             "they/them",
             "three",
             "A ginger tom",
+            "Two legs, two hands",
             "The noodle man",
             "/speak",
             "/speak Animal-speech",
@@ -297,6 +308,7 @@ def test_eat_drink_and_rest(tmp_path: Path) -> None:
             "she/her",
             "thirty",
             "Tall, in a green coat",
+            "Two legs, two hands",
             "Her brother",
             "/eat",
             "/drink",
@@ -352,6 +364,7 @@ def test_playing_a_mislaid(tmp_path: Path) -> None:
             "it/its",
             "forty years lost",
             "A green umbrella with a bent rib",
+            "Two legs, two hands",
             "The god of lost umbrellas",
             "/eat",
             "/quit",
@@ -417,6 +430,7 @@ def test_play_drops_typing_ahead_and_refuses_pastes(tmp_path: Path) -> None:
         ("she/her", False),
         ("30", False),
         ("Tall", False),
+        ("Two legs, two hands", False),
         ("Her brother", False),
         ("I pick the lock", True),
         ("I walk to the counter", False),
@@ -465,8 +479,9 @@ def test_play_drops_typing_ahead_and_refuses_pastes(tmp_path: Path) -> None:
 def test_creation_asks_again_for_a_bad_name(tmp_path: Path) -> None:
     out = run(
         tmp_path,
-        [*["1"] * 10, "src/.venv", "Ada", "pip install -e .", "she/her", "30", "Tall", "Her",
-         "/rename Ada Okoye", "/pronouns they/them", "/rename x/y", "/quit"],
+        [*["1"] * 10, "src/.venv", "Ada", "pip install -e .", "she/her", "30", "Tall",
+         "Two legs", "Her", "/rename Ada Okoye", "/pronouns they/them", "/rename x/y",
+         "/body Long arms, quick hands", "/body", "/quit"],
         StubClient(say("Hi.")),
     )  # fmt: skip
     text = "\n".join(out)
@@ -477,11 +492,14 @@ def test_creation_asks_again_for_a_bad_name(tmp_path: Path) -> None:
     conn = open_database(tmp_path / "v.db")
     [ada] = characters.characters_of(conn, players.find_player(conn, "ash").id)
     assert (ada.name, ada.pronouns) == ("Ada Okoye", "they/them")
+    assert ada.body == "Long arms, quick hands"
+    assert "[Ada Okoye: Long arms, quick hands]" in text
+    assert "say how they're built after /body" in text
 
 
 CREATE_ADA = [
     "1", "1", "1", "1", "1", "1", "1", "1", "1", "1",
-    "Ada", "she/her", "30", "Tall", "Her brother",
+    "Ada", "she/her", "30", "Tall", "Two legs, two hands", "Her brother",
 ]  # fmt: skip
 
 
@@ -531,9 +549,10 @@ def test_look_offers_only_what_the_character_needs(tmp_path: Path) -> None:
     out = run(
         tmp_path,
         ["8", "5", "4", "2", "2", "1", "8", "8", "6", "4", "Zeno", "it/its", "31 years",
-         "An umbrella", "H. Okoye", "/look", "/quit"],
+         "An umbrella", "A handle, a canopy, one broken rib", "H. Okoye", "/look", "/quit"],
         StubClient(say("The Hooks.")),
     )  # fmt: skip
     text = "\n".join(out)
     assert "Zeno (it/its)" in text and "At: The Hundred Hooks" in text
+    assert "Body: A handle, a canopy, one broken rib" in text
     assert "Food here" not in text and "Drink here" not in text

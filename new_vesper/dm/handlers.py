@@ -6,6 +6,7 @@ model or raises ToolError. A handler runs inside one transaction, so a
 rejected request never partially applies.
 """
 
+import json
 import sqlite3
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
@@ -390,6 +391,44 @@ def _npcs_here(ctx: TurnContext, me: Character) -> set[str]:
     """NPCs where the character is, and any who moved on this turn (still in its telling)."""
     here = {w.npc.id for w in present_at(ctx.conn, ctx.content, me.location_id or "", ctx.now)}
     return here | set(ctx.moved_on)
+
+
+def identity(ctx: TurnContext, me: Character) -> dict[str, Any]:
+    """Who and what is here, short, every turn: facts narration must not contradict (D117)."""
+    origin = ctx.content.origins.get(me.origin_id)
+    others: list[dict[str, Any]] = [
+        {
+            "name": w.npc.name,
+            "is": w.npc.role,
+            "pronouns": w.npc.pronouns,
+            "looks": w.npc.appearance,
+        }
+        for w in present_at(ctx.conn, ctx.content, me.location_id or "", ctx.now)
+    ]
+    for (raw,) in ctx.conn.execute(
+        "SELECT stranger FROM encounters WHERE scene_id = ? AND stranger IS NOT NULL ORDER BY id",
+        (ctx.scene_id,),
+    ):
+        stranger = json.loads(raw)
+        others.append(
+            {"name": stranger["name"], "is": stranger["role"], "pronouns": stranger["pronouns"]}
+        )
+    lying = ctx.conn.execute(
+        "SELECT name FROM items WHERE location_id = ? AND destroyed = 0 ORDER BY id",
+        (me.location_id,),
+    ).fetchall()
+    return {
+        "player_character": {
+            "name": me.name,
+            "is": origin.name if origin else me.origin_id,
+            "pronouns": me.pronouns,
+            "body": me.body,
+            "looks": me.appearance,
+        },
+        "others_here": others,
+        "items_held": [i.name for i in items.items_held(ctx.conn, me.id)],
+        "items_here": [row[0] for row in lying],
+    }
 
 
 def describe_location(ctx: TurnContext, location_id: str) -> dict[str, Any]:
