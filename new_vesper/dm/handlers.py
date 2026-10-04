@@ -438,8 +438,14 @@ def _npcs_here(ctx: TurnContext, me: Character) -> set[str]:
     return {w.npc.id for w in present_at(ctx.conn, ctx.content, me.location_id or "", ctx.now)}
 
 
-def identity(ctx: TurnContext, me: Character) -> dict[str, Any]:
-    """Who and what is here, short, every turn: facts narration must not contradict (D117)."""
+def identity(
+    ctx: TurnContext, me: Character, came_with: frozenset[str] = frozenset()
+) -> dict[str, Any]:
+    """Who and what is here, short, every turn: facts narration must not contradict (D117).
+
+    ``came_with`` are NPCs who left the character's last scene for this place, so arrived
+    with them: they know the character is here.
+    """
     origin = ctx.content.origins.get(me.origin_id)
     others: list[dict[str, Any]] = [
         {
@@ -447,6 +453,7 @@ def identity(ctx: TurnContext, me: Character) -> dict[str, Any]:
             "is": w.npc.role,
             "pronouns": w.npc.pronouns,
             "looks": w.npc.appearance,
+            **({"came_with_you": True} if w.npc.id in came_with else {}),
         }
         for w in present_at(ctx.conn, ctx.content, me.location_id or "", ctx.now)
     ]

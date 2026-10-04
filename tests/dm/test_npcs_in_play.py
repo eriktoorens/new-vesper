@@ -186,3 +186,55 @@ def test_a_new_scene_starts_without_a_gap(conn: sqlite3.Connection, content: Con
     clock.pass_minutes(60)
     play.go("tarp-row")
     assert "time_passed" not in scene_state(client)
+
+
+# --- arriving together (from the fifth playtest's third session) ---------------------
+
+
+def who_is_here(client: StubClient) -> dict[str, Any]:
+    message = client.messages.turn_calls[-1]["messages"][0]["content"]
+    return json.loads(message.split("<who_is_here>")[1].split("</who_is_here>")[0])
+
+
+def test_an_npc_who_walked_here_with_you_knows_you_are_here(
+    conn: sqlite3.Connection, content: Content
+) -> None:
+    # Tomás left for the Weighhouse with Brightfin, then startled when Brightfin arrived.
+    parting = "Nana rises. Brightfin falls in beside her, out into the drizzle."
+    play, clock, client = at_the_hooks(
+        conn, content, say(parting), say("The shrine."), say("She lights a stick.")
+    )
+    the_pass_says(client, "nana-priya | goes to | umbrella-shrine | her offering for Paru")
+    clock.pass_minutes(10)
+    play.turn("Mira walks with Nana")
+    play.go("umbrella-shrine")
+    assert scene_state(client)["just_before"] == {
+        "where": "The Hundred Hooks",
+        "last_narration": parting,
+        "came_with_you": ["Nana Priya Seshadri"],
+    }
+    [nana] = [o for o in who_is_here(client)["others_here"] if o["name"].startswith("Nana")]
+    assert nana["came_with_you"] is True
+    play.turn("Mira waits while Nana lights the incense")
+    assert "just_before" not in scene_state(client)  # the arrival only
+    [nana] = [o for o in who_is_here(client)["others_here"] if o["name"].startswith("Nana")]
+    assert nana["came_with_you"] is True  # still true all scene
+
+
+def test_an_npc_who_went_elsewhere_did_not_come_with_you(
+    conn: sqlite3.Connection, content: Content
+) -> None:
+    play, clock, client = at_the_hooks(conn, content, say("Nana goes."), say("Tarp Row."))
+    the_pass_says(client, "nana-priya | goes to | umbrella-shrine | her offering for Paru")
+    clock.pass_minutes(10)
+    play.turn("Mira watches Nana go")
+    play.go("tarp-row")
+    assert scene_state(client)["just_before"]["came_with_you"] == []
+    assert not any("came_with_you" in o for o in who_is_here(client)["others_here"])
+
+
+def test_a_new_session_starts_with_nothing_just_before(
+    conn: sqlite3.Connection, content: Content
+) -> None:
+    _, _, client = at_the_hooks(conn, content)
+    assert "just_before" not in scene_state(client)

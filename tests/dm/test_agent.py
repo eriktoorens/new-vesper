@@ -111,3 +111,12 @@ def test_config_from_env() -> None:
     config = DMConfig.from_env({"NEW_VESPER_TURN_MODEL": "claude-opus-5"})
     assert config.model_for(CallType.TURN) == "claude-opus-5"
     assert config.model_for(CallType.RECAP) == "claude-haiku-4-5"
+
+
+def test_scene_close_runs_on_its_own_model() -> None:
+    # Wants and tensions are judged once a scene; Haiku misread them (fifth playtest).
+    config = DMConfig()
+    assert config.model_for(CallType.NPC_JOURNAL) == config.turn_model
+    assert config.model_for(CallType.NPC_MEMORY) == config.summary_model
+    env = DMConfig.from_env({"NEW_VESPER_JOURNAL_MODEL": "claude-haiku-4-5"})
+    assert env.model_for(CallType.NPC_JOURNAL) == "claude-haiku-4-5"

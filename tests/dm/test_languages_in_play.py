@@ -571,3 +571,17 @@ def test_the_narrator_is_sent_back_when_an_npc_answers_words_they_did_not_unders
     outcome = play.turn('Mira asks "Two skewers, please."')
     assert outcome.narration == 'Tomás squints. "Sorry, friend?"'
     assert "understood" not in outcome.narration
+
+
+def test_a_language_label_copied_after_quoted_words_is_dropped(ctx_factory: Any, mira: Any) -> None:
+    # Fifth playtest: echoing the player's line, the Narrator printed '"..." [Portuguese]',
+    # a label code adds for the Narrator only (D115).
+    ctx = ctx_factory(mira)
+    text = (
+        'Brightfin says, "Bom dia, senhor." [Portuguese] Then “Obrigado.” [portuguese] '
+        f"He waits. {tag('clerk-vasil', 'protocol')} A sign reads [Portuguese]."
+    )
+    out = shown(ctx, text)
+    assert out.startswith('Brightfin says, "Bom dia, senhor." Then “Obrigado.” He waits.')
+    assert "[in a language Mira doesn't know]" in out  # code's own label stays
+    assert out.endswith("A sign reads [Portuguese].")  # not after quoted words

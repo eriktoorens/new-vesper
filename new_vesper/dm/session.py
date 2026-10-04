@@ -61,6 +61,8 @@ ARRIVAL = (
     "place, who is around, one thing that invites action. No roll."
 )
 SECONDS_PER_DAY = 86_400
+# How much of the last scene's final narration the next scene's arrival sees.
+CLOSING_MOMENTS = 1200
 # A gap between turns this long or longer is shown to the Narrator (D114).
 TIME_PASSED_SHOWN = 15 * 60
 # Events the recap leaves out: bookkeeping, or things the character couldn't know
@@ -160,6 +162,10 @@ class PlaySession:
         self.scene_id: int | None = None
         # NPCs who were present at some point in the current scene.
         self.scene_npcs: set[str] = set()
+        # Carried across /go: the last scene's closing moments, for the first turn of the
+        # next, and the NPCs who came along.
+        self.just_before: dict[str, Any] | None = None
+        self.came_with: frozenset[str] = frozenset()
         # When the last turn in the current scene was told, on the city clock (D114).
         self.last_turn_at: datetime | None = None
 
@@ -188,10 +194,18 @@ class PlaySession:
         if self.observer is not None:
             self.observer(call, model, usage)
 
-    def _summarize(self, call: CallType, request: str) -> str:
-        """A cheap summary call; empty if the budget is spent, so callers fall back."""
+    def _summarize(self, call: CallType, request: str, max_tokens: int | None = None) -> str:
+        """A no-tools call; empty if the budget is spent, so callers fall back."""
         try:
-            return summarize(self.client, self.config, call, request, self.on_usage, self._guard)
+            return summarize(
+                self.client,
+                self.config,
+                call,
+                request,
+                self.on_usage,
+                self._guard,
+                max_tokens=max_tokens,
+            )
         except BudgetExhausted:
             return ""
 
@@ -230,6 +244,7 @@ class PlaySession:
         return {
             "time": clock.describe(ctx.now),
             **self._time_passed(ctx.now),
+            **({"just_before": self.just_before} if self.just_before else {}),
             "weather": {"now": sky.name, "description": sky.description},
             "encounters": {
                 "left_today_in_district": left_today(self.conn, scene.region_id, ctx.now),
@@ -274,6 +289,7 @@ class PlaySession:
         )
         self.scene_id = scene.id
         self.last_turn_at = None
+        self.just_before, self.came_with = None, frozenset()
         scenes.join_scene(self.conn, scene.id, me.id, self._cause(Actor.SYSTEM))
 
     def _close_scene(self) -> None:
@@ -310,8 +326,9 @@ class PlaySession:
             for w in npc_journal.active_wants(self.conn)
         ]
         reply = self._summarize(
-            CallType.NPC_MEMORY,
+            CallType.NPC_JOURNAL,
             prompt.memory_request(me.name, names, [s for s in scene if s], wants),
+            self.config.journal_max_tokens,
         )
         cause = Cause(Actor.SYSTEM, self.player_id, scene_id)
         for npc_id, note in prompt.parse_memory_lines(reply, set(names)).items():
@@ -482,7 +499,7 @@ class PlaySession:
             ctx.spoken = self.character.speaking
             if ctx.spoken != COMMON_TONGUE:
                 told = speech.label_spoken(intent, self.content.languages[ctx.spoken].name)
-        who = identity(ctx, self.character)
+        who = identity(ctx, self.character, self.came_with)
         message = prompt.turn_message(self._state(ctx), told, direction, who)
         quiet = False
         try:
@@ -901,13 +918,42 @@ class PlaySession:
             nxt = clock.describe(flooded.tide.next_low)
             raise SessionError(f"{target.name} is under water right now; low water is {nxt}")
         self._require_budget()
+        just_before, came_with = self._closing_moments(target.id)
         self._close_scene()
         # Whoever is at the new place is there as of now, before the character watches it.
         settle(self.conn, self.content, self.now())
         characters.move_character(self.conn, me.id, target.id, self._cause())
         art = self._arrival_art()
         self._open_scene()
-        return self._with_art(self._run(None, ARRIVAL), art)
+        here_now = {w.npc.id for w in present_at(self.conn, self.content, target.id, self.now())}
+        if just_before is not None:
+            just_before["came_with_you"] = [
+                self.content.npcs[n].name for n in sorted(came_with & here_now)
+            ]
+        self.just_before, self.came_with = just_before, came_with & here_now
+        try:
+            return self._with_art(self._run(None, ARRIVAL), art)
+        finally:
+            self.just_before = None  # the arrival only; who came along stays all scene
+
+    def _closing_moments(self, to: str) -> tuple[dict[str, Any] | None, frozenset[str]]:
+        """How the scene being left ended, and which NPCs left it for ``to`` (D132).
+
+        From the fifth playtest: Tomás walked to the Weighhouse with Brightfin, then
+        startled at his arrival, because the new scene began knowing nothing of the last.
+        """
+        if self.scene_id is None:
+            return None, frozenset()
+        went = list_events(self.conn, scene_id=self.scene_id, kind="npc_went", limit=500)
+        came_with = frozenset(e.payload["npc_id"] for e in went if e.payload.get("to") == to)
+        last = scenes.recent_beats(self.conn, self.scene_id, limit=1)
+        if not last or not last[0].narration:
+            return None, came_with
+        place = self.content.locations.get(self.character.location_id or "")
+        return {
+            "where": place.name if place else None,
+            "last_narration": last[0].narration[-CLOSING_MOMENTS:],
+        }, came_with
 
     def end(self) -> None:
         """Log off: close the scene and go offline (safe at a haven, lying low elsewhere).

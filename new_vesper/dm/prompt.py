@@ -100,6 +100,10 @@ given. If the player's line has their character do something their body can't (f
 on an umbrella, hands on a cat), don't narrate it: ask once, in a short bracket on its \
 own line, how they do it, such as "(Zeno has no fingers. How does it lift the coat?)", \
 and narrate nothing else that turn.
+- If scene_state has just_before, the player character has just come here from that \
+scene, and its last_narration is how it ended. Carry it on: anyone in came_with_you \
+walked here with them, knows they are here and is not surprised to see them, and what \
+was under way between them still is. In who_is_here they are marked came_with_you.
 - If scene_state has time_passed, that much time went by since the last turn with \
 nothing on the page. Show it first: the light and weather moved on, people went about \
 their business, food was put away, anyone still here waited or grew restless. Never pick \
@@ -364,6 +368,9 @@ def memory_request(
         "A want never changes without a reason in this scene, and most scenes change few. "
         "But an NPC listed who has no current wants and showed in this scene what they want "
         "(a deal struck, a wrong to right, a favor asked) should gain one. "
+        "Never add a want an NPC already holds in other words. If this scene corrects or "
+        "replaces one of their current wants, end the old one (want- | its id | dropped | "
+        "replaced by ...) and add the new one. "
         "A tension may be between two wants of one NPC, or of two NPCs; use ids from "
         "current_wants.\n"
         f"<scene>{_safe_json(payload)}</scene>"

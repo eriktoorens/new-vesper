@@ -290,6 +290,18 @@ def render_line(ctx: "TurnContext", line: Line, listener: str) -> str:
     return f"[something {where}]"
 
 
+def drop_labels(ctx: "TurnContext", text: str) -> str:
+    """Remove a '[Portuguese]' the Narrator copied from its own input after quoted words.
+
+    The label on the character's words is for the Narrator only (D115); the fifth
+    playtest saw it echoed to the player twice.
+    """
+    names = "|".join(re.escape(lang.name) for lang in ctx.content.languages.values())
+    if not names:
+        return text
+    return re.sub(rf"([\"\u201d])[ \t]*\[(?:{names})\]", r"\1", text, flags=re.IGNORECASE)
+
+
 def render(ctx: "TurnContext", narration: str, lines: list[Line]) -> str:
     listener = characters.get_character(ctx.conn, ctx.character_id).name
     out, cursor = [], 0
@@ -298,9 +310,9 @@ def render(ctx: "TurnContext", narration: str, lines: list[Line]) -> str:
         # Code adds the quote marks; any the narrator put around the tag would double them.
         if narration[start - 1 : start] in QUOTE_MARKS and narration[end : end + 1] in QUOTE_MARKS:
             start, end = start - 1, end + 1
-        out += [narration[cursor:start], render_line(ctx, line, listener)]
+        out += [drop_labels(ctx, narration[cursor:start]), render_line(ctx, line, listener)]
         cursor = end
-    out.append(narration[cursor:])
+    out.append(drop_labels(ctx, narration[cursor:]))
     shown = "".join(out)
     # Anything left of a broken tag could be untranslated words: never show it.
     shown = UNCLOSED.sub(f"[words {listener} can't make out]", shown)

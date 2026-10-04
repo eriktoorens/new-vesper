@@ -214,3 +214,22 @@ def test_tensions_reach_the_narrator_in_the_journal(
         "remembers_about_you",
         "knows_about_you",
     }
+
+
+def test_a_restated_want_replaces_the_old_one() -> None:
+    # Fifth playtest: Tomás gained "confront Flour supplier", then "confront Sefu", and kept
+    # both.
+    request = memory_request("Mira", {"tomas-haddad": "Tomás"}, ["a beat"], [])
+    assert "already holds in other words" in request and "replaced by" in request
+
+
+def test_scene_close_is_its_own_call_with_room_to_answer(
+    conn: sqlite3.Connection, content: Content
+) -> None:
+    play = closing_a_scene(conn, content, "nothing")
+    play.go("hundred-hooks")
+    [close] = [c for c in play.client.messages.calls if "<scene>" in c["messages"][0]["content"]]
+    assert close["model"] == play.config.journal_model
+    assert close["max_tokens"] == play.config.journal_max_tokens
+    rows = [r[0] for r in conn.execute("SELECT call_type FROM usage_ledger")]
+    assert "npc_journal" in rows
