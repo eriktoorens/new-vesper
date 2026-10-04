@@ -2,7 +2,7 @@
 
 Exported from the living design doc on 2026-09-27. The living doc is where design discussion happens; update this file when it changes.
 
-**Decisions D1–D134** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
+**Decisions D1–D135** (2026-09-27 and 2026-09-28) were made in this repository after the export and are not yet in the living doc. Each is tagged where it applies and listed in the [Decision log](#decision-log). Copy them back to the living doc before the next export.
 
 ## Overview
 
@@ -508,6 +508,23 @@ Still open:
 - **Shade as a player verb:** retelling a story to raise or lower a claim, discovering that a hearsay was planted, finding the record under the telling. The bottom-right corner as the villain's toolkit, and the record as the players' best weapon against it. Ties to D106 and attention (D94).
 - Whether NPCs' memories should shade over time (each recall a retelling) rather than only fold (D63), and who decides how: code, not the Narrator's whim.
 
+## Theme: Worlds That Diverge (D135)
+
+A thematic note, not a rule, from the designer during the fifth playtest's third session (2026-10-04). Like D97 and D109, it guides design and is not in the Narrator's prompt.
+
+**In the designer's words (D135):** "This is how a massive world evolves from small scenes, and how different instances of the same game diverge, which is organic and exciting, and exactly the kind of thing i'm aiming for. i think for me designing the game is the game."
+
+It came from small things: Tomás leaving his rack to confront Sefu because he wanted to (D133), and Sefu, a supplier first named in one scene's narration, who could become a lasting NPC. Every world starts from the same content. What the characters do, and what the NPCs come to want, know and feel about each other (D121, D124–D130), makes each one its own. So:
+
+- **Divergence is the goal, not drift to correct.** Two worlds from the same start should grow apart through play, and the things that make them differ should be state code keeps (wants, facts, feelings, promises, people met), never prose alone.
+- **Small scenes are the unit of growth.** A world becomes large by keeping what happens in small scenes, not by authoring more up front.
+- **Divergence needs the record (D109).** Worlds may differ, but each must stay consistent with its own history: code decides what happened, and a world diverges only through what code kept.
+
+Still open:
+
+- How divergence is seen: comparing two worlds from the same start (see the model-choice idea), or a world's own history read back.
+- How far it reaches: authored canon (an NPC's at-heart wants, their goals) stays fixed, but whether authored NPCs can be changed at heart by enough play is undecided.
+
 ## Exporting Your Story (D96, D100–D105)
 
 Built 2026-09-29, from D96: a player can export their character's story, an artifact of play that leans into the RPG as collaborative storytelling. It is the tale, not the log, and it gives away nothing the character didn't know.
@@ -731,6 +748,21 @@ The first build is a playable CLI prototype: one player, one district, the full 
   - **The recap reported routine NPC moves as news** and invented the Arcade as "an entertainment hub" (fixed: NPC routine and journal events are private).
   - **Smaller:** the `/eat` hint again for a Castoff, for a gift; Tomás offered food again, having been told before facts were kept.
   - **What worked:** the facts pass ran every turn, and the language gate held (Nana, not speaking Cantonese, only ever "saw"); the body held; rolled moods showed (Adaeze "fishing for gossip", Tomás short with suppliers); Adaeze's businesslike handshake and Tomás pursuing his own want were strong NPC play.
+- [ ] **The fifth playtest, third session (2026-10-04, from the branch with D132–D134):** Tarp Row, then following Tomás to the Weighhouse to find Sefu, then back. Findings, roughly worst first:
+  - **A want misread, then duplicated (D124):** at Tarp Row's close Tomás gained "confront Flour supplier about late delivery", because "Captain Brightfin directed him there", running together the flour-dusted cart owner and Sefu. At the Weighhouse's close he gained "confront Sefu about selling skewers cheaply", the same want said rightly, and the first was neither ended nor corrected. Code's duplicate check matches exact text only. The scene-close call sees current wants with their ids and could have ended it.
+  - **Arrival continuity across `/go`:** Tomás left with Brightfin (D132 worked, and state had him at the Weighhouse), yet the new scene's first turn had him startle at Brightfin's arrival. The new scene starts without the last one's closing moments. Proposed: the first turn of a new scene gets the previous scene's last beat, so an NPC who walked with the character knows they're there.
+  - **Tomás didn't take his moment:** twice Brightfin stepped back and waited for Tomás to speak to Sefu, and twice the Narrator narrated Brightfin's waiting instead. An NPC handed the floor should take it, especially when it is their own want.
+  - **Facts are still partly trivia (D123):** second person is gone, but about three in seven are passing looks ("tangerine paint beaded with drizzle as he yielded the space"), one is garbled (who would explain to whom), and one has Tomás "see" Brightfin arrive from Tarp Row though they walked together. Good ones too: "speaks Portuguese and prefers words before action"; "deferred confrontation to Tomás".
+  - **Addressed speech in untranslated Portuguese:** by the designer's rule, an NPC talking to themselves in their own language is fine; speech addressed to the character should be readable, in English inside the tag, when the character understands it.
+  - **The `[Portuguese]` label leaked again** through the echo of the player's line (as in the first session; D115).
+  - **A mood stated outright:** "his mood today runs short" names the rolled mood instead of showing it (D119).
+  - **Sefu has no state:** a supplier named in narration (second session) became the scene's focus, with no place, schedule, pronouns or memory in code. The designer's answer is an idea: a stranger can become an NPC (see below).
+  - **What worked:** the exit was read from narration (`[Tomás Haddad-Reyes leaves]`) and he was where the story put him; the detour logged its reason and an end (2:00 pm), and he stayed past it while Brightfin was with him (D112); scene close now writes wants; Tarp Row stood empty at 2:28 on a Sunday, as the schedules say.
+- [ ] **A stranger can become an NPC (idea, from the designer, not decided):** people the Narrator invents in passing (Sefu, the flour-dusted cart owner) exist only in prose. Some should be able to become NPCs with state. Open sub-questions:
+  - **When:** named and spoken with; met twice; a want or a tension that names them; or the designer or player asks.
+  - **What they become:** a full NPC with a schedule, or a lighter "known stranger" with a place, a short description, pronouns, wants and memory, and no schedule until they earn one.
+  - **How they are noticed:** the after-turn pass (D123) could list new named people, and code registers them; the Narrator never creates one by narration alone.
+  - **Whose canon:** in a shared world a promoted stranger exists for every player (the MUD-or-story question), and it is one way worlds diverge (D135).
 - [x] Exporting a character's story: built (D100–D105). Still open: whether the telling should also cover a single scene or session, and illustrated or printable formats.
 - [ ] The underlying model, belief and being (D106): a draft direction with open questions. See Draft: The Underlying Model, Belief and Being. Its first slice is built: what an NPC knows about a character (D121).
 - [ ] Attention as a resource: direction set (D94), details open. See Planned: Attention.
@@ -745,7 +777,7 @@ The first build is a playable CLI prototype: one player, one district, the full 
 
 ## Decision log
 
-D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the Narrator agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, D94–D95 from the designer after layer 8, D96 from the designer after merging layers 6–8, D97 from the designer the same evening, D98–D99 from the first blind playtest, D100–D105 from building story export, D106 from the designer after the second playtest, D107–D108 from its fixes, D109 from a conversation with the designer after the third playtest, D110 from the fourth playtest, D111–D121 from the designer the next day, from the same playtest, D122–D123 from the fifth playtest, D124–D130 from the designer after it (D127–D130 decided, not yet built), D131 from its second session, and D132–D134 from the designer after it.
+D1–D23 were decided 2026-09-27, in the repository, from the open questions raised after the rules, state and content steps. Each decision was then reviewed individually with the designer; D11, D16, D18, D21 and D22 changed in that review, and D10 is marked for revisiting. D24–D32 were decided 2026-09-28 from the calls made while building the Narrator agent, each reviewed individually; D29 is marked for revisiting. D33–D43 came from the first playtest the same day, D44–D49 from building character details, D50–D55 from time and weather, D56–D59 from seasons, moon and tides, D60–D66 from NPC memory and attitudes, D67–D75 from random encounters (D72–D75 replacing parts of D67–D71 the same day), D76–D81 from languages, D82 from the designer after layer 6, D83–D89 from bodily needs (the effects in D84 chosen by the designer), D90–D93 from setting-native kinds, D94–D95 from the designer after layer 8, D96 from the designer after merging layers 6–8, D97 from the designer the same evening, D98–D99 from the first blind playtest, D100–D105 from building story export, D106 from the designer after the second playtest, D107–D108 from its fixes, D109 from a conversation with the designer after the third playtest, D110 from the fourth playtest, D111–D121 from the designer the next day, from the same playtest, D122–D123 from the fifth playtest, D124–D130 from the designer after it (D127–D130 decided, not yet built), D131 from its second session, D132–D134 from the designer after it, and D135 from the designer during its third session.
 
 | ID | Topic | Decision |
 | --- | --- | --- |
@@ -882,3 +914,4 @@ D1–D23 were decided 2026-09-27, in the repository, from the open questions rai
 | D132 | Exits are read from the narration | The after-turn pass reads NPC departures and code carries them out; `npc_moves_on` is retired; NPCs may move because they want to |
 | D133 | Detours | Off their agenda until their next scheduled block, two hours at most, even unwatched; then they rejoin their day |
 | D134 | What code checks | The NPC was there; the place is real, in the district, not their own, above water; 'away' only when their day says; the reason is logged |
+| D135 | Worlds that diverge (theme) | A thematic note, not a rule: a large world grows from small scenes, and worlds from the same start diverge through what code keeps; in the designer's words, designing the game is the game |
