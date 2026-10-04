@@ -11,7 +11,15 @@ from new_vesper.budget.policy import BudgetConfig, stamp
 from new_vesper.content.loader import Content
 from new_vesper.dm.session import PlaySession, SessionError
 from new_vesper.state import characters, scenes
-from tests.dm.conftest import DESIGN_TEXT, SeqRng, StubClient, make_character, say, use
+from tests.dm.conftest import (
+    DESIGN_TEXT,
+    NOON_TUESDAY,
+    SeqRng,
+    StubClient,
+    make_character,
+    say,
+    use,
+)
 
 TINY = BudgetConfig(monthly_cap_micro=50_000_000, player_allowance_micro=5_000)
 
@@ -27,7 +35,11 @@ def test_every_call_is_recorded_against_player_and_scene(
 ) -> None:
     char = make_character(conn, online=False)
     client = StubClient(say("Open."), use(("look", {"entity": "me"})), say("Done."))
-    play = PlaySession(conn, content, client, DESIGN_TEXT, SeqRng(), char.id)
+    # Noon on a Tuesday, so Tomás and Vasil are on Tarp Row: not the real clock, which
+    # empties the Row on a Sunday afternoon.
+    play = PlaySession(
+        conn, content, client, DESIGN_TEXT, SeqRng(), char.id, now=lambda: NOON_TUESDAY
+    )
     play.start()
     play.turn("I look myself over")
     rows = ledger(conn)
