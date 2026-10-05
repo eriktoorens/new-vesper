@@ -148,9 +148,9 @@ def test_a_condition_waits_on_a_want_and_a_new_wrong_undoes_it(
     grudges.on_condition(conn, g.id, terms)
     assert grudges.standing(conn, "rahel", "nana-priya").status == "on_condition"  # type: ignore[union-attr]
     assert grudges.blocks(conn, "rahel", "nana-priya", Axis.TRUST)  # still standing
-    assert grudges.conditions_met(conn) == []
+    assert grudges.conditions_ended(conn, "met") == []
     npc_journal.end_want(conn, terms, "met", "she did", None)
-    assert [x.id for x in grudges.conditions_met(conn)] == [g.id]
+    assert [x.id for x in grudges.conditions_ended(conn, "met")] == [g.id]
     renewed = grudges.record_drop(conn, "rahel", "nana-priya", Axis.TRUST, False, "x", T0, None)
     assert (renewed.status, renewed.condition_want_id) == ("held", None)
 

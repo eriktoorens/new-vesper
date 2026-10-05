@@ -6,7 +6,7 @@ nothing time-dependent or per-player goes in it.
 """
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from new_vesper.content.loader import Content
@@ -117,7 +117,13 @@ what they want at present, kept by code and changed only between scenes, for rea
 Play them pursuing their wants_now, not only answering; if they have none, play them \
 from at_heart. Never give them a want that contradicts their journal. A tension pulls \
 two wants against each other, one NPC's own or two NPCs'; let it show in what they say \
-and choose, and never settle it by narration.
+and choose, and never settle it by narration. An alliance pulls two NPCs' wants \
+together: play them working together. knows_the_other_part names who knows the other \
+NPC's part; anyone not named there doesn't, and never acts on it, so quiet help stays \
+quiet until it comes out on the page. A grudge is held against another NPC: play it, \
+cold on the axes it names. It never mends by itself in a scene; if one NPC offers \
+another amends, play the offer and let the answer stay unspoken or guarded, because \
+code settles it when the scene closes.
 - You play the NPCs who are here. An NPC with an "agenda" has somewhere to be or \
 something else to do, and since when. Weigh what is at stake in the scene against their \
 errand: they may stay and run late, or cut the conversation short; you never have to \
@@ -357,9 +363,18 @@ def memory_request(
     npcs: dict[str, str],
     scene: list[str],
     wants: list[dict[str, Any]] | None = None,
+    bonds: list[dict[str, Any]] | None = None,
+    grudges: list[dict[str, Any]] | None = None,
 ) -> str:
-    """Ask what each NPC would remember of the character, and how their wants changed (D124)."""
-    payload = {"npcs": npcs, "beats": scene, "current_wants": wants or []}
+    """Ask what each NPC would remember of the character, how their wants changed (D124),
+    and what they learned of each other's parts (D127-D130, D141-D142)."""
+    payload = {
+        "npcs": npcs,
+        "beats": scene,
+        "current_wants": wants or [],
+        "tensions_and_alliances": bonds or [],
+        "grudges": grudges or [],
+    }
     return (
         f"Below is a scene from the game. For each NPC listed, write what they would remember "
         f"about {character} from it, in one short line of at most 25 words, from the NPC's "
@@ -381,6 +396,22 @@ def memory_request(
         "replaced by ...) and add the new one. "
         "A tension may be between two wants of one NPC, or of two NPCs; use ids from "
         "current_wants.\n"
+        "Then, only where this scene shows it, record what NPCs listed learned of each "
+        "other's parts, one line each:\n"
+        "ally | want-id | want-id | how two NPCs' wants pull together, under 20 words\n"
+        "knows | npc-id | want-id | want-id | how they learned the other's part, under 20 "
+        "words\n"
+        "feel | npc-id | toward npc-id | trust, fondness or fear | up or down | want-id | "
+        "want-id | why\n"
+        "amends | wronged npc-id | wrongdoer npc-id | what was offered | what they would "
+        "ask in return\n"
+        "An alliance is between two different NPCs' wants, never one NPC's own. Quiet help "
+        "is still an alliance: mark knows only for an NPC the scene shows learning the "
+        "other's part (told it, seeing it, finding it out). A feel line is for an NPC who "
+        "knows, now or before, toward the NPC whose part they learned: a tension may lower "
+        "trust or fondness or raise fear; an alliance may raise trust or fondness. Write "
+        "amends only when the scene shows the wrongdoer offering amends to an NPC who holds "
+        "a grudge against them; code rolls whether they are accepted.\n"
         f"<scene>{_safe_json(payload)}</scene>"
     )
 
@@ -392,6 +423,13 @@ class JournalLines:
     added: list[tuple[str, str, str | None, str]]  # npc id, want, about, why
     ended: list[tuple[int, str, str]]  # want id, met or dropped, why
     tensions: list[tuple[int, int, str]]  # want id, want id, note
+    # The social graph (D141, D142); code checks each.
+    alliances: list[tuple[int, int, str]] = field(default_factory=list)  # want, want, note
+    knows: list[tuple[str, int, int, str]] = field(default_factory=list)  # npc, want, want, how
+    # npc, toward, axis, direction, want, want, why
+    feelings: list[tuple[str, str, str, str, int, int, str]] = field(default_factory=list)
+    # wronged, wrongdoer, offer, condition
+    amends: list[tuple[str, str, str, str]] = field(default_factory=list)
 
 
 # At most this many changes of each kind come out of one scene.
@@ -417,7 +455,7 @@ def parse_journal_lines(reply: str) -> JournalLines:
         elif (
             kind == "want-"
             and len(parts) == 4
-            and parts[1].isdigit()
+            and _ids(parts[1:2])
             and parts[3]
             and not _placeholder(parts[3])
         ):
@@ -427,13 +465,61 @@ def parse_journal_lines(reply: str) -> JournalLines:
         elif (
             kind == "tension"
             and len(parts) == 4
-            and parts[1].isdigit()
-            and parts[2].isdigit()
+            and _ids(parts[1:3])
             and parts[3]
             and len(found.tensions) < WANT_CHANGES_PER_SCENE
         ):
             found.tensions.append((int(parts[1]), int(parts[2]), parts[3]))
+        elif kind == "ally" and len(parts) == 4 and _ids(parts[1:3]) and _said(parts[3]):
+            if len(found.alliances) < WANT_CHANGES_PER_SCENE:
+                found.alliances.append((int(parts[1]), int(parts[2]), parts[3]))
+        elif (
+            kind == "knows"
+            and len(parts) == 5
+            and parts[1]
+            and _ids(parts[2:4])
+            and _said(parts[4])
+        ):
+            if len(found.knows) < WANT_CHANGES_PER_SCENE:
+                found.knows.append((parts[1], int(parts[2]), int(parts[3]), parts[4]))
+        elif (
+            kind == "feel"
+            and len(parts) == 8
+            and all(parts[1:5])
+            and _ids(parts[5:7])
+            and _said(parts[7])
+        ):
+            if len(found.feelings) < WANT_CHANGES_PER_SCENE:
+                found.feelings.append(
+                    (
+                        parts[1],
+                        parts[2].removeprefix("toward ").strip(),
+                        parts[3].casefold(),
+                        parts[4].casefold(),
+                        int(parts[5]),
+                        int(parts[6]),
+                        parts[7],
+                    )
+                )
+        elif (
+            kind == "amends"
+            and len(parts) == 5
+            and all(parts[1:3])
+            and _said(parts[3])
+            and _said(parts[4])
+            and len(found.amends) < WANT_CHANGES_PER_SCENE
+        ):
+            found.amends.append((parts[1], parts[2], parts[3], parts[4]))
     return found
+
+
+def _ids(parts: list[str]) -> bool:
+    """Plain ASCII digits only: int() refuses some characters isdigit() accepts."""
+    return all(p.isascii() and p.isdigit() for p in parts)
+
+
+def _said(part: str) -> bool:
+    return bool(part) and not _placeholder(part)
 
 
 def fold_memory_request(npc: str, character: str, old: str | None, notes: list[str]) -> str:

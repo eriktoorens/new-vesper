@@ -95,6 +95,14 @@ def get_active(conn: sqlite3.Connection, want_id: int) -> Want:
     return _want(row)
 
 
+def want_text(conn: sqlite3.Connection, want_id: int) -> str:
+    """A want's words, current or ended."""
+    row = conn.execute("SELECT want FROM npc_wants WHERE id = ?", (want_id,)).fetchone()
+    if row is None:
+        raise StateError(f"no want {want_id}")
+    return str(row[0])
+
+
 def end_want(
     conn: sqlite3.Connection, want_id: int, ending: str, reason: str, scene_id: int | None
 ) -> Want:

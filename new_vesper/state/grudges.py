@@ -189,10 +189,19 @@ def record_amends(
     )
 
 
-def conditions_met(conn: sqlite3.Connection) -> list[Grudge]:
-    """Grudges whose amends condition, a want, has been recorded as met."""
+def conditions_ended(conn: sqlite3.Connection, ending: str) -> list[Grudge]:
+    """Grudges waiting on a condition, a want, that has ended as met or dropped."""
     rows = conn.execute(
         "SELECT g.* FROM npc_grudges g JOIN npc_wants w ON w.id = g.condition_want_id"
-        " WHERE g.status = 'on_condition' AND w.status = 'met' ORDER BY g.id"
+        " WHERE g.status = 'on_condition' AND w.status = ? ORDER BY g.id",
+        (ending,),
     )
     return [_grudge(r) for r in rows]
+
+
+def hold(conn: sqlite3.Connection, grudge_id: int) -> None:
+    """Back to held: the condition of amends was dropped, not met."""
+    conn.execute(
+        "UPDATE npc_grudges SET status = 'held', condition_want_id = NULL WHERE id = ?",
+        (grudge_id,),
+    )

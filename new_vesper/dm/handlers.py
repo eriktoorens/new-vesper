@@ -22,7 +22,7 @@ from new_vesper.content.loader import Content
 from new_vesper.content.loot import roll_loot
 from new_vesper.dm import needs as bodily
 from new_vesper.dm.speech import SpeechError, check_gist_roll
-from new_vesper.rules.attitudes import Attitude, parse_axis
+from new_vesper.rules.attitudes import Attitude, Axis, parse_axis
 from new_vesper.rules.character import Sheet, apply_track
 from new_vesper.rules.clock import city_day, day_start_utc
 from new_vesper.rules.consequences import (
@@ -34,6 +34,7 @@ from new_vesper.rules.currency import format_glitter
 from new_vesper.rules.dice import Rng
 from new_vesper.rules.encounters import Kind as EncounterKind
 from new_vesper.rules.errors import RulesError, parse_enum
+from new_vesper.rules.grudges import needs_amends
 from new_vesper.rules.languages import check_gist_stat
 from new_vesper.rules.leveling import can_level_up, xp_to_advance
 from new_vesper.rules.light import apply_deed, encroach, parse_deed_size, parse_direction
@@ -54,6 +55,7 @@ from new_vesper.state import (
     characters,
     clocks,
     favors,
+    grudges,
     held_facts,
     items,
     npc_journal,
@@ -407,6 +409,9 @@ def journal(ctx: TurnContext, npc: Any) -> dict[str, Any]:
     mine = {w.id for w in wants}
     everyone = {w.id: w for w in npc_journal.active_wants(ctx.conn)}
 
+    def knowers(first: int, second: int) -> list[str]:
+        return [ctx.content.npcs[n].name for n in npc_journal.knowers(ctx.conn, first, second)]
+
     def said(want_id: int) -> str:
         w = everyone[want_id]
         whose = "" if w.npc_id == npc.id else f"{ctx.content.npcs[w.npc_id].name}: "
@@ -418,14 +423,42 @@ def journal(ctx: TurnContext, npc: Any) -> dict[str, Any]:
             {"id": w.id, "want": w.want, "about": w.about, "why": w.reason} for w in wants
         ],
         "tensions": [
-            {"between": [said(t.want_a), said(t.want_b)], "how": t.note}
+            {
+                "between": [said(t.want_a), said(t.want_b)],
+                "how": t.note,
+                "knows_the_other_part": knowers(t.want_a, t.want_b),
+            }
             for t in npc_journal.tensions_with(ctx.conn, mine)
         ],
+        # Two NPCs' wants pulling together (D130); quiet help if one doesn't know.
+        "alliances": [
+            {
+                "between": [said(a.want_a), said(a.want_b)],
+                "how": a.note,
+                "knows_the_other_part": knowers(a.want_a, a.want_b),
+            }
+            for a in npc_journal.alliances_with(ctx.conn, mine)
+        ],
+        "grudges": [_grudge(ctx, g) for g in grudges.all_standing(ctx.conn, npc.id)],
         "lately": npc_lately(ctx.conn, npc),
         "remembers_about_you": remembered(ctx, npc),
         # What they know about the character, and nothing else (D121).
         "knows_about_you": _known(ctx, npc.id),
     }
+
+
+def _grudge(ctx: TurnContext, grudge: grudges.Grudge) -> dict[str, Any]:
+    """A grudge held (D129, D143): it keeps its axes from rising until it ends."""
+    found: dict[str, Any] = {
+        "against": ctx.content.npcs[grudge.target].name,
+        "why": grudge.reason,
+        "betrayal": grudge.betrayal,
+        "on": [a.value for a in (Axis.TRUST, Axis.FONDNESS) if grudge.steps(a)],
+        "needs_amends": needs_amends(grudge.depth, grudge.betrayal),
+    }
+    if grudge.condition_want_id is not None:
+        found["accepted_amends_if"] = npc_journal.want_text(ctx.conn, grudge.condition_want_id)
+    return found
 
 
 def _known(ctx: TurnContext, npc_id: str) -> dict[str, Any]:
@@ -1041,6 +1074,11 @@ def adjust_attitude(ctx: TurnContext, raw: dict[str, Any]) -> dict[str, Any]:
         raise ToolError("toward must be 'me' or the id of another NPC who is here")
     default, _ = _default_feeling(ctx, npc, kind, target)
     delta = 1 if direction.value == "raise" else -1
+    if delta > 0 and kind is TargetKind.NPC and grudges.blocks(ctx.conn, npc_id, target, axis):
+        raise ToolError(
+            f"{npc.name} holds a grudge against {label}; their {axis.value} won't rise "
+            "until it fades or amends are made"
+        )
     try:
         after = change_attitude(
             ctx.conn, npc_id, kind, target, axis, delta, reason, ctx.cause, default=default

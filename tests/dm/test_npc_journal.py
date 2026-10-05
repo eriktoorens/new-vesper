@@ -169,7 +169,7 @@ def test_a_scene_changes_the_wants_of_those_who_were_there(
             "want+ | nana-priya | wants nothing to do with it | - | she wasn't there",
             f"want- | {old.id} | dropped | the skimmer matters more",
             f"want- | {absent.id} | met | she wasn't there either",
-            f"tension | {old.id} | {absent.id} | an ended want can't pull",
+            f"tension | {old.id} | {absent.id} | it came up, then ended with the want",
         ]
     )
     play = closing_a_scene(conn, content, reply)
@@ -181,7 +181,9 @@ def test_a_scene_changes_the_wants_of_those_who_were_there(
     [added] = list_events(conn, kind="npc_want_added")
     assert added.payload["npc_id"] == "tomas-haddad"
     assert [e.payload["want_id"] for e in list_events(conn, kind="npc_want_ended")] == [old.id]
-    assert list_events(conn, kind="npc_wants_in_tension") == []
+    # Wants end last, so a tension that came up this scene is kept, then ends (D127).
+    assert len(list_events(conn, kind="npc_wants_in_tension")) == 1
+    assert npc_journal.tensions_with(conn, {old.id, absent.id}) == []
 
 
 def test_tensions_reach_the_narrator_in_the_journal(
@@ -204,12 +206,15 @@ def test_tensions_reach_the_narrator_in_the_journal(
                 "Adaeze Okafor-Lim: wants the supplier left alone",
             ],
             "how": "one wants him named, one hidden",
+            "knows_the_other_part": [],
         }
     ]
     assert set(journal) == {
         "at_heart",
         "wants_now",
         "tensions",
+        "alliances",
+        "grudges",
         "lately",
         "remembers_about_you",
         "knows_about_you",

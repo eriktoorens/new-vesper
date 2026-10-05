@@ -27,7 +27,7 @@ from new_vesper.city.tick import run_due_ticks
 from new_vesper.city.weather import current_weather
 from new_vesper.content.loader import Content
 from new_vesper.dm import needs as bodily
-from new_vesper.dm import prompt, speech, story
+from new_vesper.dm import prompt, social, speech, story
 from new_vesper.dm.agent import ModelClient, TurnResult, UsageHook, run_turn, summarize
 from new_vesper.dm.config import CallType, DMConfig
 from new_vesper.dm.handlers import (
@@ -87,6 +87,7 @@ PRIVATE_EVENTS = frozenset(
         "npc_want_added",
         "npc_want_ended",
         "npc_wants_in_tension",
+        *social.SOCIAL_EVENTS,
     }
 )
 # Memory lines each NPC keeps per character before older ones fold into a summary.
@@ -298,6 +299,8 @@ class PlaySession:
         scene = scenes.get_scene(self.conn, self.scene_id)
         if scene.open:
             self._remember_scene(scene.id)
+            # Grudges that end without a roll, whoever was here (D129, D142).
+            social.settle(self._social(scene.id, set()))
             recent = scenes.recent_beats(self.conn, scene.id, limit=self.config.recent_beats)
             parts = [scene.summary, *(b.summary for b in recent)]
             summary = " ".join(p for p in parts if p).strip() or "Nothing of note happened."
@@ -327,25 +330,44 @@ class PlaySession:
         ]
         reply = self._summarize(
             CallType.NPC_JOURNAL,
-            prompt.memory_request(me.name, names, [s for s in scene if s], wants),
+            prompt.memory_request(
+                me.name,
+                names,
+                [s for s in scene if s],
+                wants,
+                social.bonds_for_request(self.conn),
+                social.grudges_for_request(self.conn),
+            ),
             self.config.journal_max_tokens,
         )
         cause = Cause(Actor.SYSTEM, self.player_id, scene_id)
         for npc_id, note in prompt.parse_memory_lines(reply, set(names)).items():
             attitudes.add_memory(self.conn, npc_id, me.id, note, cause)
             self._fold_memories(npc_id, me)
-        self._update_wants(prompt.parse_journal_lines(reply), set(names), scene_id, cause)
+        self._update_wants(
+            prompt.parse_journal_lines(reply), self._social(scene_id, set(names)), cause
+        )
         for npc_id in names:
             self._fold_facts(npc_id, me)
 
+    def _social(self, scene_id: int, there: set[str]) -> social.SceneClose:
+        cause = Cause(Actor.SYSTEM, self.player_id, scene_id)
+        return social.SceneClose(
+            self.conn, self.content, self.rng, self.now(), there, scene_id, cause
+        )
+
     def _update_wants(
-        self, lines: prompt.JournalLines, there: set[str], scene_id: int, cause: Cause
+        self, lines: prompt.JournalLines, close: social.SceneClose, cause: Cause
     ) -> None:
-        """Changes to wants from a scene, each checked by code (D124, D126).
+        """Changes to wants and the social graph from a scene, each checked by code
+        (D124, D126, D127-D130, D141-D143).
 
         Only NPCs who were in the scene gain or end wants; a tension needs one of its
-        wants to belong to someone who was there. Anything code won't keep is dropped.
+        wants to belong to someone who was there. Wants end last, so that what was learned
+        of a tension or alliance this scene still counts: a conflict that comes up and is
+        settled in one scene still leaves its mark. Anything code won't keep is dropped.
         """
+        there, scene_id = close.there, close.scene_id
         for npc_id, want, about, why in lines.added:
             if npc_id not in there:
                 continue
@@ -358,19 +380,6 @@ class PlaySession:
                 "npc_want_added",
                 cause,
                 {"npc_id": npc_id, "want_id": added.id, "want": added.want, "why": added.reason},
-            )
-        for want_id, ending, why in lines.ended:
-            try:
-                if npc_journal.get_active(self.conn, want_id).npc_id not in there:
-                    continue
-                ended = npc_journal.end_want(self.conn, want_id, ending, why, scene_id)
-            except StateError:
-                continue
-            append_event(
-                self.conn,
-                "npc_want_ended",
-                cause,
-                {"npc_id": ended.npc_id, "want_id": want_id, "ending": ending, "why": why},
             )
         for first, second, note in lines.tensions:
             try:
@@ -388,6 +397,20 @@ class PlaySession:
                 "npc_wants_in_tension",
                 cause,
                 {"wants": sorted((first, second)), "note": note},
+            )
+        social.apply(close, lines)
+        for want_id, ending, why in lines.ended:
+            try:
+                if npc_journal.get_active(self.conn, want_id).npc_id not in there:
+                    continue
+                ended = npc_journal.end_want(self.conn, want_id, ending, why, scene_id)
+            except StateError:
+                continue
+            append_event(
+                self.conn,
+                "npc_want_ended",
+                cause,
+                {"npc_id": ended.npc_id, "want_id": want_id, "ending": ending, "why": why},
             )
 
     def _fold_memories(self, npc_id: str, me: Character) -> None:
